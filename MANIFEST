@@ -3,4 +3,7 @@ Makefile.PL
 MANIFEST
 README
 test.pl
-Wizard.pm
+Tk/Wizard.pm
+setup_blue.gif
+setup_blue_top.gif
+perl_licence_blab.txt

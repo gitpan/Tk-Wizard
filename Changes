@@ -1,29 +1,3 @@
 Revision history for Perl extension Tk::Wizard.
 
-1.01  Mon Nov 25 13:16:21 2002
-	- created by h2xs 1.21 with options
-		-X -n Tk::Wizard
-
-	*   Made the supply of a "MainWindow" to the constructor
-		optional, and changed the supply method from a reference to
-		part of the passed name/value list.
-
-	*   Changed "filename" field to "-imagepath" for readability.
-
-	*   Made all arguments begin with "-" to fit in with Tk
-		"switches".
-
-	*   Added method "blank_frame" that can take title and
-		standfirst text.
-
-	*   Added a bit of space between the Wizard body and the button
-		footer.
-
-	*   Added default font and background.
-
-	*   Added licence agreement bits.
-
-1.0  February 2002?
-	Initial version by Daniel T Hable, found with Google, at
-	http://perlmonks.thepen.com/139336.html.
-
+Please see inline documentation in Tk::Wizard.
