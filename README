@@ -1,0 +1,402 @@
+Tk/Wizard version 1.01 - Wizard GUI Framework
+=============================================
+
+INSTALLATION
+
+To install this module type the following:
+
+	perl Makefile.PL
+	make
+	make test
+	make install
+
+SYNOPSIS
+		use Tk::Wizard;
+
+		# Instantiate a Wizard
+		my $wizard = new Tk::Wizard(
+				-title => "A title",
+				-imagepath => "/image/for/the/left/panel.gif",
+		);
+
+		# Create pages
+		my $SPLASH              = $wizard->addPage( sub{ page_splash ($wizard)} );
+		my $COPYRIGHT_PAGE      = $wizard->addLicencePage( -filepath => "end_user_licence.txt" );
+		my $GET_PREFS           = $wizard->addPage( sub{ page_get_prefs($wizard) });
+		my $user_chosen_dir;
+		my $GET_DIR             = $wizard->addDirSelectPage ( -variable => \$user_chosen_dir )
+		my $INSTALL_FILES       = $wizard->addPage( sub{ page_install_files($wizard,$user_chosen_dir) });
+		my $FINISH                      = $wizard->addPage( sub{ page_finish($wizard) });
+
+		$wizard->Show();
+		MainLoop;
+
+		sub page_get_prefs { my $wizard = shift;
+				my $frame = $wizard->blank_frame(-title=>"The First Page",-text=>"This is page one...");
+				# ....
+				return $frame;
+		}
+
+		sub preNextButtonAction { my $wizard = shift;
+				$_ = $wizard->currentPage;
+				if (/^$SPLASH$/){
+						warn "Pressed NEXT in the splash page ($SPLASH)";
+						return 1;
+				}
+				elsif (/^$COPYRIGHT_PAGE$/){
+						return $wizard->callback_licence_agreement;
+				}
+				elsif (/^$GET_DIR/){
+						return $wizard->callback_dirSelect( \$user_chosen_dir );
+				}
+				# ...
+		}
+
+		__END__
+
+DESCRIPTION
+The "Tk::Wizard" module automates a large part of the creation of a
+wizard program to collect information and then perform some complex task
+based upon it. The wizard feel is largly based upon the
+Microsoft(TM,etc) wizard style.
+
+The Wizard was developed to aid software installation by end-users using
+ActiveState's ActivePerl, but should function under under OS and
+circumstances. There are a number of routines specific to software
+installation, which may be removed to a sub-class at a later date.
+
+THIS IS AN ALPHA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!
+
+ACTION EVENT HANDLERS
+"Tk::Wizard" action event handlers are code-references called at the
+press of a "Tk::Wizard" button.
+
+The handler functions should return a Boolean value, signifying whether
+the remainder of the action should continue. If a false value is
+returned, execution of the event handler halts.
+
+All active event handlers can be set at construction or using
+"configure" - see the CONSTRUCTOR (new) entry elsewhere in this document
+and the METHOD configure entry elsewhere in this document.
+
+-preNextButtonAction =>
+	This is a reference to a function that will be dispatched before the
+	Next button is processed.
+
+-postNextButtonAction =>
+	This is a reference to a function that will be dispatched after the
+	Next button is processed.
+
+-prePrevButtonAction =>
+	This is a reference to a function that will be dispatched before the
+	Previous button is processed.
+
+-postPrevButtonAction =>
+	This is a reference to a function that will be dispatched after the
+	Previous button is processed.
+
+-preHelpButtonAction =>
+	This is a reference to a function that will be dispatched before the
+	Help button is processed.
+
+-helpButtonAction =>
+	This is a reference to a function that will be dispatched to handle
+	the Help button action.
+
+-postHelpButtonAction =>
+	This is a reference to a function that will be dispatched after the
+	Help button is processed.
+
+-preFinishButtonAction =>
+	This is a reference to a function that will be dispatched before the
+	Finish button is processed.
+
+-finishButtonAction =>
+	This is a reference to a funciton that will be dispatched to handle
+	the Finish button action.
+
+-postFinishButtonAction =>
+	This is a reference to a function that will be dispatched after the
+	Finish button is processed.
+
+-preCancelButtonAction =>
+	This is a reference to a function that will be dispatched before the
+	Cancel button is processed. Default is to exit on user confirmation
+	- see the METHOD DIALOGUE_really_quit entry elsewhere in this
+	document.
+
+-preCloseWindowAction =>
+	This is a reference to a funciton that will be dispatched before the
+	window is issued a close command. Default is to exit on user
+	confirmation - see the DIALOGUE METHOD DIALOGUE_really_quit entry
+	elsewhere in this document.
+
+CONSTRUCTOR (new)
+		Tk::Wizard->new( -name1=>"value1"...-nameN=>"valueN" )
+
+Creates a new instance of the Tk::Wizard object as a "MainWindow", or in
+the supplied "MainWindow" (see below).
+
+Standard paramters, appyling to the "MainWindow":
+
+		-width -height -background
+
+Non-standard parameters:
+
+-title =>
+	This is the title that will be displayed in the Windows title bar
+
+-imagepath =>
+	Path to a JPEG file that will be displayed on the left-hand side of
+	the screen.
+
+-mw =>
+	Optionally a TK "MainWindow" for the Wizard to occupy. If none is
+	supplied, one is created.
+
+-style =>
+	If supplied and is "top", will put the image at the top. Could do
+	more....
+
+-nohelpbutton =>
+	Set to anything to disable the display of the help buton.
+
+Action Event Handlers:
+	See the ACTION EVENT HANDLERS entry elsewhere in this document for
+	details.
+
+All paramters can be set after construction using "configure" - see the
+METHOD configure entry elsewhere in this document.
+
+As the "Tk::Wizard" object also controls the *Next* and *Previous*
+buttons, you can set the configuration - use the "cancelButtonRef" and
+"prevButtonRef" object fields:
+
+		$wizard->{prevButtonRef}->configure( -state => "disabled" )
+
+The default font is created by the constructor as 8pt Verdana, named
+"DEFAULT_FONT" and placed in the object's "defaultFont" field. All
+references to the default font in the Wizard call this routine, so
+changing the default is easy.
+
+Privately, "licence_agree" flags whether the end-user licence agreement
+has been accepted.
+
+METHODS
+METHOD configure
+
+Allows the configuration of all object properties. =cut
+
+sub configure { my $self = shift; my %newHandlers = ( @_ ); foreach(
+keys %newHandlers) { $self->{$_} = $newHandlers{$_}; } }
+
+METHOD addPage
+
+		$wizard->addPage ($page_code_ref)
+
+This method is used to add a Wizard page to the wizard. The $page
+parameter must be a Tk::Frame object. The pages are stored and will be
+displayed in the order that they were added to the Wizard control.
+
+METHOD Show
+
+		C<wizard>->Show()
+
+This method must be dispatched before the Wizard will be displayed, and
+must preced the "MainLoop" call.
+
+METHOD currentPage
+
+		my $current_page = $wizard->currentPage()
+
+This returns the index of the page that is currently shown. Pages are
+indexed starting at 1 with the first page that is associated with the
+wizard through the addWizardPage method.
+
+METHOD parent
+
+		my $parent_window = C<wizard>->parent
+
+This returns areference to the parent Tk widget that was used to create
+the wizard and all of the controls. By default, returns a reference to
+the main window.
+
+Defined at construction - see the CONSTRUCTOR (new) entry elsewhere in
+this document..
+
+METHOD blank_frame
+
+		my ($frame,@packing) = C<wizard>->blank_frame(-title=>$title,-text=>$standfirst);
+
+Returns a "Tk::Frame" object that is a child of the Wizard control. Some
+padding parameters are applied to the frame by the wizard control;
+
+Arguments are name/value pairs:
+
+-title =>
+	Printed in a big, bold font at the top of the frame as a title
+
+-text =>
+	Printed under the title in standard font.
+
+Also:
+
+		-width -height -background -font
+
+METHOD addLicencePage
+
+		$wizard->addLicencePage ( -filepath => $path_to_licence_text )
+
+Adds a page that contains a scroll texxt box of a licence text file
+specifed in the "-filepath" argument. Presents the user with two
+options, accept and continue, or not accept and quit. The user *cannot*
+progress until the 'agree' option has been chosen.
+
+You could supply the GNU Artistic Licence....
+
+See the CALLBACK callback_licence_agreement entry elsewhere in this
+document and the METHOD page_licence_agreement entry elsewhere in this
+document.
+
+METHOD addDirSelectPage
+
+		$wizard->addDirSelectPage ( -variable => \$chosen_dir )
+
+Adds a page that contains a scroll texxt box of all directories
+including, on Win32, logical drives. You can also specify the "-title"
+and "-text" paramters, as in the METHOD blank_frame entry elsewhere in
+this document.
+
+See the CALLBACK callback_dirSelect entry elsewhere in this document.
+
+CALLBACK callback_licence_agreement
+
+Intended to be used with an action-event handler like
+"-preNextButtonAction", this routine check that the object field
+"licence_agree" is a Boolean true value. If that operand is not set, it
+warns the user to read the licence; if that operand is set to a Boolean
+false value, a message box says goodbye and quits the program.
+
+CALLBACK callback_dirSelect
+
+A callback to check that the directory, passed as a reference in the
+sole argument, exists, and can and should be created.
+
+Will not allow the Wizard to continue unless a directory has been
+chosen. If the chosen directory does not exist, Setup will ask if it
+should create it. If the user affirms, it is created; otherwise the user
+is again asked to chose a directory.
+
+Returns a Boolean value.
+
+DIALOGUE METHOD DIALOGUE_really_quit
+
+The default routine called when the user clicks *Cancel* or attempts to
+close the window ("-preCancelButtonAction" and "-preCloseWindowAction").
+Justs asks 'Are you sure?' Calls "exit" if they are.
+
+DIALOGUE METHOD prompt
+
+Equivalent to the JavaScript method of the same name: pops up a dialogue
+box to get a text string, and returns it. Arguemnts are:
+
+-parent =>
+	"Tk" object that is our parent window. Default's to our "parent"
+	field.
+
+-title =>
+	The title of the dialogue box.
+
+-text =>
+	The text to display above the "Entry" widget.
+
+-value =>
+	The initial value of the "Entry" box.
+
+-wraplength =>
+	Text "Label"'s wraplength: defaults to 275.
+
+-width =>
+	The "Entry" widget's width: defaults to 40. =back
+
+LEGACY METHOD wpFrame
+
+			my $frame = C<wizard>->wpFrame;
+
+	Returns a "Tk::Frame" object that is a child of the Wizard control.
+	It should be used when creating wizard pages since some padding
+	parameters are applied to it by the wizard control.
+
+CAVEATS / BUGS
+	*   Nothing is currently done to ensure text fits into the window -
+		it is currently up to the client to make frames "Scrolled"), as
+		I'm having problems making "&blank_frame" produce them.
+
+	*   Dimenions are not yet fixed - more of my novice Tk problems!
+
+	*   When The *New Directory* button in the "addDirSelectPage" method
+		is used to create a new directory, the "DirTree" object does not
+		open the branch. How can it?
+
+	*   If a Wizard is one page long, the "FINISH" button will not
+		appear as expected.
+
+CHANGES
+VERSION 1.01
+
+		*   Made the supply of a "MainWindow" to the constructor
+			optional, and changed the supply method from a reference to
+			part of the passed name/value list.
+
+		*   Changed "filename" field to "-imagepath" for readability.
+
+		*   Made all arguments begin with "-" to fit in with Tk
+			"switches".
+
+		*   Added method "blank_frame" that can take title and
+			standfirst text.
+
+		*   Added a bit of space between the Wizard body and the button
+			footer.
+
+		*   Added default font and background.
+
+		*   Added licence agreement bits.
+
+VERSION 1.0
+
+		Initial version by Daniel T Hable, found with Google, at
+		http://perlmonks.thepen.com/139336.html.
+
+AUTHORS
+		Daniel T Hable,
+
+		Lee Goddard (lgoddard@cpan.org).
+
+COPYRIGHT
+		Copyright (c) 2002 Daniel T Hable.
+
+		Modifications Copyright (C) Lee Goddard, 2002.
+
+		Permission is hereby granted, free of charge, to any person
+		obtaining a copy of this software and associated documentation
+		files (the "Software"), to deal in the Software without
+		restriction, including without limitation the rights to use,
+		copy, modify, merge, publish, distribute, sublicense, and/or
+		sell copies of the Software, and to permit persons to whom the
+		Software is furnished to do so, subject to the following
+		conditions:
+
+		The above copyright notice and this permission notice shall be
+		included in all copies or substantial portions of the Software.
+
+		THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+		EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+		OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+		NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+		HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+		WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+		FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+		OTHER DEALINGS IN THE SOFTWARE.
+
+
