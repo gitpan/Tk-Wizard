@@ -134,7 +134,7 @@ registry tree in the current location: YMMV.
 =cut
 
 sub register_with_windows { my ($self,$args) = (shift,{@_});
-	return 1 if $Tk::platform ne 'MSWin32';
+	return 1 if $^O!~/(mswin32|cygwin)/i;
 	unless ($args->{DisplayName} and $args->{UninstallString}
 		and ($args->{uninstall_key_name} or $args->{app_path})
 	){
@@ -156,7 +156,8 @@ sub register_with_windows { my ($self,$args) = (shift,{@_});
 		next if $_ =~ /^(app_path|uninstall_key_name)$/g;
 		$uninst_key_ref->{"/$_"} = $args->{$_};
 	}
-	return $!? undef : 1;
+	return 1;
+	# return $!? undef : 1;
 }
 
 

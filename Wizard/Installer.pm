@@ -232,6 +232,11 @@ Rerence to an array of locations to move/copy to
 
 Delay (in mS) before copying begins (see L<Tk::After>). Default is 1000.
 
+=item -continue
+
+Display the next Wizard page once the job is done: invokes the callback
+of the I<Next> button at the end of the task.
+
 =item -bar
 
 A list of properties to pass to the C<Tk::ProgessBar> object created and used
@@ -322,6 +327,7 @@ sub page_fileList { my ($self,$args) = (shift,shift);
 
 		$self->{nextButton}->configure(-state=>"normal");
 		$self->{backButton}->configure(-state=>"normal");
+		$self->{nextButton}->invoke if $args->{-continue};
 	});
 	return $frame;
 }

@@ -1,6 +1,6 @@
 package Tk::Wizard;
 use vars qw/$VERSION/;
-$VERSION = 1.031;	# 02 December 2002 18:17
+$VERSION = 1.032;	# 02 December 2002 18:17
 
 BEGIN {
 	use Carp;
@@ -292,7 +292,7 @@ sub Populate { my ($cw, $args) = @_;
 	$args->{-style} = $cw->{-style} unless $args->{-style};	# yuck
 	$args->{-width } = ($args->{-style} eq 'top'? 500 : 570) unless $args->{-width};
 	$args->{-height} = 370 unless $args->{-height};
-
+	# $cw->overrideredirect(1);
 	my $buttonPanel = $cw->Frame;
 	# right margin
 	$buttonPanel->Frame(-width=>10)->pack( -side => "right", -expand => 0,-pady=>10);
@@ -413,6 +413,27 @@ sub Show { my $self = shift;
 } # end of sub Show
 
 
+=head2 METHOD forward
+
+Convenience method to move the Wizard on a page by invoking the
+callback for the C<nextBUtton>.
+
+=cut
+
+sub forward { my $self=shift;
+	return $self->{nextButton}->invoke;
+}
+
+=head2 METHOD backward
+
+Convenience method to move the Wizard back a page by invoking the
+callback for the C<backBUtton>.
+
+=cut
+
+sub backward { my $self=shift;
+	return $self->{backButton}->invoke;
+}
 
 
 #
@@ -427,7 +448,7 @@ sub initial_layout { my $self = shift;
 	if ($self->cget(-style) eq '95' or $self->{wizardPagePtr}==0){
 		if ($self->cget(-imagepath)){
 			$self->Photo( "sidebanner",  -file => $self->cget(-imagepath));
-			$self->{left_object} = $self->Label( -image => "sidebanner")->pack( -side => "left", -anchor => "w");
+			$self->{left_object} = $self->Label( -image => "sidebanner")->pack( -side => "top", -anchor => "n");
 		} else {
 			$self->{left_object} = $self->Frame(-width=>100)->pack(qw/-side left -anchor w -expand 1 -fill both/);
 		}
@@ -753,6 +774,9 @@ sub addDirSelectPage { my ($self,$args) = (shift,{@_});
 #
 # PRIVATE METHOD page_dirSelect
 #
+# It'd be nice to use FBox here, but it doesn't seem to support dir selection
+# and DirSelect is broken and ugly
+#
 # As blank_frame plus:
 # -variable => Reference to a variable to set.
 # -nowarnings => 1 : chdir to each drive first and only list if accessible
@@ -917,6 +941,11 @@ the first of which is a text string to display, the second a reference to code t
 The length of the  delay, in milliseconds, after the page has been displayed and
 before execution the task list is begun. See L<the entry for the 'after' routine in the Tk::After manpage|Tk::After>.
 
+=item -continue
+
+Display the next Wizard page once the job is done: invokes the callback
+of the I<Next> button at the end of the task.
+
 =item -todo_photo
 
 =item -done_photo
@@ -925,6 +954,11 @@ Optional: both C<Tk::Photo> objects, the former displayed before an item on the 
 which is changed to the latter after completion of the item. If not provided, then not displayed.
 
 If I knew more about TK bitmaps, or any bitmaps other than Vic-20, I'd extend this to have defaults.
+
+=item -label_frame_title
+
+The label above the C<Tk::LabFrame> object which
+contains the task list. Default label is the boring C<Performing Tasks:>.
 
 =item -frame_args
 
@@ -963,6 +997,9 @@ Note that unlink C<addTaskListPage>, arguments are expected in a hash reference.
 Useful for a task list that cannot be filled before the call
 to C<Show()>.
 
+Parameter C<-label_frame_title> is the label above the C<Tk::LabFrame> object which
+contains the task list. Default label is the boring C<Performing Tasks:>.
+
 =cut
 
 sub page_taskList { my ($self,$args) = (shift,shift);
@@ -981,8 +1018,14 @@ sub page_taskList { my ($self,$args) = (shift,shift);
 		warn "Could not read $args->{-done_photo}" if $^W;
 		undef $args->{-done_photo};
 	}
-	$args->{-frame_pack} = [qw/-pady 10 -padx 50 -fill x -expand 1/] unless $args->{-frame_pack};
-	$args->{-frame_args} = [-relief=>"groove",-bd=>1] unless $args->{-frame_args};
+	$args->{-frame_pack} = [
+		qw/-expand 1 -fill x -padx 40 -pady 10/
+	] unless $args->{-frame_pack};
+	$args->{-frame_args} = [
+		-relief=>"flat",-bd=>0,
+		-label => $args->{-label_frame_title} || "Performing Tasks: ",
+		-labelside => "acrosstop"
+	] unless $args->{-frame_args};
 
 	my $frame = $self->blank_frame(
 		-title => $args->{-title} || "Performing Taks",
@@ -993,7 +1036,13 @@ sub page_taskList { my ($self,$args) = (shift,shift);
 		$frame->Label(-text=>'Please press next to continue.')->pack();
 		return $frame;
 	}
-	my $task_frame = $frame->Frame(@{$args->{-frame_args}})->pack( @{$args->{-frame_pack}} );
+#	my $task_frame = $frame->Frame(@{$args->{-frame_args}})->pack( @{$args->{-frame_pack}} );
+	my $task_frame = $frame->LabFrame(
+		@{$args->{-frame_args}}
+	)->pack(
+		@{$args->{-frame_pack}}
+	);
+
 	foreach ( my $i=0; $i<=$#{$args->{-tasks}}; $i+=2 ){
 		my $icn="-1";
 		$_ = $task_frame->Frame()->pack(-side=>'top',-anchor=>"w");
@@ -1015,6 +1064,7 @@ sub page_taskList { my ($self,$args) = (shift,shift);
 		}
 		$self->{nextButton}->configure(-state=>"normal");
 		$self->{backButton}->configure(-state=>"normal");
+		$self->{nextButton}->invoke if $args->{-continue};
 	});
 	return $frame;
 }

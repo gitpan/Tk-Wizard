@@ -1,12 +1,18 @@
 CHANGES
+VERSION 1.032
+
+	*	Added &forward> and &backward, mainly to automate tests.
+
+	*	Added -continue method to &Tk::Wizard::Installer::addFileListPage
+		and &Tk::Wizard::addTaskListPage.
 
 VERSION 1.031
 
-	* Added method &addTaskListPage (etc) to Tk::Wizard;
+	*	Added method &addTaskListPage (etc) to Tk::Wizard;
 
-	* Added -resizable switch; added warnings in addPage.
+	*	Added -resizable switch; added warnings in addPage.
 
-	* Added method &addFileListPage (etc) to Tk::Wizard::Installer
+	*	Added method &addFileListPage (etc) to Tk::Wizard::Installer
 
 VERSION 1.03
 

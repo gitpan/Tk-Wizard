@@ -8,6 +8,7 @@ WriteMakefile(
 		"Tk"				=> 0.1,
 		"Tk::ProgressBar"	=> 0.1,
 		"Tk::LabFrame"		=> 0.1,
+		$^O=~/(mswin32|cygwin)/i? ('Win32::TieRegistry'=>0.1) : "",
 
 	}, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005

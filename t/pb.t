@@ -24,7 +24,7 @@ print ref $wizard eq "Tk::Wizard"? "ok 2\n" : "not ok 2\n";
 $wizard->configure(
 	-postNextButtonAction => sub { &postNextButtonAction($wizard) },
 	-preNextButtonAction => sub { &preNextButtonAction($wizard) },
-	-finishButtonAction  => sub { print "ok 4\n";  },
+	-finishButtonAction  => sub { print "ok 4\n";  $wizard->destroy;},
 );
 print ref $wizard->cget(-preNextButtonAction) eq "CODE"? "ok 3\n":"not ok 3\n";
 
@@ -39,11 +39,12 @@ exit;
 
 
 sub page_splash { my $wizard = shift;
-	my ($frame,@pl) = $wizard->blank_frame(-title=>"Welcome to the Wizard Test 'pb'",
+	my $frame = $wizard->blank_frame(-title=>"Welcome to the Wizard Test 'pb'",
 	-text=>
 		"This script tests and hopefully demonstrates the 'postNextButtonAction' feature.\n\n"
 		."When you click Next, a Tk::ProgressBar widget should slowly be udpated."
 	);
+	$frame->after(100,sub{$wizard->forward});
 	return $frame;
 }
 
@@ -51,6 +52,7 @@ sub page_finish { my $wizard = shift;
 	my ($frame,@pl) = $wizard->blank_frame(-title=>"Wizard Test 'pb' Complete",
 		-text=> "Thanks for running this test.",
 	);
+	$frame->after(100,sub{$wizard->forward});
 	return $frame;
 }
 
@@ -66,7 +68,6 @@ sub pb { my $wizard = shift;
 		-borderwidth => 2, -relief => 'sunken',
 		-from => 0,	-to => 10,
 	)->pack( -padx => 10, -pady => 10, -side => 'top', -fill => 'both', -expand => 1 )->pack;
-
 	return $frame;
 }
 
@@ -85,6 +86,7 @@ sub postNextButtonAction { my $wizard = shift;
 			$bar->update;
 		}
 		$wizard->{nextButton}->configure(-state=>"normal");
+		$wizard->{nextButton}->after(100,sub{$wizard->forward});
 	}
 	return 1;
 }
