@@ -6,14 +6,18 @@
 # `make test'. After `make install' it should work as `perl test.pl'
 
 #########################
-
 use Test;
 use strict;
 use Tk;
 use Cwd;
 BEGIN { plan tests => 6 };
+
+our $VERSION = 0.11;	# 27 November 2002, 17:19 CET
+
 use Tk::Wizard;
 ok(1);
+
+
 
 #
 # Instantiate Wizard
@@ -38,7 +42,7 @@ $wizard->configure(
 our $SPLASH       	= $wizard->addPage( sub{ page_splash ($wizard)} );
 ok($SPLASH,1);
 
-our $COPYRIGHT_PAGE	= $wizard->addLicencePage( -filepath => "perl_licence_blab.txt" );
+our $COPYRIGHT_PAGE	= $wizard->addLicencePage( -filepath => cwd."/perl_licence_blab.txt" );
 ok($COPYRIGHT_PAGE, 2);
 
 $wizard->addPage( sub{ page_one($wizard) });
@@ -50,20 +54,19 @@ our $user_chosen_dir;
 our $GET_DIR 	= $wizard->addDirSelectPage ( -variable => \$user_chosen_dir );
 ok($GET_DIR, 5);
 
-$wizard->addPage(
-	sub {
-		my $frame = $wizard->blank_frame(
-			-title=>"Finished",
-			-subtitle => "Please press Finish to leave the Wizard.",
-			-text => "You had selected the directory $user_chosen_dir.",
-		);
-		return $frame;
-	}
-);
+$wizard->addPage( sub {
+	return $wizard->blank_frame(
+		-title=>"Finished",
+		-subtitle => "Please press Finish to leave the Wizard.",
+		-text => "You had selected the directory $user_chosen_dir.",
+	);
+});
+
 
 $wizard->Show();
 MainLoop;
 exit;
+
 
 sub page_splash { my $wizard = shift;
 	my ($frame,@pl) = $wizard->blank_frame(-title=>"Welcome to the Wizard",
@@ -78,8 +81,8 @@ sub page_splash { my $wizard = shift;
 sub page_one { my $wizard = shift;
 	my $frame = $wizard->blank_frame(
 		-title=>"-title here",
-		-subtitle=>'-subtitle here',
-		-text=>"-text goes here."
+		-subtitle=>'The text found in the -subtitle paramter appears here on the screen; quite a long string I trust: and sadly ugly still',
+		-text=>"-text goes here.\n\nTk::Wizard is but a baby, and needs your help to grow into a happy, healthy, well-adjusted widget. Sadly, I've only been using Tk::* for a couple of weeks, and all this packing takes a bit of getting used to. And I'm also working to a deadline on the project which bore this Wizard, so please excuse some coding which is currently rather slip-shod, but which be tightened in the future."
 	);
 	return $frame;
 }

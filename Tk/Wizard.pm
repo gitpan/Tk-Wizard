@@ -1,6 +1,6 @@
 package Tk::Wizard;
 use vars qw/$VERSION/;
-$VERSION = 1.02;
+$VERSION = 1.0211;	# 27 November 2002, 17:19 CET
 #
 # Please read the copyright notice and licence at the end of this file.
 #
@@ -12,24 +12,36 @@ use Tk::DirTree;
 
 =head1 NAME
 
-Tk::Wizard - Wizard framework: installers & more
+Tk::Wizard - Wizard framework for installers & more
 
 =head1 SYNOPSIS
 
 	use Tk::Wizard;
-
 	# Instantiate a Wizard
 	my $wizard = new Tk::Wizard(
-		-title => "A title",
-		-imagepath => "/image/for/the/left/panel.gif",
+		-title		=> "TitleBar Title",
+		-imagepath	=> "/image/for/the/left/panel.gif",
 	);
+	$wizard->configure( ...add event handlers... );
+	$wizard->addPage(
+		... code-ref to anything returning a Tk::Frame ...
+	);
+	$wizard->addPage( sub {
+		return $wizard->blank_frame(
+			-title	=> "Page Title",
+			-text	=> "Stand-first text.",
+		);
+	});
+	$wizard->Show;
+	MainLoop;
+	__END__
 
-To avoid 50 lines of Synopsis, please see the file F<test.pl> included
+To avoid 50 lines of SYNOPSIS, please see the file F<test.pl> included
 with the distribution.
 
 =head1 DEPENDENCIES
 
-	Tk
+	Tk and modules of the current standard Perl Tk distribution.
 
 On MS Win32 only:
 
@@ -44,91 +56,33 @@ The C<Tk::Wizard> module automates a large part of the creation of a wizard prog
 to collect information and then perform some complex task based upon it.
 
 The Wizard was developed to aid software installation by end-users using ActiveState's
-ActivePerl, but should function under under OS and circumstances. There are a number of
-routines specific to software installation, which may be removed to a sub-class at a
-later date.
+ActivePerl, but should function under other OS and circumstances. There package does
+contain a number of routines specific to software installation: these may be removed to
+a sub-class at a later date.
 
-The wizard feel is largly based upon the Microsoft(TM,etc) wizard style.
+The wizard feel is largly based upon the Microsoft(TM,etc) wizard style: the default is
+simillar to that found in Microsoft Windows 95; a more Windows 2000-like feel is also
+supported (see the C<-style> entry in L<CONSTRUCTOR (new)>.
+
 
 B<THIS IS A BETA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!>
 
-=head1 ACTION EVENT HANDLERS
+=cut
 
-A Wizard is a series of pages that gather information and perform tasks based upon
-that information. Navigated through the pages is via I<Back> and I<Next> buttons,
-as well as I<Help>, I<Cancel> and I<Finish> buttons.
+# See INTERNATIONALISATION
+my %LABELS = (
+	# Buttons
+	BACK => "< Back",	NEXT => "Next >",
+	FINISH => "Finish",	CANCEL => "Cancel",
+	HELP => "Help",
+	# licence agreement
+	LICENCE_ALERT_TITLE	=> "Licence Condition",
+	LICENCE_OPTION_NO	=> "I do not accept the terms of the licence agreement",
+	LICENCE_OPTION_YES	=> "I accept the terms the terms of the licence agreement",
+	LICENCE_IGNORED		=> "You must read and agree to the licence before you can use this software.\n\nIf you do not agree to the terms of the licence, you must remove the software from your machine.",
+	LICENCE_DISAGREED	=> "You must read and agree to the licence before you can use this software.\n\nAs you indicated that you do not agree to the terms of the licence, please remove the software from your machine.\n\nSetup will now exit.",
+);
 
-In the C<Tk::Wizard> implimentation, each button has associated with it one or more
-action event handlers, supplied as code-references executed before, during and/or
-after the button press.
-
-The handler code should return a Boolean value, signifying whether the remainder of
-the action should continue. If a false value is returned, execution of the event
-handler halts.
-
-=over 4
-
-=item -preNextButtonAction =>
-
-This is a reference to a function that will be dispatched before the Next
-button is processed.
-
-=item -postNextButtonAction =>
-
-This is a reference to a function that will be dispatched after the Next
-button is processed.
-
-=item -prePrevButtonAction =>
-
-This is a reference to a function that will be dispatched before the Previous
-button is processed.
-
-=item -postPrevButtonAction =>
-
-This is a reference to a function that will be dispatched after the Previous
-button is processed.
-
-=item -preHelpButtonAction =>
-
-This is a reference to a function that will be dispatched before the Help
-button is processed.
-
-=item -helpButtonAction =>
-
-This is a reference to a function that will be dispatched to handle the Help
-button action.
-
-=item -postHelpButtonAction =>
-
-This is a reference to a function that will be dispatched after the Help
-button is processed.
-
-=item -finishButtonAction =>
-
-This is a reference to a funciton that will be dispatched to handle the Finish
-button action.
-
-=item -postFinishButtonAction =>
-
-This is a reference to a function that will be dispatched after the Finish
-button is processed.
-
-=item -preCancelButtonAction =>
-
-This is a reference to a function that will be dispatched before the Cancel
-button is processed.  Default is to exit on user confirmation - see
-L<METHOD DIALOGUE_really_quit>.
-
-=item -preCloseWindowAction =>
-
-This is a reference to a funciton that will be dispatched before the window
-is issued a close command. Default is to exit on user confirmation - see
-L<DIALOGUE METHOD DIALOGUE_really_quit>.
-
-=back
-
-All active event handlers can be set at construction or using C<configure> -
-see L<CONSTRUCTOR (new)> and L<METHOD configure>.
 
 =head1 CONSTRUCTOR (new)
 
@@ -217,12 +171,6 @@ Please see L<ACTION EVENT HANDLERS> for details.
 All paramters can be set after construction using C<configure> - see
 L<METHOD configure>.
 
-As the C<Tk::Wizard> object also controls the I<Next> and I<Previous>
-buttons, you can set the configuration - use the C<cancelButtonRef> and
-C<prevButtonRef> object fields:
-
-	$wizard->{prevButtonRef}->configure( -state => "disabled" )
-
 The B<default font> is created by the constructor as 8pt Verdana,
 named C<DEFAULT_FONT> and placed in the object's C<defaultFont> field.
 All references to the default font in the Wizard call this routine, so
@@ -243,8 +191,8 @@ sub new($) { my ($invocant,$args) = (shift,{@_});
 		# event handling references
 		-preNextButtonAction    => undef,
 		-postNextButtonAction   => undef,
-		-prePrevButtonAction    => undef,
-		-postPrevButtonAction   => undef,
+		-preBackButtonAction    => undef,
+		-postBackButtonAction   => undef,
 		-preHelpButtonAction    => undef,
 		-helpButtonAction       => undef,
 		-postHelpButtonAction   => undef,
@@ -335,21 +283,21 @@ sub Show { my $self = shift;
 		warn "Showing a Wizard that is only one page long";
 	}
 	my $buttonPanel = $self->{wizwin}->Frame();
-	$self->{nextButtonRef} = $buttonPanel->Button( -text => "Next >",
+	$self->{nextButton} = $buttonPanel->Button( -text => $LABELS{NEXT},
 		-command => [ \&NextButtonEventCycle, $self ],
 		-width => 10
 	)->pack( -side => "right", -expand => 0,-pady=>10);
-	$self->{prevButtonRef} = $buttonPanel->Button( -text => "< Back",
-		-command => [ \&PrevButtonEventCycle, $self ],
+	$self->{backButton} = $buttonPanel->Button( -text => $LABELS{BACK},
+		-command => [ \&BackButtonEventCycle, $self ],
 		-width => 10,
 		-state => "disabled"
 	)->pack( -side => "right", -expand => 0,-pady=>10);
-	$buttonPanel->Button( -text => "Cancel",
+	$self->{cancelButton} = $buttonPanel->Button( -text => $LABELS{CANCEL},
 		-command => [ \&CancelButtonEventCycle, $self, $self->{wizwin}],
 		-width => 10
 	) ->pack( -side => "right", -expand => 0,-pady=>10);
 	unless ($self->{-nohelpbutton}){
-		$buttonPanel->Button( -text => "Help",
+		$self->{helpButton} = $buttonPanel->Button( -text => $LABELS{HELP},
 			-command => [ \&HelpButtonEventCycle, $self ],
 			-width => 10,
 		)->pack( -side => 'left', -anchor => 'w',-pady=>10);
@@ -358,7 +306,7 @@ sub Show { my $self = shift;
 
 	my $line = $self->{wizwin}->Frame(
 		-width => $self->{-width}||500,
-		qw/ -relief groove -bd 1 -height 2 -background white/
+		qw/ -relief groove -bd 1 -height 2 -background SystemButtonFace/
 	);
 	$line->pack(qw/-side bottom -fill x/);
 
@@ -489,30 +437,33 @@ See also L<METHOD addLicencePage> and L<METHOD addDirSelectPage>.
 
 sub blank_frame { my ($self,$args) = (shift,{@_});
 	my ($main_bg,$main_wi);
+	# First and last pages are white
 	if ($self->{wizardPagePtr}==0
 		or $self->{wizardPagePtr} == $#{$self->{wizardPageList}}
 	){
 		$main_bg = "white";
 		$main_wi = $args->{-width} || 300;
-	} elsif ($self->{-style} eq 'top' and $self->{wizardPagePtr}>0){
+	}
+	# For 'top' style, main body is plain
+	elsif ($self->{-style} eq 'top' and $self->{wizardPagePtr}>0){
 		$main_bg = undef;
 		$main_wi = $args->{-width} || 600
-	} else {
+	}
+	# For other styles (95 default), main body is userdefined or plain
+	else {
 		$main_bg = $args->{background} || undef;
 		$main_wi = $args->{-width} || 300;
 	}
 	my $frame = $self->parent->Frame(
 		-width=>$main_wi, -height=>$args->{-height}||300,
 	);
-#	my $frame = $self->parent->Scrolled("Frame", -scrollbars=>'osoe',
-#		-width=>$main_wi, -height=>$args->{-height}||300,
-#	);
 
 	$frame->configure(-background => $main_bg) if $main_bg;
 
 	$args->{-font} = $self->{defaultFont} unless $args->{-font};
 	my $wrap = $args->{-wraplength} || 375;
 
+	# For 'top' style pages other than first and last
 	if (($self->{-style} eq 'top' and $self->{wizardPagePtr}>0)
 	and $self->{wizardPagePtr} != $#{$self->{wizardPageList}}
 	){
@@ -524,16 +475,24 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 		my $title_frame = $top_frame->Frame(-background=>'white')->pack(
 			-side=>'left',-anchor=>'w',-expand=>1,-fill=>'x'
 		);
+		#
+		# Is it better to call in Text::Wrap to indent, or
+		# access font metrics and work out lengths and heights, or
+		# just sod it and only support short lines?
+		#
 		if ($args->{-title}){
-			$_ = $title_frame->Label(
-				-justify => 'left',
-				-anchor=> 'w',
-				-wraplength=>$wrap, -text=>$args->{-title},
-				-font=>'TITLE_FONT_TOP',
-				-background=>"white",
-			)->pack(-side=>'top',-expand=>'1',-fill=>'x',-padx=>30,-pady=>5);
+			# Indent left of title: -height should come from font metrics of TITLE_FONT_TOP;
+			# 	and what about if the line wraps?
+			$title_frame->Frame(qw/-background white -width 30 -height 30/)->pack(qw/-anchor n -side left/);
+			$title_frame->Label(
+				-justify => 'left', -anchor=> 'w', -wraplength=>$wrap,
+				-text=> $args->{-title},
+				-font=>'TITLE_FONT_TOP', -background=>"white",
+			)->pack(-side=>'top',-expand=>'1',-fill=>'x',-pady=>5,-padx=>5);
 		}
 		if ($args->{-subtitle}){
+			# Indent the subtitle - see note above
+			$title_frame->Frame(qw/-background white -width 20 -height 12/)->pack(qw/-anchor w -side left/);
 			$args->{-subtitle} =~ s/^[\n\r\f]//;
 			$args->{-subtitle} = $args->{-subtitle};
 			$title_frame->Label(
@@ -542,7 +501,7 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 				-anchor=> 'w',
 				-wraplength=>$wrap, qw/-justify left/, -text => $args->{-subtitle},
 				-background=>$args->{background}||"white",
-			)->pack(-side=>'top',-expand=>'1',-fill=>'x',-padx=>50,);
+			)->pack(-side=>'top',-expand=>'1',-fill=>'x',-padx=>5,);
 		} else {
 			$frame->Label(); # intended so we can packForget first to $frame->children;
 		}
@@ -642,7 +601,7 @@ sub addDirSelectPage { my ($self,$args) = (shift,{@_});
 
 
 
-######################################################################################################
+
 #
 # Method:       dispatch
 #
@@ -653,14 +612,14 @@ sub addDirSelectPage { my ($self,$args) = (shift,{@_});
 #         methods to bypass. This reduces the number of method dispatchs made for each handler and also
 #         increased the usability of the set methods above when trying to unregister event handlers.
 #
-######################################################################################################
+
 sub dispatch { my $handler = shift;
    return (!($handler->())) if defined $handler;
    return 0;
 } # end of sub dispatch
 
 
-######################################################################################################
+
 #
 # Method:      NextButtonEventCycle
 #
@@ -668,7 +627,7 @@ sub dispatch { my $handler = shift;
 #              wizard button bar. This includes dispatching the preNextButtonAction and
 #              postNextButtonAction handler at the apporprate times.
 #
-######################################################################################################
+
 sub NextButtonEventCycle { my $self = shift;
 	if( dispatch( $self->{-preNextButtonAction})) { return;}
 
@@ -677,12 +636,12 @@ sub NextButtonEventCycle { my $self = shift;
 	$self->{wizardPagePtr}++;
 	$self->{wizardPagePtr} = $#{$self->{wizardPageList}} if( $self->{wizardPagePtr} >= $#{ $self->{wizardPageList}});
 
-	if( $self->{nextButtonRef}->cget( -text) eq "Finish") {
+	$self->{backButton}->configure( -state => "normal");
+	if( $self->{nextButton}->cget( -text) eq $LABELS{FINISH}) {
 		if( dispatch( $self->{-finishButtonAction})) { return; }
 		$self->CloseWindowEventCycle();
 	}
-	$self->{prevButtonRef}->configure( -state => "normal");
-	$self->{nextButtonRef}->configure( -text => "Finish") if( $self->{wizardPagePtr} == $#{ $self->{wizardPageList}});
+	$self->{nextButton}->configure( -text => $LABELS{FINISH}) if( $self->{wizardPagePtr} == $#{ $self->{wizardPageList}});
 	$self->redrawWizardPage;
 
 	if( dispatch( $self->{-postNextButtonAction})) { return; }
@@ -690,34 +649,34 @@ sub NextButtonEventCycle { my $self = shift;
 
 
 
-######################################################################################################
+
 #
-# Method:      PrevButtonEventCycle
+# Method:      BackButtonEventCycle
 #
 # Description: Runs the complete view of the action handler cycle for the "<Previous" button on the
-#              wizard button bar. This includes dispatching the prePrevButtonAction and
-#              postPrevButtonAction handler at the apporprate times.
+#              wizard button bar. This includes dispatching the preBackButtonAction and
+#              postBackButtonAction handler at the apporprate times.
 #
 # Parameters:    None
 #
-######################################################################################################
-sub PrevButtonEventCycle { my $self=shift;
-	return if dispatch( $self->{-prePrevButtonAction});
+
+sub BackButtonEventCycle { my $self=shift;
+	return if dispatch( $self->{-preBackButtonAction});
 
 	# move the wizard pointer back one position and then adjust the navigation buttons
 	# to reflect any state changes. Don't fall off end of page pointer
 	$self->{wizardPagePtr}--;
 	$self->{wizardPagePtr} = 0 if( $self->{wizardPagePtr} < 0);
 
-	$self->{nextButtonRef}->configure( -text => "Next >");
-	$self->{prevButtonRef}->configure( -state => "disabled") if( $self->{wizardPagePtr} == 0);
+	$self->{nextButton}->configure( -text => $LABELS{NEXT});
+	$self->{backButton}->configure( -state => "disabled") if( $self->{wizardPagePtr} == 0);
 	$self->redrawWizardPage;
 
-	if( dispatch( $self->{-postPrevButtonAction})) { return; }
-} # end of sub PrevButtonEventCycle
+	if( dispatch( $self->{-postBackButtonAction})) { return; }
+} # end of sub BackButtonEventCycle
 
 
-######################################################################################################
+
 #
 # Method:      HelpButtonEventCycle
 #
@@ -727,7 +686,7 @@ sub PrevButtonEventCycle { my $self=shift;
 #
 # Parameters:    None
 #
-######################################################################################################
+
 sub HelpButtonEventCycle { my $self = shift;
 	if (dispatch( $self->{-preHelpButtonAction})) { return; }
 	if (dispatch( $self->{-helpButtonAction})) { return; }
@@ -735,7 +694,7 @@ sub HelpButtonEventCycle { my $self = shift;
 } # end of sub HelpButtonEventCycle
 
 
-######################################################################################################
+
 #
 # Method:      CancelButtonEventCycle
 #
@@ -746,7 +705,6 @@ sub HelpButtonEventCycle { my $self = shift;
 #
 # Parameters:    None
 #
-######################################################################################################
 sub CancelButtonEventCycle { my ($self, $hGUI) = (shift, @_);
   return if dispatch( $self->{-preCancelButtonAction});
   $self->CloseWindowEventCycle( $hGUI);
@@ -777,24 +735,22 @@ sub redrawWizardPage { my $self = shift;
 	if (($self->{-style} eq 'top' and $self->{wizardPagePtr} == 0)
 		or $self->{wizardPagePtr} == $#{$self->{wizardPageList}}
 	){
-		$self->{left_object}->pack( -side => "left", -anchor => "w")
-	} elsif ($self->{-style} eq 'top' and $self->{wizardPagePtr} > 0){
+		$self->{left_object}->pack( -side => "left", -anchor => "w");
+	} elsif ($self->{-style} eq 'top'){
 		$self->{left_object}->packForget;
 	}
-	if ($self->{wizardPagePtr}==1 and $self->{wizardPagePtr} != $#{$self->{wizardPageList}}){
-		$self->{wizwin}->configure(-background =>"SystemButtonFace");
-	} elsif ($self->{wizardPagePtr} == $#{$self->{wizardPageList}}){
-		$self->{wizwin}->configure(-background =>"white");
-		warn "yearse";
+	if ($self->{wizardPagePtr}==0 or $self->{wizardPagePtr}==$#{$self->{wizardPageList}}){
+		$self->{wizwin}->configure(-background=>$self->{-background}||"white");
+	} else {
+		$self->{wizwin}->configure(-background=>$self->{-background}||"SystemButtonFace");
 	}
 	$self->{wizardFrame}->packForget;
 	$self->{wizardFrame} = $self->{wizardPageList}->[$self->{wizardPagePtr}]->();
-	if ($self->{-style} ne 'top' and $self->{wizardPagePtr} > 0){
+	if ($self->{-style} ne 'top'  and $self->{wizardPagePtr} > 0){
 		$self->{wizardFrame}->pack( -side=>"top", -expand=>0, -padx=>10, -pady=>2 );
 	} else {
 		$self->{wizardFrame}->pack( -side => "top");
 	}
-
 }
 
 
@@ -820,7 +776,7 @@ sub page_licence_agreement { my ($self,$licence_file) = (shift,shift);
 	my $text;
 	my $padx = $self->{-style} eq 'top'? 30 : 5;
 	$self->{licence_agree} = undef;
-	open IN,$licence_file or die "No licence: $licence_file; $!";
+	open IN,$licence_file or croak "Could not read licence: $licence_file; $!";
 	read IN,$text,-s IN;
 	close IN;
 	my ($frame,@pl) = $self->blank_frame(
@@ -838,7 +794,7 @@ sub page_licence_agreement { my ($self,$licence_file) = (shift,shift);
 	$frame->Frame(-height=>10)->pack();
 	$_ = $frame->Radiobutton(
 		-font => $self->{defaultFont},
-		-text     => "I accept the terms the terms of the licence agreement",
+		-text     => $LABELS{LICENCE_OPTION_YES},
 		-variable => \${$self->{licence_agree}},
 		-relief   => 'flat',
 		-value    => 1,
@@ -848,7 +804,7 @@ sub page_licence_agreement { my ($self,$licence_file) = (shift,shift);
 	$_->configure(-background=>$self->{-background}) if $self->{-background};
 	$frame->Radiobutton(
 		-font => $self->{defaultFont},
-		-text     => "I do not accept the terms of the licence agreement",
+		-text     => $LABELS{LICENCE_OPTION_NO},
 		-variable => \${$self->{licence_agree}},
 		-relief   => 'flat',
 		-value    => 0,
@@ -872,12 +828,14 @@ program.
 
 sub callback_licence_agreement { my $self = shift;
 	if (not defined ${$self->{licence_agree}}){
-		my $button = $self->parent->messageBox('-icon' => 'info', -type => 'ok',				-title => 'Licence Condition',-message => "You must read and agree to the licence before you can use this software.\n\nIf you do not agree to the terms of the licence, you must remove the software from your machine.");
+		my $button = $self->parent->messageBox('-icon'=>'info',-type=>'ok',
+		-title => $LABELS{LICENCE_ALERT_TITLE},
+		-message => $LABELS{LICENCE_IGNORED});
 		return 0;
 	}
 	elsif (not ${$self->{licence_agree}}){
-		my $button = $self->parent->messageBox('-icon' => 'warning', -type => 'ok',				-title => 'Licence Condition',-message => "You must read and agree to the licence before you can use this software.\n\nAs you indicated that you do not agree to the terms of the licence, please remove the software from your machine.");
-		$button = $self->parent->messageBox('-icon' => 'info', -type => 'ok',				-title => 'Setup Cancelled',-message => "Setup will now exit.");
+		my $button = $self->parent->messageBox('-icon'=>'warning', -type=>'ok',-title=>$LABELS{LICENCE_ALERT_TITLE},
+		-message => $LABELS{LICENCE_DISAGREED});
 		exit;
 	}
 	return 1;
@@ -904,12 +862,9 @@ sub page_dirSelect { my ($self,$args) = (shift,shift);
 	$entry->configure(-background=>$self->{-background}) if $self->{-background};
 	my $dirs	= $frame->Scrolled ( "DirTree",
 		-scrollbars => 'osoe',
-		-selectbackground => "navy", -selectforeground => "white",
-		-selectmode =>'browse',
+		-selectbackground => "navy", -selectforeground => "white",-selectmode =>'browse',
 		-width=>40, height=>10,
-		-browsecmd => sub {
-			${$args->{-variable}}=shift;
-		},
+		-browsecmd => sub { ${$args->{-variable}}=shift },
 	)->pack(-fill=>"x",-padx=>10, -pady=>0,);
 	$dirs->configure(-background=>$self->{-background}) if $self->{-background};
 	$frame->Frame(-height=>10)->pack();
@@ -954,7 +909,6 @@ sub page_dirSelect { my ($self,$args) = (shift,shift);
 		$dirs->configure(-directory=>$_);
 	}
 	return $frame;
-
 }
 
 =head2 CALLBACK callback_dirSelect
@@ -1025,7 +979,7 @@ Justs asks 'Are you sure?' Calls C<exit> if they are.
 =cut
 
 sub DIALOGUE_really_quit { my $self = shift;
-	return 0 if $self->{nextButtonRef}->cget(-text) eq "Finish";
+	return 0 if $self->{nextButton}->cget(-text) eq $LABELS{FINISH};
 	my $button = $self->parent->messageBox('-icon' => 'question', -type => 'yesno',
 	-default => 'no', -title => 'Quit Setup?',
 	-message => "Setup has not finished installing.\n\nIf you quit now, you will not be able to run the software.\n\nDo you really wish to quit?");
@@ -1075,7 +1029,7 @@ sub prompt { my ($self,$args) = (shift,{@_});
 	my $input = $self->{-value};
 	$args->{-parent} = $self->parent if not $args->{-parent};
 	$d = $args->{-parent}->DialogBox(-title => $args->{-title}||"Prompt",
-		-buttons => ["Cancel","OK"],-default_button=>'OK',
+		-buttons => [$LABELS{CANCEL},"OK"],-default_button=>'OK',
 	);
 	if ($args->{-text}){
 		$w = $d->add("Label",
@@ -1196,9 +1150,118 @@ sub register_with_windows { my ($self,$args) = (shift,{@_});
 1;
 __END__
 
+=head1 ACTION EVENT HANDLERS
+
+A Wizard is a series of pages that gather information and perform tasks based upon
+that information. Navigated through the pages is via I<Back> and I<Next> buttons,
+as well as I<Help>, I<Cancel> and I<Finish> buttons.
+
+In the C<Tk::Wizard> implimentation, each button has associated with it one or more
+action event handlers, supplied as code-references executed before, during and/or
+after the button press.
+
+The handler code should return a Boolean value, signifying whether the remainder of
+the action should continue. If a false value is returned, execution of the event
+handler halts.
+
+=over 4
+
+=item -preNextButtonAction =>
+
+This is a reference to a function that will be dispatched before the Next
+button is processed.
+
+=item -postNextButtonAction =>
+
+This is a reference to a function that will be dispatched after the Next
+button is processed.
+
+=item -preBackButtonAction =>
+
+This is a reference to a function that will be dispatched before the Previous
+button is processed.
+
+=item -postBackButtonAction =>
+
+This is a reference to a function that will be dispatched after the Previous
+button is processed.
+
+=item -preHelpButtonAction =>
+
+This is a reference to a function that will be dispatched before the Help
+button is processed.
+
+=item -helpButtonAction =>
+
+This is a reference to a function that will be dispatched to handle the Help
+button action.
+
+=item -postHelpButtonAction =>
+
+This is a reference to a function that will be dispatched after the Help
+button is processed.
+
+=item -finishButtonAction =>
+
+This is a reference to a funciton that will be dispatched to handle the Finish
+button action.
+
+=item -postFinishButtonAction =>
+
+This is a reference to a function that will be dispatched after the Finish
+button is processed.
+
+=item -preCancelButtonAction =>
+
+This is a reference to a function that will be dispatched before the Cancel
+button is processed.  Default is to exit on user confirmation - see
+L<METHOD DIALOGUE_really_quit>.
+
+=item -preCloseWindowAction =>
+
+This is a reference to a funciton that will be dispatched before the window
+is issued a close command. Default is to exit on user confirmation - see
+L<DIALOGUE METHOD DIALOGUE_really_quit>.
+
+=back
+
+All active event handlers can be set at construction or using C<configure> -
+see L<CONSTRUCTOR (new)> and L<METHOD configure>.
+
+=head1 BUTTONS
+
+	backButton nextButton helpButton cancelButton
+
+If you must, you can access the Wizard's button through the object fields listed
+above, each of which represents a C<Tk::BUtton> object.
+
+This is not advised for anything other than disabling or re-enabling the display
+status of the buttons, as the C<-command> switch is used by the Wizard:
+
+	$wizard->{backButton}->configure( -state => "disabled" )
+
+Note: the I<Finish> button is simply the C<nextButton> with the label C<$LABEL{FINISH}>.
+
+See also L<INTERNATIONALISATION>.
+
+=head1 INTERNATIONALISATION
+
+The labels of the buttons can be changed (perhaps into a language other an English)
+by changing the values of the package-global C<%LABELS> hash, where keys are
+C<BACK>, C<NEXT>, C<CANCEL>, C<HELP>, and C<FINISH>.
+
+The text of the licence agreement page and callbacks can also be changed via the
+C<%LABELS> hash: see the top of the source code for details.
+
 =head1 CAVEATS / BUGS / TODO
 
 =over 4
+
+=item *
+
+In Windows, with the system font set to > 96 dpi (via Display Properties / Settings
+/ Advanced / General / Display / Font Size), the Wizard will not display propertly.
+This seems to be a Tk feature.
 
 =item *
 
@@ -1219,6 +1282,20 @@ but does not show it as selected - how can it?
 =cut
 
 =head1 CHANGES
+
+=head2 VERSION 1.021
+
+=over 4
+
+=item *
+
+More minor display tweeks.
+
+=item *
+
+Added internationalisation of button labels.
+
+=back
 
 =head2 VERSION 1.02
 
@@ -1252,32 +1329,19 @@ Windows "uninstall" feature: thanks to James Tillman and Paul Barker for info.
 
 =item *
 
-Made the supply of a C<MainWindow> to the constructor optional, and
-changed the supply method from a reference to part of the passed name/value list.
-
-=item *
-
-Changed C<filename> field to C<-imagepath> for readability.
-
-=item *
-
-Made all arguments begin with C<-> to fit in with Tk "switches".
-
-=item *
-
 Added method C<blank_frame> that can take title and standfirst text.
 
 =item *
 
-Added a bit of space between the Wizard body and the button footer.
-
-=item *
-
-Added default font and background.
-
-=item *
-
 Added licence agreement bits.
+
+=item *
+
+Modified spacing, added default font and background;
+changed C<filename> field to C<-imagepath> for readability;
+made all arguments begin with C<-> to fit in with Tk "switches";
+made the supply of a C<MainWindow> to the constructor optional, and
+changed the supply method from a reference to part of the passed name/value list.
 
 =back
 
