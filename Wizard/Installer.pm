@@ -1,6 +1,6 @@
 package Tk::Wizard::Installer;
 use vars qw/$VERSION/;
-$VERSION = 0.02;	# 04 December 2002 14:47
+$VERSION = 0.021;	# 21 March 2003 minor bug fix to mkpath
 
 BEGIN {
 	use Carp;
@@ -42,9 +42,11 @@ Tk::Wizard::Installer - building-blocks for a software install wizard
 
 =head1 DESCRIPTION
 
-This module comprises the first moves towards a C<Tk::Wizard> extension
+This module makes the first moves towards a C<Tk::Wizard> extension
 to automate software installation, primarily for end-users, in the manner
-of I<Inno Setup>, I<Install Sheild>, etc.
+of I<Inno Setup> and I<Install Sheild>.
+
+Your contributions to extend it are more than welcome!
 
 =head1 DEPENDENCIES
 
@@ -64,7 +66,7 @@ All the methods and means of C<Tk::Wizard>, plus those below:
 
 	$wizard->addLicencePage ( -filepath => $path_to_licence_text )
 
-Adds a page (C<Tk::Frame>) that contains a scroll texxt box of a licence text file
+Adds a page (C<Tk::Frame>) that contains a scroll text box of a licence text file
 specifed in the C<-filepath> argument. Presents the user with two
 options, accept and continue, or not accept and quit. The user
 I<cannot> progress until the 'agree' option has been chosen. The
@@ -87,7 +89,7 @@ sub addLicencePage { my ($self,$args) = (shift, {@_});
 
 	$wizard->addDirSelectPage ( -variable => \$chosen_dir )
 
-Adds a page (C<Tk::Frame>) that contains a scrollable texxt box of all directories
+Adds a page (C<Tk::Frame>) that contains a scrollable text box of all directories
 including, on Win32, logical drives.
 
 Supply in C<-variable> a reference to a variable to set the initial directory,
@@ -200,6 +202,26 @@ sub callback_licence_agreement { my $self = shift;
 =head2 METHOD addFileListPage
 
 	$wizard->addFileListPage ( name1=>value1 ... nameN=>valueN )
+
+Adds a page (C<Tk::Frame>) that contains a contains a progress bar
+(C<Tk::ProgressBar>) which is updated as a supplied list of files
+is copied or mvoed from one location to another.
+
+The I<Next> and I<Back> buttons of the Wizard are disabled whilst
+the process takes place.
+
+The two arguments (below) C<-to> and C<-from> should be references
+to arrays (or anonymous arrays), where entries in the former are
+moved or copied to the locations specified to the equivalent
+entries in the latter, renaming and path creation occuring as needed:
+
+	-copy => 1,
+	-to   => ['/html/index.html', '/html/imgs/index.gif','/html/oldname.html'],
+	-from => ['/docs/', '/docs/imgs/','/html/newname_for_oldname.html'],
+
+Copies C<index.html> to C</docs/index.html>, C<index.gif> is copied to
+become C</docs/imgs/index.gif>, and C<oldname.html> is moved to the C<html>
+directory and given the new name, C<newname_for_oldname.html>.
 
 Arguments:
 
@@ -414,8 +436,10 @@ sub install_files { my ($self,$args) = (shift,shift);
 			$args->{-bar}->update;
 
 			# Make the path, if needs be
-			if (!-d "$tv/$td"){
-				mkpath "$tv/$td" or croak "Could not make path $tv/$td : $!";
+			my $d = "$tv/$td";
+			$d =~ s/[\\\/]+/\//g;
+			if (!-d "$d"){
+				mkpath $d or croak "Could not make path $d : $!";
 			}
 
 			# Do the move/copy
