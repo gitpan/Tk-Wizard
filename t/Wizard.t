@@ -42,8 +42,18 @@ print $SPLASH==1? "ok 4\n":"not ok 4\n";
 
 
 $wizard->addPage( sub{ page_one($wizard) });
-
 $wizard->addPage( sub{ page_two($wizard) });
+$wizard->addPage( sub{ page_text_textbox1($wizard) });
+$wizard->addPage( sub{ page_text_textbox2($wizard) });
+my ($C1,$C2,$C3) = (undef,"TWooo",3);
+$wizard->addMultipleChoicePage(-title=>'Multi',-subtitle=>'Multiple Choice Page',-text=>"Something here too?",
+	-choices=> [
+		{-variable=>\$C1,-title=>"Option number one",-subtitle=>"This is the first of three options, each of which may take a value.",-value=>'1',},
+		{-variable=>\$C2,-title=>"The Second option is here",-subtitle=>"The Lumberjack Song, German version",-value=>'two',-checked=>1,},
+		{-variable=>\$C3,-title=>"And no subitle either",-value=>'two',},
+	],
+);
+
 
 our $user_chosen_dir;
 
@@ -51,7 +61,7 @@ our $GET_DIR 	= $wizard->addDirSelectPage (
 	-nowarnings => "1",
 	-variable => \$user_chosen_dir,
 	);
-print $GET_DIR==4? "ok 5\n":"not ok 5\n";
+print $GET_DIR==7? "ok 5\n":"not ok 5 # $GET_DIR\n";
 
 $_ = $wizard->addPage( sub {
 	return $wizard->blank_frame(
@@ -99,6 +109,31 @@ sub page_two { my $wizard = shift;
 	);
 	return $frame;
 }
+
+sub page_bye { my $wizard = shift;
+	my $frame = $wizard->blank_frame(
+		-title=>"Bye!",
+		-text=>"Thanks for testing!"
+	);
+	return $frame;
+}
+
+sub page_text_textbox1 { my $wizard = shift;
+	my $text = "THis is in a box";
+	my $frame = $wizard->text_frame(
+		-title=>"1: Text from literal",
+		-boxedtext => \$text,
+	);
+	return $frame;
+}
+sub page_text_textbox2 { my $wizard = shift;
+	my $frame = $wizard->text_frame(
+		-title=>"2: Text from filename",
+		-boxedtext => 'perl_licence_blab.txt',
+	);
+	return $frame;
+}
+
 
 
 sub preNextButtonAction { my $wizard = shift;

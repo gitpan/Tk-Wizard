@@ -1,5 +1,18 @@
 CHANGES
 
+VERSION 1.036 04 April 2003
+
+	*	New page type, text_frame via addTextFrame.
+
+	*	New page type, multiple choice.
+
+VERSION 1.035 02 April 2003
+
+	*	-nohelpbutton bug now corrected
+
+	*	-continue now works for empty task lists
+		(previously it asked for a key to be pressed)
+
 VERSION 1.034 21 January 2003
 
 	*	Typed = instead of =~, resulting in

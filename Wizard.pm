@@ -7,7 +7,7 @@ Tk::Wizard - GUI for step-by-step interactive logical process (ALPHA)
 =cut
 
 use vars qw/$VERSION/;
- $VERSION = 1.034;	# 20 January 2003 16:59
+$VERSION = 1.036;	# 03 April 2003
 
 
 # Still alpha.
@@ -23,6 +23,9 @@ BEGIN {
 }
 
 use strict;
+if ($^V and $^V gt v5.8.0){
+	eval "use warnings";
+}
 use base  qw(Tk::MainWindow);
 Tk::Widget->Construct('Wizard');
 
@@ -64,8 +67,10 @@ use vars qw/%LABELS %DRIVETYPES/;
 	MainLoop;
 	__END__
 
-To avoid 50 lines of SYNOPSIS, please see the file F<test.pl> included
-with the distribution.
+To avoid 50 lines of SYNOPSIS, please see the files included with the distribution.
+in the test directory: F<t/*.t>. These are just Perl files that are run during
+the C<make test> phase of installation: you may rename them without harm once
+you have installed the module.
 
 =head1 DEPENDENCIES
 
@@ -73,49 +78,31 @@ C<Tk> and modules of the current standard Perl Tk distribution.
 
 On MS Win32 only: C<Win32API::File>.
 
+=head1 EXPORTS
+
+	MainLoop();
+
+This is so that I can say C<use strict; use Tk::Wizard> without
+having to C<use Tk>. You can always C<use Tk::Wizard ()> to avoid
+importing this.
+
 =head1 DESCRIPTION
-
-The C<Tk::Wizard> module automates a large part of the creation of a wizard program
-to collect information and then perform some complex task based upon it.
-
-The Wizard was developed to aid software installation by end-users using ActiveState's
-ActivePerl, but should function under other OS and circumstances.
-
-The package did contain a number of routines specific to software installation:
-these may now be found elsewhere in the C<Tk::Wizard> CPAN heirachy.
-
-The wizard feel is largly based upon the Microsoft(TM,etc) wizard style: the default is
-simillar to that found in Microsoft Windows 95; a more Windows 2000-like feel is also
-supported (see the C<-style> entry in L<WIDGET-SPECIFIC OPTIONS>.
-
-NB: B<THIS IS AN ALPHA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!>
-
-=head1 WHAT IS A WIZARD?
 
 In the context of this namespace, a Wizard is defined as a graphic user interface (GUI)
 that presents information, and possibly performs tasks, step-by-step via a series of
 different pages. Pages (or 'screens', or 'Wizard frames') may be chosen logically depending
 upon user input.
 
-=head1 THE Tk::Wizard NAMESPACE
+The C<Tk::Wizard> module automates a large part of the creation of a wizard program
+to collect information and then perform some complex task based upon it.
 
-In discussion on comp.lang.perl.tk, it was suggested by Dominique Dumont
-(would you mind your address appearing here?) that the following guidelines
-for the use of the C<Tk::Wizard> namespace be followed:
+The wizard feel is largly based upon the Microsoft(TM,etc) wizard style: the default is
+simillar to that found in Microsoft Windows 95; a more Windows 2000-like feel is also
+supported (see the C<-style> entry in L<WIDGET-SPECIFIC OPTIONS>. Sub-classing the
+module to provide different look-and-feel is highly encourage: please see
+L<NOTES ON SUB-CLASSING Tk::Wizard>.
 
-=over 4
-
-=item 1
-
-That the module C<Tk::Wizard> act as a base module, providing all the basic services and
-components a Wizard might require.
-
-=item 2
-
-That modules beneath the base in the hierachy provide implimentations based on
-aesthetics and/or architecture.
-
-=back
+NB: B<THIS IS AN ALPHA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!>
 
 Please also see L<IMPLIMENTATION NOTES>.
 
@@ -123,7 +110,7 @@ Please also see L<IMPLIMENTATION NOTES>.
 
     -title -background -width -height
 
-See the Tk::options manpage for details of the standard options.
+Please see the L<Tk::options> documentation for details of the standard options.
 
 =head1 WIDGET-SPECIFIC OPTIONS
 
@@ -144,8 +131,8 @@ left (C<-imagepath>, below).
 A value of C<top>, the Wizard will be more of a Windows 2000-like affair,
 with the initial page being a white-backgrounded version of the traditional style,
 and subsequent pages being C<SystemButtonFace> coloured, with a white
-strip at the top holding a title and subtitle, and a smaller image (C<-topimagepath>,
-below>.
+strip at the top holding a title and subtitle, and a smaller image (see C<-topimagepath>,
+below).
 
 =item Name:   imagepath
 
@@ -184,11 +171,11 @@ C<-height> properties, as there is (currently) no image-sized checking performed
 
 =item Switch: -topimagepath
 
-Only required if C<-style=>'top'> (as above): the image this filepath specifies
+Only required if C<-style=E<gt>'top'> (as above): the image this filepath specifies
 will be displayed in the top-right corner of the screen. Dimensions are not
 restrained (yet), but only 50px x 50px has been tested.
 
-Please see notes the C<-imagepath> entry, above.
+Please see notes for the C<-imagepath> entry, above.
 
 =item Name:   nohelpbutton
 
@@ -225,6 +212,7 @@ sub Populate { my ($cw, $args) = @_;
 		-imagepath		=> ['PASSIVE','topimagepath', 'Imagepath', undef],
 		-topimagepath	=> ['PASSIVE','topimagepath', 'Topimagepath', undef],
 		# event handling references
+		-nohelpbutton			=> ['PASSIVE',undef,undef,undef],
 		-preNextButtonAction    => ['PASSIVE',undef,undef,undef],
 		-postNextButtonAction   => ['PASSIVE',undef,undef,undef],
 		-preBackButtonAction    => ['PASSIVE',undef,undef,undef],
@@ -255,6 +243,7 @@ sub Populate { my ($cw, $args) = @_;
 
 	# right margin
 	$buttonPanel->Frame(-width=>10)->pack( -side => "right", -expand => 0,-pady=>10);
+	# Bottom
 	$cw->{cancelButton} = $buttonPanel->Button( -text => $LABELS{CANCEL},
 		-command => [ \&CancelButtonEventCycle, $cw, $cw],-width => 10
 	) ->pack( -side => "right", -expand => 0,-pady=>10);
@@ -268,7 +257,7 @@ sub Populate { my ($cw, $args) = @_;
 		-width => 10,
 		-state => "disabled"
 	)->pack( -side => "right", -expand => 0,-pady=>10);
-	unless ($cw->cget(-nohelpbutton)){
+	if ($cw->cget(-nohelpbutton)){
 		$cw->{helpButton} = $buttonPanel->Button( -text => $LABELS{HELP},
 			-command => [ \&HelpButtonEventCycle, $cw ],
 			-width => 10,
@@ -292,6 +281,8 @@ sub Populate { my ($cw, $args) = @_;
 	}
 	# Font used for &blank_frame titles
 	$cw->fontCreate(qw/TITLE_FONT -family verdana -size 12 -weight bold/);
+	# Font used in multiple choices for radio title
+	$cw->fontCreate(qw/RADIO_BOLD -family verdana -size 8 -weight demi/);
 	# Fonts used if -style=>"top"
 	$cw->fontCreate(qw/TITLE_FONT_TOP -family verdana -size 8 -weight bold/);
 	$cw->fontCreate(qw/SUBTITLE_FONT  -family verdana -size 8 /);
@@ -450,9 +441,7 @@ sub render_current_page { my $self = shift;
 
 This returns the index of the page currently being shown to the user.
 Page are indexes start at 1, with the first page that is associated with
-the wizard through the C<addPage> method.
-
-See L<METHOD addPage>.
+the wizard through the C<addPage> method. See also the L<METHOD addPage> entry.
 
 =cut
 
@@ -474,7 +463,7 @@ sub parent { return shift }
 
 =head2 METHOD blank_frame
 
-	my $frame = C<wizard>->blank_frame(-title=>$title,-subtitle=>$sub,-text=>$standfirst);
+	my $frame = wizard>->blank_frame(-title=>$title,-subtitle=>$sub,-text=>$standfirst);
 
 Returns a C<Tk::Frame> object that is a child of the Wizard control, with some C<pack>ing
 parameters applied - for more details, please see C<-style> entry elsewhere in this document.
@@ -563,6 +552,7 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 				-font=>'TITLE_FONT_TOP', -background=>"white",
 			)->pack(-side=>'top',-expand=>'1',-fill=>'x',-pady=>5,-padx=>5);
 		}
+		# Smaller text in top
 		if ($args->{-subtitle}){
 			# Indent the subtitle - see note above
 			$title_frame->Frame(qw/-background white -width 20 -height 12/)->pack(qw/-fill x -anchor w -side left/);
@@ -578,6 +568,17 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 		} else {
 			$frame->Label(); # intended so we can packForget first to $frame->children;
 		}
+
+		# Line below top
+		if ($self->cget(-style) eq 'top' and $self->{wizardPagePtr}>0){
+			my $top = $frame->Frame(
+				-width => ($frame->cget(-width)||500),
+				-background => $frame->cget("-background"),
+				qw/ -relief groove -bd 1 -height 2/,
+			)->pack(qw/-side top -fill x/);
+		}
+
+		# Text in body
 		if ($args->{-text}){
 			$args->{-text} =~ s/^[\n\r\f]//;
 			$args->{-text} = "\n".$args->{-text};
@@ -589,8 +590,10 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 			)->pack(-side=>'top',-expand=>'1',-fill=>'x',-padx=>10);
 			$_->configure(-background => $main_bg) if $main_bg ;
 		}
+
 	}
 
+	# For wizards that are not 'top' style
 	else {
 		if ($args->{-title}){
 			$_ = $frame->Label(
@@ -633,6 +636,57 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 	return $frame->pack(qw/-side top -anchor n -fill x/);
 } # end blank_frame
 
+
+
+=head1 METHOD addTextFrame
+
+Add to the wizard a frame containing a scroll box of text,
+specified in the paramter C<-boxedtext>. If this is a reference
+to a scalar, it is taken to be plain text;
+if a plain scalar, it is taken to be a file to be opened and
+read.
+
+Accepts the usual C<-title>, C<-subtitle>, and C<-text> like C<blank_frame>.
+
+=cut
+
+sub addTextFrame { my ($self,$args) = (shift,{@_});
+	return $self->addPage( sub { $self->text_frame($args)  } );
+}
+
+
+
+sub text_frame { my ($self,$args) = (shift,{@_});
+	local *IN;
+	my $text;
+	my $frame = $self->blank_frame(@_);
+	if ($args->{-boxedtext}){
+		if (ref $args->{-boxedtext} eq 'SCALAR'){
+			$text = $args->{-boxedtext};
+		} elsif (not ref $args->{-boxedtext}){
+			open IN,$args->{-boxedtext} or croak "Could not read file: $args->{-boxedtext}; $!";
+			read IN,$$text,-s IN;
+			close IN;
+		}
+	}
+	$$text = "" if not defined $text;
+
+	my $padx = $self->cget(-style) eq 'top'? 30 : 5;
+	my $t = $frame->Scrolled("Text",
+		-background => ($args->{"-background"} || 'white'),
+		-relief => "sunken",
+		-borderwidth => "1",
+		-font => "SMALL_FONT",
+		-setgrid => 1,
+		-scrollbars => "osoe",
+		-wrap => "word",
+	);
+	$t->insert('0.0', $$text);
+	$t->configure(-state => "disabled");
+	$t->pack(qw/-expand 1 -fill both -padx 10 -pady 10/);
+	$frame->Frame(-height=>10)->pack();
+	return $frame;
+}
 
 
 #
@@ -929,7 +983,7 @@ Optional: array-refernce to pass to the C<pack> method of the C<Frame> containin
 
 =back
 
-Example:
+=head 2 TASK LIST EXAMPLE
 
 	$wizard->addTaskListPage(
 		-title => "Toy example",
@@ -991,25 +1045,24 @@ sub page_taskList { my ($self,$args) = (shift,shift);
 		-subtitle => $args->{-subtitle}  || "Please wait whilst the Wizard performs these tasks.",
 		-text => $args->{-text}  || "",
 	);
-	if ($#{$args->{-tasks}}==-1){
-		$frame->Label(-text=>'Please press next to continue.')->pack();
-		return $frame;
-	}
-#	my $task_frame = $frame->Frame(@{$args->{-frame_args}})->pack( @{$args->{-frame_pack}} );
-	my $task_frame = $frame->LabFrame(
-		@{$args->{-frame_args}}
-	)->pack(
-		@{$args->{-frame_pack}}
-	);
+	if ($#{$args->{-tasks}}>-1){
+		my $task_frame = $frame->LabFrame(
+			@{$args->{-frame_args}}
+		)->pack(
+			@{$args->{-frame_pack}}
+		);
 
-	foreach ( my $i=0; $i<=$#{$args->{-tasks}}; $i+=2 ){
-		my $icn="-1";
-		$_ = $task_frame->Frame()->pack(-side=>'top',-anchor=>"w");
-		if (defined $args->{-todo_photo}){
-			$icn = $_->Label(-image=>"todo",-anchor=>"w")->pack(-side=>"left");
+		foreach ( my $i=0; $i<=$#{$args->{-tasks}}; $i+=2 ){
+			my $icn="-1";
+			$_ = $task_frame->Frame()->pack(-side=>'top',-anchor=>"w");
+			if (defined $args->{-todo_photo}){
+				$icn = $_->Label(-image=>"todo",-anchor=>"w")->pack(-side=>"left");
+			}
+			$_->Label(-text=>@{$args->{-tasks}}[$i],-anchor=>"w")->pack(-side=>"left");
+			push @tasks, [$icn,@{$args->{-tasks}}[$i+1]];
 		}
-		$_->Label(-text=>@{$args->{-tasks}}[$i],-anchor=>"w")->pack(-side=>"left");
-		push @tasks, [$icn,@{$args->{-tasks}}[$i+1]];
+	} else {
+		$args->{-delay} = 1;
 	}
 	$self->{nextButton}->configure(-state=>"disabled");
 	$self->{backButton}->configure(-state=>"disabled");
@@ -1030,12 +1083,83 @@ sub page_taskList { my ($self,$args) = (shift,shift);
 
 
 
+=head1 METHOD addMultipleChoicePage
 
+Allow the user to make multiple choices between choose options:
+each choice sets a variable passed as reference to this method.
 
+Accepts the usual paramters plus:
 
+=over 4
 
+=item -relief
 
+For the radio buttons - see L<Tk::options>.
 
+=item -choices
+
+A reference to an array of  hashes with the following fields:
+
+=over 4
+
+=item -title
+
+Title of the option, rendered in bold
+
+=item -subtitle
+
+Text rendered smaller beneath the C<-title> field's value.
+
+=item -variable
+
+Reference to a variable that will contain the result of the choice.
+Croaks if none supplied.
+
+=item -checked
+
+Contains a true value to specify the box should initially
+appear checked.
+
+=back
+
+=back
+
+Support for images by the radio buttons would be good.
+
+=cut
+
+sub addMultipleChoicePage { my ($self,$args) = (shift,{@_});
+	return $self->addPage( sub { $self->page_multiple_choice($args)  } );
+}
+
+sub page_multiple_choice { my ($self,$args) = (shift,shift);
+	my $frame = $self->blank_frame(%$args);
+
+	croak "-chocies should be a ref to an array!" if not $args->{-choices} or not ref $args->{-choices} or ref $args->{-choices} ne 'ARRAY';
+
+	my $content = $frame->Frame()->pack(-side=>'top',-anchor=>"n",-padx=>30,-pady=>10,);
+
+	foreach my $opt (@{$args->{-choices}}){
+		croak "Option in -choices array is not a hash!" if not ref $opt or ref $opt ne 'HASH';
+		croak "No -varialbe!" if not $opt->{-variable};
+		croak "-varialbe should be a reference!" if not ref $opt->{-variable};
+		my $b = $content->Checkbutton(
+			-text		=> $opt->{-title},
+			-justify	=> 'left',
+			-relief		=> $args->{-reflief}||'flat',
+			-font		=> "RADIO_BOLD",
+			-variable	=> $opt->{-variable},
+
+		)->pack(qw/-side top -anchor w /);
+		$b->invoke if defined $opt->{-checked};
+		if (defined $opt->{-subtitle}){
+			$content->Label(
+				-text	=> $opt->{-subtitle},
+			)->pack(qw/-side top -anchor w -padx 25 -pady 0/);
+		}
+	}
+	return $frame;
+}
 
 
 # Returns true if to continue
@@ -1118,7 +1242,6 @@ sub prompt { my ($self,$args) = (shift,{@_});
 
 
 1;
-__END__
 
 =head1 ACTION EVENT HANDLERS
 
@@ -1203,7 +1326,8 @@ see L<WIDGET-SPECIFIC OPTIONS> and L<METHOD configure>.
 	backButton nextButton helpButton cancelButton
 
 If you must, you can access the Wizard's button through the object fields listed
-above, each of which represents a C<Tk::BUtton> object.
+above, each of which represents a C<Tk::BUtton> object. Yes, this is not a good
+way to do it: patches always welcome ;)
 
 This is not advised for anything other than disabling or re-enabling the display
 status of the buttons, as the C<-command> switch is used by the Wizard:
@@ -1231,19 +1355,40 @@ or patch, send it to me directly: C<LGoddard@CPAN.org>.
 
 The widget is a C<MainWindow> and not a C<TopLevel> window. The reasoning is that
 Wizards are applications in their own right, and not usually parts of other
-applications. Although I've only three weeks of Tk, I believe it should be possible
+applications. Although at the time of writing, I had only three weeks of Tk, I believe
+it should be possible
 to embed a C<Tk::Wizard> into another window using C<-use> and C<-container> -- but
 any info on this practice would be appreciated.
 
 There is one outstanding bug which came about when this Wizard was translated
 from an even more naive implimentation to the more-standard manner. That is:
 because C<Wizard> is a sub-class of C<MainWIndow>, the C<-background> is inacessible
-to me. Useful and/or patches suggestions much appreciated.
+to me. Advice and/or patches suggestions much appreciated.
+
+=head2 THE Tk::Wizard NAMESPACE
+
+In discussion on comp.lang.perl.tk, it was suggested by Dominique Dumont
+(would you mind your address appearing here?) that the following guidelines
+for the use of the C<Tk::Wizard> namespace be followed:
+
+=over 4
+
+=item 1
+
+That the module C<Tk::Wizard> act as a base module, providing all the basic services and
+components a Wizard might require.
+
+=item 2
+
+That modules beneath the base in the hierachy provide implimentations based on
+aesthetics and/or architecture.
+
+=back
 
 =head1 NOTES ON SUB-CLASSING Tk::Wizard
 
 If you are planning to sub-class C<Tk::Wizard> to create a different display style,
-there are three routines you will to over-ride:
+there are three routines you will need to over-ride:
 
 =over 4
 
@@ -1322,3 +1467,10 @@ THIS SOFTWARE IS NOT ENDORSED BY THE MICROSOFT CORP
 
 MICROSOFT IS A REGISTERED TRADEMARK OF MICROSOFT CROP.
 
+
+=cut
+
+
+
+
+__END__
