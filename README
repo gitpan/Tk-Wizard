@@ -10,494 +10,145 @@ To install this module type the following:
    make test
    make install
 
-
-SYNOPSIS
-            use Tk::Wizard;
-
-            # Instantiate a Wizard
-            my $wizard = new Tk::Wizard(
-                    -title => "A title",
-                    -imagepath => "/image/for/the/left/panel.gif",
-            );
-
-    To avoid 50 lines of Synopsis, please see the file test.pl included with
-    the distribution.
-
-DEPENDENCIES
-            Tk
-
-    On MS Win32 only:
-
-            Win32API::File
-
-    And if you plan to use the method "register_with_windows" on MsWin32,
-    you'll need Win32::TieRegistry.
-
 DESCRIPTION
     The "Tk::Wizard" module automates a large part of the creation of a
     wizard program to collect information and then perform some complex task
     based upon it.
 
     The Wizard was developed to aid software installation by end-users using
-    ActiveState's ActivePerl, but should function under under OS and
-    circumstances. There are a number of routines specific to software
-    installation, which may be removed to a sub-class at a later date.
+    ActiveState's ActivePerl, but should function under other OS and
+    circumstances. There package does contain a number of routines specific
+    to software installation: these may be removed to a sub-class at a later
+    date.
 
-    The wizard feel is largly based upon the Microsoft(TM,etc) wizard style.
+    The wizard feel is largly based upon the Microsoft(TM,etc) wizard style:
+    the default is simillar to that found in Microsoft Windows 95; a more
+    Windows 2000-like feel is also supported (see the "-style" entry in the
+    WIDGET-SPECIFIC OPTIONS entry elsewhere in this document.
 
-    THIS IS A BETA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!
+    THIS IS AN ALPHA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!
 
-ACTION EVENT HANDLERS
-    A Wizard is a series of pages that gather information and perform tasks
-    based upon that information. Navigated through the pages is via *Back*
-    and *Next* buttons, as well as *Help*, *Cancel* and *Finish* buttons.
+WHAT IS A WIZARD?
+    In the context of this namespace, a Wizard is defined as a graphic user
+    interface (GUI) that presents information, and possibly performs tasks,
+    step-by-step via a series of different pages. Pages (or 'screens', or
+    'Wizard frames') may be chosen logically depending upon user input.
 
-    In the "Tk::Wizard" implimentation, each button has associated with it
-    one or more action event handlers, supplied as code-references executed
-    before, during and/or after the button press.
+THE Tk::Wizard NAMESPACE
+    In discussion on comp.lang.perl.tk, it was suggested by Dominique Dumont
+    (would you mind your address appearing here?) that the following
+    guidelines for the use of the "Tk::Wizard" namespace be followed:
 
-    The handler code should return a Boolean value, signifying whether the
-    remainder of the action should continue. If a false value is returned,
-    execution of the event handler halts.
+    1   That the module "Tk::Wizard" act as a base module, providing all the
+        basic services and components a Wizard might require.
 
-    -preNextButtonAction =>
-        This is a reference to a function that will be dispatched before the
-        Next button is processed.
+    2   That modules beneath the base in the hierachy provide
+        implimentations based on aesthetics and/or architecture.
 
-    -postNextButtonAction =>
-        This is a reference to a function that will be dispatched after the
-        Next button is processed.
+    At the time of writing (28 November 2002, 18:07 CET) there has yet to
+    emmerge a consensus of opinion on this matter, with suggestions being
+    put forward by a couple of parties that the "Tk" namespace should
+    contain sub-categories named after various platforms, and that each of
+    these have a "Wizard" namespace, with that possibly having further
+    sub-categories.
 
-    -prePrevButtonAction =>
-        This is a reference to a function that will be dispatched before the
-        Previous button is processed.
+    The the DESCRIPTION entry in the perlport manpage suggests a 'general
+    rule':
 
-    -postPrevButtonAction =>
-        This is a reference to a function that will be dispatched after the
-        Previous button is processed.
+        ... When you approach a task commonly done using a
+        whole range of platforms, think about writing portable code. That way,
+        you don't sacrifice much by way of the implementation choices you can
+        avail yourself of, and at the same time you can give your users lots of
+        platform choices. On the other hand, when you have to take advantage of
+        some unique feature of a particular platform, as is often the case with
+        systems programming ... consider writing platform-specific code.
 
-    -preHelpButtonAction =>
-        This is a reference to a function that will be dispatched before the
-        Help button is processed.
+    As there has yet to emmerge a suggestion of a task that could not be implimented
+    by a cross-platform "Tk::Wizard" base-class, I urge you, in the spirit of
+    the three virtues (perl/NOTES), to visit comp.lang.perl.tk and cast an
+    opinion one way or another.
 
-    -helpButtonAction =>
-        This is a reference to a function that will be dispatched to handle
-        the Help button action.
-
-    -postHelpButtonAction =>
-        This is a reference to a function that will be dispatched after the
-        Help button is processed.
-
-    -finishButtonAction =>
-        This is a reference to a funciton that will be dispatched to handle
-        the Finish button action.
-
-    -postFinishButtonAction =>
-        This is a reference to a function that will be dispatched after the
-        Finish button is processed.
-
-    -preCancelButtonAction =>
-        This is a reference to a function that will be dispatched before the
-        Cancel button is processed. Default is to exit on user confirmation
-        - see the METHOD DIALOGUE_really_quit entry elsewhere in this
-        document.
-
-    -preCloseWindowAction =>
-        This is a reference to a funciton that will be dispatched before the
-        window is issued a close command. Default is to exit on user
-        confirmation - see the DIALOGUE METHOD DIALOGUE_really_quit entry
-        elsewhere in this document.
-
-    All active event handlers can be set at construction or using
-    "configure" - see the CONSTRUCTOR (new) entry elsewhere in this document
-    and the METHOD configure entry elsewhere in this document.
-
-CONSTRUCTOR (new)
-            Tk::Wizard->new( -name1=>"value1"...-nameN=>"valueN" )
-
-    Creates a new instance of the Tk::Wizard object as a "MainWindow", or in
-    the supplied "MainWindow" (see below).
-
-  STANDARD OPTIONS
-
-    The following standard paramters apply to the whole of the Wizard:
-
-            -width -height -background -wraplength
-
-  WIZARD-SPECIFIC OPTIONS
-
-    -title =>
-        This is the title that will be displayed in the main window's title
-        bar
-
-    -style =>
-        Default is no value, which creates a traditional, Windows 95-style
-        wizard, with every page being "SystemButtonFace" coloured, with a
-        large image on the left ("-imagepath", below).
-
-        If "-style="'top'>, the Wizard will be more of a Windows 2000-like
-        affair, with the initial page being a white-backgrounded version of
-        the traditional style, and subsequent pages being "SystemButtonFace"
-        coloured, with a white strip at the top holding a title and
-        subtitle, and a smaller image ("-topimagepath", below>.
-
-    -imagepath =>
-        Path to an image file that will be displayed on the left-hand side
-        of the screen. Dimensions are not been restrained (yet).
-
-        Notes:
-
-        *   This is a "Tk::Photo" object without the format being specified
-            - this has been tested only on GIF and JPEG.
-
-        *   No checking is done, but paths ought to be absolute, as no
-            effort is made to maintain or restore any initial current
-            working directory.
-
-        *   The supplied images setup_blue.gif and setup_blue_top.gif are
-            used by default. If you supply others you will probably have to
-            set the Wizard's "-width" and "-height" properties, as there is
-            (currently) no image-sized checking performed.
-
-    -topimagepath =>
-        Only required if "-style="'top'> (as above): the image this filepath
-        specifies will be displayed in the top-right corner of the screen.
-        Dimensions are not restrained (yet), but only 50px x 50px has been
-        tested.
-
-        Please see notes the "-imagepath" entry, above.
-
-    -mw =>
-        Optionally a TK "MainWindow" for the Wizard to occupy. If none is
-        supplied, one is created. If you supply a <MainWindow>, you'll
-        currently probably need to specify new "-width" and "-height"
-        attributes for the Wizard.
-
-    -nohelpbutton =>
-        Set to anything to disable the display of the help buton.
-
-    Action Event Handlers:
-        Please see the ACTION EVENT HANDLERS entry elsewhere in this
-        document for details.
-
-    All paramters can be set after construction using "configure" - see the
-    METHOD configure entry elsewhere in this document.
-
-    As the "Tk::Wizard" object also controls the *Next* and *Previous*
-    buttons, you can set the configuration - use the "cancelButtonRef" and
-    "prevButtonRef" object fields:
-
-            $wizard->{prevButtonRef}->configure( -state => "disabled" )
-
-    The default font is created by the constructor as 8pt Verdana, named
-    "DEFAULT_FONT" and placed in the object's "defaultFont" field. All
-    references to the default font in the Wizard call this routine, so
-    changing the default is easy.
-
-    Privately, "licence_agree" flags whether the end-user licence agreement
-    has been accepted.
-
-METHODS
-  METHOD configure
-
-    Allows the configuration of all object properties. =cut
-
-    sub configure { my $self = shift; my %newHandlers = ( @_ ); foreach(
-    keys %newHandlers) { $self->{$_} = $newHandlers{$_} } }
-
-  METHOD addPage
-
-            $wizard->addPage ($page_code_ref1 ... $page_code_refN)
-
-    Adds a Wizard page to the wizard. The parameters must be "Tk::Frame"
-    objects, such as those returned by the methods "blank_frame",
-    "addLicencePage" and "addDirSelectPage".
-
-    Pages are (currently) stored and displayed in the order added.
-
-    Returns the index of the page added, which is useful as a page UID when
-    peforming checks as the *Next* button is pressed (see file test.pl
-    supplied with the distribution).
-
-    See also the METHOD blank_frame entry elsewhere in this document, the
-    METHOD addLicencePage entry elsewhere in this document and the METHOD
-    addDirSelectPage entry elsewhere in this document.
-
-  METHOD Show
-
-            C<wizard>->Show()
-
-    This method must be dispatched before the Wizard will be displayed, and
-    must preced the "MainLoop" call.
-
-  METHOD currentPage
-
-            my $current_page = $wizard->currentPage()
-
-    This returns the index of the page currently being shown to the user.
-    Page are indexes start at 1, with the first page that is associated with
-    the wizard through the "addPage" method.
-
-    See the METHOD addPage entry elsewhere in this document.
-
-  METHOD parent
-
-            my $main_window = $wizard->parent
-
-    This returns a reference to the parent Tk widget that was used to create
-    the wizard. Returns a reference to the Wizard's "MainWindow", as defined
-    at construction or supplied by the user before the "Show" method was
-    called - see the CONSTRUCTOR (new) entry elsewhere in this document..
-
-  METHOD blank_frame
-
-            my ($frame,@packing) = C<wizard>->blank_frame(-title=>$title,-text=>$standfirst);
-
-    Returns a "Tk::Frame" object that is a child of the Wizard control, with
-    some "pack"ing parameters applied - for more details, please see
-    "-style" section in the CONSTRUCTOR (new) entry elsewhere in this
+    Please also see the IMPLIMENTATION NOTES entry elsewhere in this
     document.
 
-    Arguments are name/value pairs:
+IMPLIMENTATION NOTES
+    This widget is implimented using the Tk 'standard' API as far as
+    possible, given my almost two weeks of exposure to Tk. Please, if you
+    have a suggestion, send it to me directly: "LGoddard@CPAN.org".
 
-    -title =>
-        Printed in a big, bold font at the top of the frame as a title
+    There is one outstanding bug which came about when this Wizard was
+    translated from an even more naive implimentation to the more-standard
+    manner. That is: "Wizard" is a sub-class of "MainWIndow", the
+    "-background" is inacessible to me. Useful suggestions much appreciated.
 
-    =subtitle =>
-        Subtitle/standfirst.
+    There is one item included which, despite the ramble in the section
+    above, is platform specific. This is simply present at present for my
+    own convenience - this module is currently being developed for a
+    commercial project with a tight schedule. These methods will later be
+    removed to the sub-classes "Tk::Wizard::Installer" and
+    "Tk::Wizard::Installer::Win32".
 
-    -text =>
-        Main body text.
+NOTES ON SUB-CLASSING Tk::Wizard
+    If you are planning to sub-class "Tk::Wizard" to create a different
+    display style, there are three routines you will to over-ride:
 
-    Also:
-
-            -width -height -background -font
-
-    See also the METHOD addLicencePage entry elsewhere in this document and
-    the METHOD addDirSelectPage entry elsewhere in this document.
-
-  METHOD addLicencePage
-
-            $wizard->addLicencePage ( -filepath => $path_to_licence_text )
-
-    Adds a page that contains a scroll texxt box of a licence text file
-    specifed in the "-filepath" argument. Presents the user with two
-    options, accept and continue, or not accept and quit. The user *cannot*
-    progress until the 'agree' option has been chosen. The choice is entered
-    into the object field "licence_agree", which you can test as the *Next*
-    button is pressed, either using your own function or with the Wizard's
-    "callback_licence_agreement" function.
-
-    You could supply the GNU Artistic Licence....
-
-    See the CALLBACK callback_licence_agreement entry elsewhere in this
-    document and the METHOD page_licence_agreement entry elsewhere in this
-    document.
-
-  METHOD addDirSelectPage
-
-            $wizard->addDirSelectPage ( -variable => \$chosen_dir )
-
-    Adds a page that contains a scroll texxt box of all directories
-    including, on Win32, logical drives. You can also specify the "-title",
-    "-subtitle" and "-text" paramters, as in the METHOD blank_frame entry
-    elsewhere in this document.
-
-    See the CALLBACK callback_dirSelect entry elsewhere in this document.
-
-  CALLBACK callback_licence_agreement
-
-    Intended to be used with an action-event handler like
-    "-preNextButtonAction", this routine check that the object field
-    "licence_agree" is a Boolean true value. If that operand is not set, it
-    warns the user to read the licence; if that operand is set to a Boolean
-    false value, a message box says goodbye and quits the program.
-
-  CALLBACK callback_dirSelect
-
-    A callback to check that the directory, passed as a reference in the
-    sole argument, exists, and can and should be created.
-
-    Will not allow the Wizard to continue unless a directory has been
-    chosen. If the chosen directory does not exist, Setup will ask if it
-    should create it. If the user affirms, it is created; otherwise the user
-    is again asked to chose a directory.
-
-    Returns a Boolean value.
-
-    This method relies on "Win32API::File" on MS Win32 machines only.
-
-  DIALOGUE METHOD DIALOGUE_really_quit
-
-    The default routine called when the user clicks *Cancel* or attempts to
-    close the window ("-preCancelButtonAction" and "-preCloseWindowAction").
-    Justs asks 'Are you sure?' Calls "exit" if they are.
-
-  DIALOGUE METHOD prompt
-
-    Equivalent to the JavaScript method of the same name: pops up a dialogue
-    box to get a text string, and returns it. Arguemnts are:
-
-    -parent =>
-        "Tk" object that is our parent window. Default's to our "parent"
-        field.
-
-    -title =>
-        The title of the dialogue box.
-
-    -text =>
-        The text to display above the "Entry" widget.
-
-    -value =>
-        The initial value of the "Entry" box.
-
-    -wraplength =>
-        Text "Label"'s wraplength: defaults to 275.
-
-    -width =>
-        The "Entry" widget's width: defaults to 40. =back
-
-  METHOD register_with_windows
-
-        Registers an application with Windows so that it can be Uninstalled
-        using the *Add/Remove Programs* dialogue.
-
-        An entry is created in the Windows' registry pointing to the
-        uninstall script path. See "uninstall_string", below.
-
-        Returns "undef" on failure, "1" on success.
-
-        Aguments are:
-
-        display_name =>
-            The string displayed in bold in the Add/Remove Programs
-            dialogue.
-
-        display_version =>
-            Optional: the version number displayed in the Add/Remove
-            Programs dialogue.
-
-        uninstall_key_name
-            The name of the registery sub-key to be used.
-
-        uninstall_string
-            The command-line to execute to uninstall the script.
-
-            According to Microsoft:
-
-                    You must supply complete names for both the DisplayName and UninstallString
-                    values for your uninstall program to appear in the Add/Remove Programs
-                    utility. The path you supply to Uninstall-String must be the complete
-                    command line used to carry out your uninstall program. The command line you
-                    supply should carry out the uninstall program directly rather than from a
-                    batch file or subprocess.
-
-            The default value is:
-
-                    perl -e '$args->{app_path} -u'
-
-            This default assumes you have set the argument "app_path", and
-            that it checks and reacts to the the command line switch "-u":
-
-                    package MyInstaller;
-                    use strict;
-                    use Tk::Wizard;
-                    if ($ARGV[0] =~ /^-*u$/i){
-                            # ... Have been passed the uninstall switch: uninstall myself now ...
-                    }
-                    # ...
-
-            Or something like that.
-
-        Note: this method uses "eval" to require "Win32::TieRegistry".
-
-        This method returns "1" and does nothing on non-MSWin32 platforms.
+    initial_layout
+    render_current_page
+    blank_frame
+    This may change in a day or so, so please bear with me.
 
 CAVEATS / BUGS / TODO
-        *   Not much of a Tk widget inheritance - any pointers welcome.
+        *   In Windows, with the system font set to > 96 dpi (via Display
+            Properties / Settings / Advanced / General / Display / Font
+            Size), the Wizard will not display propertly. This seems to be a
+            Tk feature.
+
+        *   Still not much of a Tk widget inheritance - any pointers
+            welcome.
 
         *   Nothing is currently done to ensure text fits into the window -
             it is currently up to the client to make frames "Scrolled"), as
             I'm having problems making "&blank_frame" produce them.
 
-        *   When The *New Directory* button in the "addDirSelectPage" method
-            is used to create a new directory, the "DirTree" object does
-            open the branch. but does not show it as selected - how can it?
-
 CHANGES
-  VERSION 1.02
-
-            *   All known display issues fixed.
-
-            *   Warnings about stupid things if run undef "-w".
-
-            *   Directory selection method cleaned, fixed and extended.
-
-            *   "-style="top> implimented.
-
-            *   Windows "uninstall" feature: thanks to James Tillman and
-                Paul Barker for info.
-
-  VERSION 1.01
-
-                *   Made the supply of a "MainWindow" to the constructor
-                    optional, and changed the supply method from a reference
-                    to part of the passed name/value list.
-
-                *   Changed "filename" field to "-imagepath" for
-                    readability.
-
-                *   Made all arguments begin with "-" to fit in with Tk
-                    "switches".
-
-                *   Added method "blank_frame" that can take title and
-                    standfirst text.
-
-                *   Added a bit of space between the Wizard body and the
-                    button footer.
-
-                *   Added default font and background.
-
-                *   Added licence agreement bits.
-
-  VERSION 1.0
-
-                Initial version by Daniel T Hable, found with Google, at
-                http://perlmonks.thepen.com/139336.html.
+        Please see the file CHANGES.txt included with the distribution.
 
 AUTHOR
-                Daniel T Hable,
-
-                Lee Goddard (lgoddard@cpan.org).
+        Lee Goddard (lgoddard@cpan.org) based on work Daniel T Hable.
 
 KEYWORDS
-                Wizard; setup; installer; uninstaller; install; uninstall;
-                Tk; GUI.
+        Wizard; set-up; setup; installer; uninstaller; install; uninstall;
+        Tk; GUI.
 
 COPYRIGHT
-                Copyright (c) 2002 Daniel T Hable.
+        Copyright (c) Daniel T Hable, 2/2002.
 
-                Modifications Copyright (C) Lee Goddard, 2002.
+        Modifications Copyright (C) Lee Goddard, 11/2002 ff.
 
-                Permission is hereby granted, free of charge, to any person
-                obtaining a copy of this software and associated
-                documentation files (the "Software"), to deal in the
-                Software without restriction, including without limitation
-                the rights to use, copy, modify, merge, publish, distribute,
-                sublicense, and/or sell copies of the Software, and to
-                permit persons to whom the Software is furnished to do so,
-                subject to the following conditions:
+        Permission is hereby granted, free of charge, to any person
+        obtaining a copy of this software and associated documentation files
+        (the "Software"), to deal in the Software without restriction,
+        including without limitation the rights to use, copy, modify, merge,
+        publish, distribute, sublicense, and/or sell copies of the Software,
+        and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
 
-                The above copyright notice and this permission notice shall
-                be included in all copies or substantial portions of the
-                Software.
+        The above copyright notice and this permission notice shall be
+        included in all copies or substantial portions of the Software.
 
-                THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
-                KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-                WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-                PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
-                OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-                OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-                OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-                SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+        NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+        BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+        ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+        CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
 
+        THIS SOFTWARE AND THE AUTHORS OF THIS SOFTWARE ARE IN NO WAY
+        CONNECTED TO THE MICROSOFT CORP. THIS SOFTWARE IS NOT ENDORSED BY
+        THE MICROSOFT CORP MICROSOFT IS A REGISTERED TRADEMARK OF MICROSOFT
+        CROP.
+
+
+Tool completed successfully

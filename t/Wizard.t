@@ -5,18 +5,15 @@
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
 #########################
-use Test;
+our $VERSION = 0.3;	# 28 November 2002 23:30 CET
+
 use strict;
-use Tk::Wizard;
 use Cwd;
-BEGIN {
-	warn "*"x70,"\nPlease agree to the licence to complete the test sucessfully.\n","*"x70,"\n";
-	plan tests => 10;
-};
 
-our $VERSION = 0.2;	# 28 November 2002 11:24
+print "1..9\n";
 
-ok(1);
+use Tk::Wizard;
+print "ok 1\n";
 
 
 #
@@ -26,20 +23,19 @@ ok(1);
 my $wizard = new Tk::Wizard(
 	-title => "A title",
 	-imagepath => cwd."/setup_blue.gif",
-#	-style	=> 'top',
+	-style	=> 'top',
 	-topimagepath => cwd."/setup_blue_top.gif",
 );
-ok(ref $wizard, "Tk::Wizard");
+
+print ref $wizard eq "Tk::Wizard"? "ok 2\n" : "not ok 2\n";
+
 $wizard->configure(
 	-preNextButtonAction => sub { &preNextButtonAction($wizard) },
-	-finishButtonAction  => sub { ok(6);  },
+	-finishButtonAction  => sub { print "ok 8\n";  },
 );
 
-#$wizard->Show();
-#MainLoop;
-#exit;
 
-ok( ref $wizard->cget(-preNextButtonAction),"CODE");
+print ref $wizard->cget(-preNextButtonAction) eq "CODE"? "ok 3\n":"not ok 3\n";
 
 
 #
@@ -47,10 +43,8 @@ ok( ref $wizard->cget(-preNextButtonAction),"CODE");
 #
 
 our $SPLASH       	= $wizard->addPage( sub{ page_splash ($wizard)} );
-ok($SPLASH,1);
+print $SPLASH==1? "ok 4\n":"not ok 4\n";
 
-our $COPYRIGHT_PAGE	= $wizard->addLicencePage( -filepath => cwd."/perl_licence_blab.txt" );
-ok($COPYRIGHT_PAGE, 2);
 
 $wizard->addPage( sub{ page_one($wizard) });
 
@@ -59,9 +53,9 @@ $wizard->addPage( sub{ page_two($wizard) });
 our $user_chosen_dir;
 
 our $GET_DIR 	= $wizard->addDirSelectPage ( -variable => \$user_chosen_dir );
-ok($GET_DIR, 5);
+print $GET_DIR==4? "ok 5\n":"not ok 5\n";
 
-$wizard->addPage( sub {
+$_ = $wizard->addPage( sub {
 	return $wizard->blank_frame(
 		-title=>"Finished",
 		-subtitle => "Please press Finish to leave the Wizard.",
@@ -71,14 +65,13 @@ $wizard->addPage( sub {
 		."media.  Such warnings can be turned off - please see the documentation for details."
 	);
 });
+print $_? "ok 6\n":"not ok 6\n";
 
-ok(1);
-
-ok(ref $wizard->parent, "Tk::Wizard" );
+print ref $wizard->parent eq "Tk::Wizard"? "ok 7\n":"not ok 7\n";
 
 $wizard->Show();
 MainLoop;
-ok(1);
+print "ok 9\n";
 exit;
 
 
@@ -112,10 +105,7 @@ sub page_two { my $wizard = shift;
 
 sub preNextButtonAction { my $wizard = shift;
 	$_ = $wizard->currentPage;
-	if (/^$COPYRIGHT_PAGE$/){
-		return $wizard->callback_licence_agreement;
-	}
-	elsif (/^$GET_DIR$/){
+	if (/^$GET_DIR$/){
 		$_ = $wizard->callback_dirSelect( \$user_chosen_dir );
 		if ($_==1){
 			$_ = chdir $user_chosen_dir;

@@ -16,17 +16,12 @@ use base  qw(Tk::MainWindow);
 Tk::Widget->Construct('WizardTest');
 
 # See INTERNATIONALISATION
-my %LABELS = (
+use vars qw/%LABELS/;
+%LABELS = (
 	# Buttons
 	BACK => "< Back",	NEXT => "Next >",
 	FINISH => "Finish",	CANCEL => "Cancel",
 	HELP => "Help", OK => "OK",
-	# licence agreement
-	LICENCE_ALERT_TITLE	=> "Licence Condition",
-	LICENCE_OPTION_NO	=> "I do not accept the terms of the licence agreement",
-	LICENCE_OPTION_YES	=> "I accept the terms the terms of the licence agreement",
-	LICENCE_IGNORED		=> "You must read and agree to the licence before you can use this software.\n\nIf you do not agree to the terms of the licence, you must remove the software from your machine.",
-	LICENCE_DISAGREED	=> "You must read and agree to the licence before you can use this software.\n\nAs you indicated that you do not agree to the terms of the licence, please remove the software from your machine.\n\nSetup will now exit.",
 );
 
 =head1 NAME
@@ -82,6 +77,89 @@ simillar to that found in Microsoft Windows 95; a more Windows 2000-like feel is
 supported (see the C<-style> entry in L<WIDGET-SPECIFIC OPTIONS>.
 
 B<THIS IS AN ALPHA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!>
+
+=head1 WHAT IS A WIZARD?
+
+In the context of this namespace, a Wizard is defined as a graphic user interface (GUI)
+that presents information, and possibly performs tasks, step-by-step via a series of
+different pages. Pages (or 'screens', or 'Wizard frames') may be chosen logically depending
+upon user input.
+
+=head1 THE Tk::Wizard NAMESPACE
+
+In discussion on comp.lang.perl.tk, it was suggested by Dominique Dumont
+(would you mind your address appearing here?) that the following guidelines
+for the use of the C<Tk::Wizard> namespace be followed:
+
+=over 4
+
+=item 1
+
+That the module C<Tk::Wizard> act as a base module, providing all the basic services and
+components a Wizard might require.
+
+=item 2
+
+That modules beneath the base in the hierachy provide implimentations based on
+aesthetics and/or architecture.
+
+=back
+
+At the time of writing (28 November 2002, 18:07 CET) there has yet to emmerge a
+consensus of opinion on this matter, with suggestions being put forward by a couple
+of parties that the C<Tk> namespace should contain sub-categories named
+after various platforms, and that each of these have a C<Wizard> namespace, with
+that possibly having further sub-categories.
+
+The L<perlport/DESCRIPTION> suggests a 'general rule':
+
+    ... When you approach a task commonly done using a
+    whole range of platforms, think about writing portable code. That way,
+    you don't sacrifice much by way of the implementation choices you can
+    avail yourself of, and at the same time you can give your users lots of
+    platform choices. On the other hand, when you have to take advantage of
+    some unique feature of a particular platform, as is often the case with
+    systems programming ... consider writing platform-specific code.
+
+As there has yet to emmerge a suggestion of a task a cross-platform C<Tk::Wizard>
+base-class cannot impliment, I urge you, in the spirit of the three virtues
+(perl/NOTES), to visit comp.lang.perl.tk and cast an opinion one way or another.
+
+Please also see L<IMPLIMENTATION NOTES>.
+
+=head1 IMPLIMENTATION NOTES
+
+This widget is implimented using the Tk 'standard' API as far as possible,
+given my almost two weeks of exposure to Tk. Please, if you have a suggestion,
+send it to me directly: C<LGoddard@CPAN.org>.
+
+There is one outstanding bug which came about when this Wizard was translated
+from an even more naive implimentation to the more-standard manner. That is:
+C<Wizard> is a sub-class of C<MainWIndow>, the C<-background> is inacessible
+to me. Useful suggestions much appreciated.
+
+There is one item included which, despite the ramble in the section above, is platform
+specific. This is simply present at present for my own convenience - this module
+is currently being developed for a commercial project with a tight schedule.  These
+methods will later be removed to the sub-classes C<Tk::Wizard::Installer> and
+C<Tk::Wizard::Installer::Win32>.
+
+=head1 NOTES ON SUB-CLASSING Tk::Wizard
+
+If you are planning to sub-class C<Tk::Wizard> to create a different display style,
+there are three routines you will to over-ride:
+
+=over 4
+
+=item initial_layout
+
+=item render_current_page
+
+=item blank_frame
+
+=back
+
+This may change in a day or so, so please bear with me.
 
 =head1 STANDARD OPTIONS
 
@@ -168,22 +246,13 @@ Please see also L<ACTION EVENT HANDLERS>.
 
 =cut
 
-sub Populate {
-    my ($cw, $args) = @_;
-	# the delete above ensures that new() does not try
-	# and do  $cw->configure(-flag => xxx);
-
+sub Populate { my ($cw, $args) = @_;
     $cw->SUPER::Populate($args);
-
-#	$w = $cw->Component(...);
-
-#	$cw->Delegates(...);
-
     $cw->ConfigSpecs(
 # ?		-title			=> ['SELF','title','Title','Generic Wizard'],
 		-command    	=> ['CALLBACK', undef, undef, undef ],
 #		-foreground 	=> ['PASSIVE', 'foreground','Foreground', 'black'],
-		-background 	=> ['METHOD', 'background','Background', $^O eq 'MSWin32'? 'SystemButtonFace':'gray'],
+		-background 	=> ['METHOD', 'background','Background', $Tk::platform eq 'MSWin32'? 'SystemButtonFace':'gray'],
 		-style			=> ['PASSIVE',"style","Style","95"],
 		-imagepath		=> ['PASSIVE','topimagepath', 'Imagepath', undef],
 		-topimagepath	=> ['PASSIVE','topimagepath', 'Topimagepath', undef],
@@ -214,7 +283,13 @@ sub Populate {
 	$args->{-width } = ($args->{-style} eq 'top'? 500 : 570) unless $args->{-width};
 	$args->{-height} = 370 unless $args->{-height};
 
-	my $buttonPanel = $cw->Frame();
+	my $buttonPanel = $cw->Frame;
+	# right margin
+	$buttonPanel->Frame(-width=>10)->pack( -side => "right", -expand => 0,-pady=>10);
+	$cw->{cancelButton} = $buttonPanel->Button( -text => $LABELS{CANCEL},
+		-command => [ \&CancelButtonEventCycle, $cw, $cw],-width => 10
+	) ->pack( -side => "right", -expand => 0,-pady=>10);
+	$buttonPanel->Frame(-width=>10)->pack( -side => "right", -expand => 0,-pady=>10);
 	$cw->{nextButton} = $buttonPanel->Button( -text => $LABELS{NEXT},
 		-command => [ \&NextButtonEventCycle, $cw ],
 		-width => 10
@@ -224,18 +299,13 @@ sub Populate {
 		-width => 10,
 		-state => "disabled"
 	)->pack( -side => "right", -expand => 0,-pady=>10);
-	$cw->{cancelButton} = $buttonPanel->Button( -text => $LABELS{CANCEL},
-		-command => [ \&CancelButtonEventCycle, $cw, $cw],
-		-width => 10
-	) ->pack( -side => "right", -expand => 0,-pady=>10);
 	unless ($cw->cget(-nohelpbutton)){
 		$cw->{helpButton} = $buttonPanel->Button( -text => $LABELS{HELP},
 			-command => [ \&HelpButtonEventCycle, $cw ],
 			-width => 10,
-		)->pack( -side => 'left', -anchor => 'w',-pady=>10);
+		)->pack( -side => 'left', -anchor => 'w',-pady=>10,-padx=>10);
 	}
 	$buttonPanel->pack(qw/ -side bottom -fill x/);
-
 	# Line above buttons
 	$cw->Frame(
 		-width => $cw->cget(-width)||500,
@@ -253,15 +323,6 @@ sub Populate {
 	# Font used in all other places
 	$cw->fontCreate(qw/DEFAULT_FONT -family verdana -size 8 /);
 	$cw->{defaultFont} = 'DEFAULT_FONT';
-
-	# setup the MainWindow to match the criteria for a wizard widget
-	$cw->resizable( 0, 0);        # forbid resize
-	$cw->withdraw;                # position in screen center
-	$cw->Popup;
-	$cw->transient;               # forbid minimize
-	$cw->protocol( WM_DELETE_WINDOW => [ \&CloseWindowEventCycle, $cw, $cw]);
-	$cw->packPropagate(0);
-	$cw->configure(-background=>$cw->cget(-background));
 }
 
 
@@ -281,6 +342,7 @@ sub background { my ($self,$operand)=(shift,shift);
 	}
 }
 
+
 =head2 METHOD addPage
 
 	$wizard->addPage ($page_code_ref1 ... $page_code_refN)
@@ -299,6 +361,7 @@ See also L<METHOD blank_frame>, L<METHOD addLicencePage> and L<METHOD addDirSele
 =cut
 
 sub addPage { my ($self, @pages) = (shift,@_);
+	croak __PACKAGE__."::addPage requires one or more CODE references as arguments" if grep {ref ne 'CODE'} @_;
 	push @{$self->{wizardPageList}}, @pages;
 }
 
@@ -313,14 +376,33 @@ and must preced the C<MainLoop> call.
 =cut
 
 sub Show { my $self = shift;
-	# builds the buttons on the bottom of thw wizard
-	if ($^W and $self->cget(-style) eq 'top' and not $self->cget(-topimagepath)){
-		warn "Wizard has -style=>top but not -topimagepath is defined";
-	}
 	if ($^W and $#{$self->{wizardPageList}}==0){
 		warn "Showing a Wizard that is only one page long";
 	}
 
+	$self->initial_layout;
+	$self->render_current_page;
+
+	$self->resizable( 0, 0);        # forbid resize
+	$self->withdraw;                # position in screen center
+	$self->Popup;
+	$self->transient;               # forbid minimize
+	$self->protocol( WM_DELETE_WINDOW => [ \&CloseWindowEventCycle, $self, $self]);
+	$self->packPropagate(0);
+	$self->configure("-background"=>$self->cget("-background"));
+} # end of sub Show
+
+
+
+
+#
+# Sub-class me!
+# Called by Show().
+#
+sub initial_layout { my $self = shift;
+	if ($^W and $self->cget(-style) eq 'top' and not $self->cget(-topimagepath)){
+		warn "Wizard has -style=>top but not -topimagepath is defined";
+	}
 	# Wizard 98/95 style
 	if ($self->cget(-style) eq '95' or $self->{wizardPagePtr}==0){
 		if ($self->cget(-imagepath)){
@@ -330,7 +412,6 @@ sub Show { my $self = shift;
 			$self->{left_object} = $self->Frame(-width=>100)->pack(qw/-side left -anchor w -expand 1 -fill both/);
 		}
 	}
-
 	# Wizard 2k style - builds the left side of the wizard
 	else {
 		if ($self->cget(-topimagepath)){
@@ -340,17 +421,13 @@ sub Show { my $self = shift;
 			$self->{left_object} = $self->Frame( -width => 250 )->pack( -side => "top", -anchor => "n", -padx=>5, -pady=>2);
 		}
 	}
-
-	# This populates the wizard page panel on the side of the screen.
-	$self->{wizardFrame} =
-	$self->{wizardPageList}->[$self->{wizardPagePtr}]->()->pack(qw/-side top -expand 0 -padx 20 -pady 2/);
-
-	$self->redrawWizardPage;
-} # end of sub Show
+}
 
 
-
-sub redrawWizardPage { my $self = shift;
+#
+# Maybe sub-class me
+#
+sub render_current_page { my $self = shift;
 	if (($self->cget(-style) eq 'top' and $self->{wizardPagePtr} == 0)
 		or $self->{wizardPagePtr} == $#{$self->{wizardPageList}}
 	){
@@ -358,9 +435,12 @@ sub redrawWizardPage { my $self = shift;
 	} elsif ($self->cget(-style) eq 'top'){
 		$self->{left_object}->packForget;
 	}
+	# xxx
 	$self->configure("-background"=>$self->cget("-background"));
-	$self->{wizardFrame}->packForget;
-	$self->{wizardFrame} = $self->{wizardPageList}->[$self->{wizardPagePtr}]->();
+	$self->{nextButton}->focus(); # Default focus possibly over-ridden in wizardFrame
+	$self->{wizardFrame}->packForget if $self->{wizardFrame};
+	$self->{wizardFrame} = $self->{wizardPageList}->[$self->{wizardPagePtr}]->()->pack(qw/-side top/);
+#	$self->update;
 }
 
 
@@ -426,8 +506,15 @@ See also L<METHOD addLicencePage> and L<METHOD addDirSelectPage>.
 
 =cut
 
+#
+# Sub-class me:
+#	accept the args in the POD and
+#	return a Tk::Frame
+#
 sub blank_frame { my ($self,$args) = (shift,{@_});
 	my ($main_bg,$main_wi);
+	my $wrap = $args->{-wraplength} || 375;
+	$args->{-font} = $self->{defaultFont} unless $args->{-font};
 	# First and last pages are white
 	if ($self->{wizardPagePtr}==0
 		or $self->{wizardPagePtr} == $#{$self->{wizardPageList}}
@@ -445,14 +532,11 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 		$main_bg = $args->{background} || $self->cget("-background");
 		$main_wi = $args->{-width} || 300;
 	}
+	# Frame is the page container
 	my $frame = $self->parent->Frame(
-		-width=>$main_wi, -height=>$args->{-height}||300,
+		-width=>$main_wi, -height=>$args->{-height}||316,
 	);
-
 	$frame->configure(-background => $main_bg) if $main_bg;
-
-	$args->{-font} = $self->{defaultFont} unless $args->{-font};
-	my $wrap = $args->{-wraplength} || 375;
 
 	# For 'top' style pages other than first and last
 	if (($self->cget(-style) eq 'top' and $self->{wizardPagePtr}>0)
@@ -473,8 +557,8 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 		#
 		if ($args->{-title}){
 			# Indent left of title: -height should come from font metrics of TITLE_FONT_TOP;
-			# 	and what about if the line wraps?
-			$title_frame->Frame(qw/-background white -width 30 -height 30/)->pack(qw/-anchor n -side left/);
+			# 	but what about if the line wraps?
+			$title_frame->Frame(qw/-background white -width 30 -height 30/)->pack(qw/-fill x -anchor n -side left/);
 			$title_frame->Label(
 				-justify => 'left', -anchor=> 'w', -wraplength=>$wrap,
 				-text=> $args->{-title},
@@ -483,7 +567,7 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 		}
 		if ($args->{-subtitle}){
 			# Indent the subtitle - see note above
-			$title_frame->Frame(qw/-background white -width 20 -height 12/)->pack(qw/-anchor w -side left/);
+			$title_frame->Frame(qw/-background white -width 20 -height 12/)->pack(qw/-fill x -anchor w -side left/);
 			$args->{-subtitle} =~ s/^[\n\r\f]//;
 			$args->{-subtitle} = $args->{-subtitle};
 			$title_frame->Label(
@@ -544,57 +628,13 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 			$frame->Label(); # intended so we can packForget first to $frame->children;
 		}
 	}
-	$frame->pack(qw/-side top -fill x -expand 1 -anchor n/);
-#	$_ = $frame->Frame(-background=>"yellow")->pack(qw/-expand 1 -fill both/);
-	return $frame;
+#	$_ = $frame->Frame->pack(qw/-anchor s -side bottom -fill both -expand 1/);
+#	$_->configure(-background => $frame->cget("-background") );
+#	$_->packPropagate(0);
+
+	return $frame->pack(qw/-side top -anchor n -fill x/);
 } # end blank_frame
 
-
-=head2 METHOD addLicencePage
-
-	$wizard->addLicencePage ( -filepath => $path_to_licence_text )
-
-Adds a page (C<Tk::Frame>) that contains a scroll texxt box of a licence text file
-specifed in the C<-filepath> argument. Presents the user with two
-options, accept and continue, or not accept and quit. The user
-I<cannot> progress until the 'agree' option has been chosen. The
-choice is entered into the object field C<licence_agree>, which you
-can test as the I<Next> button is pressed, either using your own
-function or with the Wizard's C<callback_licence_agreement> function.
-
-You could supply the GNU Artistic Licence....
-
-See L<CALLBACK callback_licence_agreement> and L<METHOD page_licence_agreement>.
-
-=cut
-
-sub addLicencePage { my ($self,$args) = (shift, {@_});
-	die "No -filepath argument present" if not $args->{-filepath};
-	$self->addPage( sub { $self->page_licence_agreement($args->{-filepath} )  } );
-}
-
-=head2 METHOD addDirSelectPage
-
-	$wizard->addDirSelectPage ( -variable => \$chosen_dir )
-
-Adds a page (C<Tk::Frame>) that contains a scrollable texxt box of all directories
-including, on Win32, logical drives.
-
-Supply in C<-variable> a reference to a variable to set the initial directory,
-and to have set with the chosen path.
-
-Supply C<-nowarnings> to list only drives which are accessible, thus avoiding C<Tk::DirTree>
-warnings on Win32 where removable drives have no media.
-
-You may also specify the C<-title>, C<-subtitle> and C<-text> paramters, as in L<METHOD blank_frame>.
-
-See L<CALLBACK callback_dirSelect>.
-
-=cut
-
-sub addDirSelectPage { my ($self,$args) = (shift,{@_});
-	$self->addPage( sub { $self->page_dirSelect($args)  } );
-}
 
 
 #
@@ -628,7 +668,7 @@ sub NextButtonEventCycle { my $self = shift;
 		$self->CloseWindowEventCycle();
 	}
 	$self->{nextButton}->configure( -text => $LABELS{FINISH}) if( $self->{wizardPagePtr} == $#{ $self->{wizardPageList}});
-	$self->redrawWizardPage;
+	$self->render_current_page;
 	if( dispatch( $self->cget(-postNextButtonAction))) { return; }
 }
 
@@ -640,7 +680,7 @@ sub BackButtonEventCycle { my $self=shift;
 	$self->{wizardPagePtr} = 0 if( $self->{wizardPagePtr} < 0);
 	$self->{nextButton}->configure( -text => $LABELS{NEXT});
 	$self->{backButton}->configure( -state => "disabled") if( $self->{wizardPagePtr} == 0);
-	$self->redrawWizardPage;
+	$self->render_current_page;
 	if( dispatch( $self->cget(-postBackButtonAction))) { return; }
 }
 
@@ -666,92 +706,27 @@ sub CloseWindowEventCycle { my ($self, $hGUI) = (shift,@_);
 
 
 
-#
-# PRIVATE METHOD page_licence_agreement
-#
-#	my $COPYRIGHT_PAGE = $wizard->addPage( sub{ Tk::Wizard::page_licence_agreement ($wizard,$LICENCE_FILE)} );
-#
-# Accepts a C<TK::Wizard> object and the path to a text file
-# containing the licence.
-#
-# Returns a C<Tk::Wizard> page entitled "End-user Licence Agreement",
-# a scroll-box of the licence text, and an "Agree" and "Disagree"
-# option. If the user agrees, the caller's package's global (yuck)
-# C<$LICENCE_AGREE> is set to a Boolean true value.
-#
-# If the licence file cannot be read, this routine will call C<die $!>.
-#
-# See also L<CALLBACK callback_licence_agreement>.
-#
-sub page_licence_agreement { my ($self,$licence_file) = (shift,shift);
-	local *IN;
-	my $text;
-	my $padx = $self->cget(-style) eq 'top'? 30 : 5;
-	$self->{licence_agree} = undef;
-	open IN,$licence_file or croak "Could not read licence: $licence_file; $!";
-	read IN,$text,-s IN;
-	close IN;
-	my ($frame,@pl) = $self->blank_frame(
-		-title	 =>"End-user Licence Agreement",
-		-subtitle=>"Please read the following licence agreement carefully.",
-		-text	 =>"\n"
-	);
-	my $t = $frame->Scrolled(
-		qw/Text -relief sunken -borderwidth 2 -font SMALL_FONT -width 10 -setgrid true
-		-height 9 -scrollbars e -wrap word/
-	);
-	$t->insert('0.0', $text);
-	$t->configure(-state => "disabled");
-	$t->pack(qw/-expand 1 -fill both -padx 10 /);
-	$frame->Frame(-height=>10)->pack();
-	$_ = $frame->Radiobutton(
-		-font => $self->{defaultFont},
-		-text     => $LABELS{LICENCE_OPTION_YES},
-		-variable => \${$self->{licence_agree}},
-		-relief   => 'flat',
-		-value    => 1,
-		-underline => '2',
-		-anchor	=> 'w',
-		-background=>$self->cget("-background"),
-	)->pack(-padx=>$padx, -anchor=>'w',);
-	$frame->Radiobutton(
-		-font => $self->{defaultFont},
-		-text     => $LABELS{LICENCE_OPTION_NO},
-		-variable => \${$self->{licence_agree}},
-		-relief   => 'flat',
-		-value    => 0,
-		-underline => 5,
-		-anchor	=> 'w',
-		-background=>$self->cget("-background"),
-    )->pack(-padx=>$padx, -anchor=>'w',);
-	return $frame;
-}
+=head2 METHOD addDirSelectPage
 
+	$wizard->addDirSelectPage ( -variable => \$chosen_dir )
 
-=head2 CALLBACK callback_licence_agreement
+Adds a page (C<Tk::Frame>) that contains a scrollable texxt box of all directories
+including, on Win32, logical drives.
 
-Intended to be used with an action-event handler like C<-preNextButtonAction>,
-this routine check that the object field C<licence_agree>
-is a Boolean true value. If that operand is not set, it warns
-the user to read the licence; if that operand is set to a
-Boolean false value, a message box says goodbye and quits the
-program.
+Supply in C<-variable> a reference to a variable to set the initial directory,
+and to have set with the chosen path.
+
+Supply C<-nowarnings> to list only drives which are accessible, thus avoiding C<Tk::DirTree>
+warnings on Win32 where removable drives have no media.
+
+You may also specify the C<-title>, C<-subtitle> and C<-text> paramters, as in L<METHOD blank_frame>.
+
+See L<CALLBACK callback_dirSelect>.
 
 =cut
 
-sub callback_licence_agreement { my $self = shift;
-	if (not defined ${$self->{licence_agree}}){
-		my $button = $self->parent->messageBox('-icon'=>'info',-type=>'ok',
-		-title => $LABELS{LICENCE_ALERT_TITLE},
-		-message => $LABELS{LICENCE_IGNORED});
-		return 0;
-	}
-	elsif (not ${$self->{licence_agree}}){
-		my $button = $self->parent->messageBox('-icon'=>'warning', -type=>'ok',-title=>$LABELS{LICENCE_ALERT_TITLE},
-		-message => $LABELS{LICENCE_DISAGREED});
-		exit;
-	}
-	return 1;
+sub addDirSelectPage { my ($self,$args) = (shift,{@_});
+	$self->addPage( sub { $self->page_dirSelect($args)  } );
 }
 
 #
@@ -762,6 +737,11 @@ sub callback_licence_agreement { my $self = shift;
 # -nowarnings => chdir to each drive first and only list if accessible
 #
 sub page_dirSelect { my ($self,$args) = (shift,shift);
+	my $_drives = sub {
+		return '/' if $Tk::platform ne 'MSWin32';
+		eval('require Win32API::File');
+		return Win32API::File::getLogicalDrives();
+	};
 	my ($frame,@pl) = $self->blank_frame(
 		-title => $args->{-title} || "Please choose a directory",
 		-subtitle => $args->{-text}  || "After you have made your choice, press Next to continue.",
@@ -808,16 +788,16 @@ sub page_dirSelect { my ($self,$args) = (shift,shift);
 			}
 		}, # end of -command sub
 	)->pack( -side => 'right', -anchor => 'w', -padx=>'10', );
-
-	$frame->Button( -text => "Desktop",
-		command => sub {
-			${$args->{-variable}} = "$ENV{USERPROFILE}/Desktop";
-			$dirs->configure(-directory => "$ENV{USERPROFILE}/Desktop");
-			$dirs->chdir("$ENV{USERPROFILE}/Desktop");
-		},
-	)->pack( -side => 'right', -anchor => 'w', -padx=>'10', );
-
-	foreach (&_drives){
+	if (-d "$ENV{USERPROFILE}/Desktop"){ # Where are desktops outside of Win32?
+		$frame->Button( -text => "Desktop",
+			command => sub {
+				${$args->{-variable}} = "$ENV{USERPROFILE}/Desktop";
+				$dirs->configure(-directory => "$ENV{USERPROFILE}/Desktop");
+				$dirs->chdir("$ENV{USERPROFILE}/Desktop");
+			},
+		)->pack( -side => 'right', -anchor => 'w', -padx=>'10', );
+	}
+	foreach (&$_drives){
 		($_) = /^(\w+:)/;
 		if ($args->{-nowarnings}){
 			$dirs->configure(-directory=>$_) if chdir  $_
@@ -882,11 +862,6 @@ sub callback_dirSelect { my ($self,$var) = (shift,shift);
 }
 
 
-sub _drives {
-	return '/' if $^O ne 'MSWin32';
-	eval('require Win32API::File');
-	return Win32API::File::getLogicalDrives();
-}
 
 # Returns true if to continue
 # By default, may be called by close window or pressing cancel
@@ -966,98 +941,6 @@ sub prompt { my ($self,$args) = (shift,{@_});
 }
 
 
-=head2 METHOD register_with_windows
-
-Registers an application with Windows so that it can be Uninstalled
-using the I<Add/Remove Programs> dialogue.
-
-An entry is created in the Windows' registry pointing to the
-uninstall script path. See C<uninstall_string>, below.
-
-Returns C<undef> on failure, C<1> on success.
-
-Aguments are:
-
-=over 4
-
-=item display_name =>
-
-The string displayed in bold in the Add/Remove Programs dialogue.
-
-=item display_version =>
-
-Optional: the version number displayed in the Add/Remove Programs dialogue.
-
-=item uninstall_key_name
-
-The name of the registery sub-key to be used.
-
-=item uninstall_string
-
-The command-line to execute to uninstall the script.
-
-According to L<Microsoft|http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnwue/html/ch11d.asp>:
-
-	You must supply complete names for both the DisplayName and UninstallString
-	values for your uninstall program to appear in the Add/Remove Programs
-	utility. The path you supply to Uninstall-String must be the complete
-	command line used to carry out your uninstall program. The command line you
-	supply should carry out the uninstall program directly rather than from a
-	batch file or subprocess.
-
-The default value is:
-
-	perl -e '$args->{app_path} -u'
-
-This default assumes you have set the argument C<app_path>, and that it
-checks and reacts to the the command line switch C<-u>:
-
-	package MyInstaller;
-	use strict;
-	use Tk::Wizard;
-	if ($ARGV[0] =~ /^-*u$/i){
-		# ... Have been passed the uninstall switch: uninstall myself now ...
-	}
-	# ...
-
-Or something like that.
-
-=back
-
-B<Note:> this method uses C<eval> to require C<Win32::TieRegistry>.
-
-This method returns C<1> and does nothing on non-MSWin32 platforms.
-
-=cut
-
-sub register_with_windows { my ($self,$args) = (shift,{@_});
-	return 1 if $^O ne 'MSWin32';
-	unless ($args->{display_name} and $args->{uninstall_string}
-		and ($args->{uninstall_key_name} or $args->{app_path})
-	){
-		die __PACKAGE__."::register_with_windows requires an argument of name/value pairs which must include the keys 'uninstall_string', 'uninstall_key_name' and 'display_name'";
-	}
-
-	if (not $args->{uninstall_string} and not $args->{app_path}){
-		die __PACKAGE__."::register_with_windows requires either argument 'app_path' or 'uninstall_string' be set.";
-	}
-	if ($args->{app_path}){
-		$args->{app_path} = "perl -e '$args->{app_path} -u'";
-	}
-	my $Registry;
-	eval('use Win32::TieRegistry( Delimiter=>"/", ArrayValues=>0 );');
-	my $uninst_key_ref =
-	$Registry->{'LMachine/SOFTWARE/Microsoft/Windows/CurrentVersion/Uninstall/'} ->
-		CreateKey( $args->{uninstall_key_name} );
-	die "Perl Win32::TieRegistry error" if !$uninst_key_ref;
-	$uninst_key_ref->{"/DisplayName"} = $args->{display_name};
-	if ($args->{display_version}){
-		$uninst_key_ref->{"/DisplayVersion"} = $args->{display_version};  # $VERSION;
-	}
-	$uninst_key_ref->{"/UninstallString"} = $args->{uninstall_string};
-	return $!? undef : 1;
-}
-
 
 1;
 __END__
@@ -1075,6 +958,9 @@ after the button press.
 The handler code should return a Boolean value, signifying whether the remainder of
 the action should continue. If a false value is returned, execution of the event
 handler halts.
+
+Note that you may find it necessary to call the C<update> method upon the Wizard
+object whilst performing time consuming actions: see L<Tk::Widget/DESCRIPTION>.
 
 =over 4
 
@@ -1218,3 +1104,8 @@ TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONIN
 THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
+
+THIS SOFTWARE AND THE AUTHORS OF THIS SOFTWARE ARE IN NO WAY CONNECTED TO THE MICROSOFT CORP.
+THIS SOFTWARE IS NOT ENDORSED BY THE MICROSOFT CORP
+MICROSOFT IS A REGISTERED TRADEMARK OF MICROSOFT CROP.
+
