@@ -1,9 +1,9 @@
-Changes
+CHANGES.txt
 Makefile.PL
 MANIFEST
 README
 test.pl
-Tk/Wizard.pm
+Wizard.pm
 setup_blue.gif
 setup_blue_top.gif
 perl_licence_blab.txt

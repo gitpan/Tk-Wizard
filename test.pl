@@ -4,19 +4,19 @@
 #
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
-
 #########################
 use Test;
 use strict;
-use Tk;
-use Cwd;
-BEGIN { plan tests => 6 };
-
-our $VERSION = 0.11;	# 27 November 2002, 17:19 CET
-
 use Tk::Wizard;
-ok(1);
+use Cwd;
+BEGIN {
+	warn "*"x70,"\nPlease agree to the licence to complete the test sucessfully.\n","*"x70,"\n";
+	plan tests => 10;
+};
 
+our $VERSION = 0.2;	# 28 November 2002 11:24
+
+ok(1);
 
 
 #
@@ -26,14 +26,21 @@ ok(1);
 my $wizard = new Tk::Wizard(
 	-title => "A title",
 	-imagepath => cwd."/setup_blue.gif",
-	-style	=> 'top',
+#	-style	=> 'top',
 	-topimagepath => cwd."/setup_blue_top.gif",
 );
 ok(ref $wizard, "Tk::Wizard");
 $wizard->configure(
-	-finishButtonAction => sub { ok(6); exit; },
 	-preNextButtonAction => sub { &preNextButtonAction($wizard) },
+	-finishButtonAction  => sub { ok(6);  },
 );
+
+#$wizard->Show();
+#MainLoop;
+#exit;
+
+ok( ref $wizard->cget(-preNextButtonAction),"CODE");
+
 
 #
 # Create pages
@@ -58,13 +65,20 @@ $wizard->addPage( sub {
 	return $wizard->blank_frame(
 		-title=>"Finished",
 		-subtitle => "Please press Finish to leave the Wizard.",
-		-text => "You had selected the directory $user_chosen_dir.",
+		-text => "By the way, you selected the directory $user_chosen_dir.\n\n"
+		."If you saw some error messages, they came from Tk::DirTree, and show "
+		."that some of your drives are inacessible - perhaps a CD-ROM drive without "
+		."media.  Such warnings can be turned off - please see the documentation for details."
 	);
 });
 
+ok(1);
+
+ok(ref $wizard->parent, "Tk::Wizard" );
 
 $wizard->Show();
 MainLoop;
+ok(1);
 exit;
 
 
