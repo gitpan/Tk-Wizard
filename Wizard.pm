@@ -1,11 +1,22 @@
 package Tk::Wizard;
+
+=head1 NAME
+
+Tk::Wizard - GUI for step-by-step interactive logical process (ALPHA)
+
+=cut
+
 use vars qw/$VERSION/;
-$VERSION = 1.032;	# 02 December 2002 18:17
+ $VERSION = 1.033;	# 20 January 2003 16:59
+
+
+# Still alpha.
 
 BEGIN {
 	use Carp;
 	use Tk;
 	use Tk::DirTree;
+	use File::Path;
 	require Exporter;			# Exporting Tk's MainLoop so that
 	@ISA = "Exporter";			# I can just use strict and Tk::Wizard without
 	@EXPORT = ("MainLoop");		# having to use Tk
@@ -30,10 +41,6 @@ use vars qw/%LABELS %DRIVETYPES/;
 	3=>1, 4=>1,6=>1,
 );
 
-
-=head1 NAME
-
-Tk::Wizard - GUI for step-by-step interactive logical process
 
 =head1 SYNOPSIS
 
@@ -110,56 +117,7 @@ aesthetics and/or architecture.
 
 =back
 
-There have been a few suggestions that the C<Tk> namespace should contain sub-categories
-named after various platforms, and that each of these have a C<Wizard> namespace, with
-that possibly having further sub-categories.  This may not really be in keeping with
-the philosophy outlined in the perldocs: the L<perlport/DESCRIPTION> suggests a 'general rule':
-
-    ... When you approach a task commonly done using a
-    whole range of platforms, think about writing portable code. That way,
-    you don't sacrifice much by way of the implementation choices you can
-    avail yourself of, and at the same time you can give your users lots of
-    platform choices. On the other hand, when you have to take advantage of
-    some unique feature of a particular platform, as is often the case with
-    systems programming ... consider writing platform-specific code.
-
-But it's a free CPAN...!
-
 Please also see L<IMPLIMENTATION NOTES>.
-
-=head1 IMPLIMENTATION NOTES
-
-This widget is implimented using the Tk 'standard' API as far as possible,
-given my almost three weeks of exposure to Tk. Please, if you have a suggestion,
-send it to me directly: C<LGoddard@CPAN.org>.
-
-The widget is a C<MainWindow> and not a C<TopLevel> window. The reasoning is that
-Wizards are applications in their own right, and not usually parts of other
-applications. Although I've only three weeks of Tk, I believe it should be possible
-to embed a C<Tk::Wizard> into another window using C<-use> and C<-container> -- but
-any info on this practice would be appreciated.
-
-There is one outstanding bug which came about when this Wizard was translated
-from an even more naive implimentation to the more-standard manner. That is:
-because C<Wizard> is a sub-class of C<MainWIndow>, the C<-background> is inacessible
-to me. Useful suggestions much appreciated.
-
-=head1 NOTES ON SUB-CLASSING Tk::Wizard
-
-If you are planning to sub-class C<Tk::Wizard> to create a different display style,
-there are three routines you will to over-ride:
-
-=over 4
-
-=item initial_layout
-
-=item render_current_page
-
-=item blank_frame
-
-=back
-
-This may change in a day or so, so please bear with me.
 
 =head1 STANDARD OPTIONS
 
@@ -899,7 +857,7 @@ sub callback_dirSelect { my ($self,$var) = (shift,shift);
 			-message => "The directory you selected does not exist.\n\n"."Shall I create ".$$var." ?"
 		);
 		if (lc $button eq 'yes'){
-			return 1 if File::Path::mkpath $$var;
+			return 1 if File::Path::mkpath( $$var);
 			$self->parent->messageBox(
 				-icon => 'warning', -type => 'ok',
 				-title => 'Directory Could Not Be Created',
@@ -1264,9 +1222,48 @@ C<BACK>, C<NEXT>, C<CANCEL>, C<HELP>, and C<FINISH>.
 The text of the callbacks can also be changed via the
 C<%LABELS> hash: see the top of the source code for details.
 
+=head1 IMPLIMENTATION NOTES
+
+This widget is implimented using the Tk 'standard' API as far as possible,
+given my almost three weeks of exposure to Tk. Please, if you have a suggestion,
+or patch, send it to me directly: C<LGoddard@CPAN.org>.
+
+The widget is a C<MainWindow> and not a C<TopLevel> window. The reasoning is that
+Wizards are applications in their own right, and not usually parts of other
+applications. Although I've only three weeks of Tk, I believe it should be possible
+to embed a C<Tk::Wizard> into another window using C<-use> and C<-container> -- but
+any info on this practice would be appreciated.
+
+There is one outstanding bug which came about when this Wizard was translated
+from an even more naive implimentation to the more-standard manner. That is:
+because C<Wizard> is a sub-class of C<MainWIndow>, the C<-background> is inacessible
+to me. Useful and/or patches suggestions much appreciated.
+
+=head1 NOTES ON SUB-CLASSING Tk::Wizard
+
+If you are planning to sub-class C<Tk::Wizard> to create a different display style,
+there are three routines you will to over-ride:
+
+=over 4
+
+=item initial_layout
+
+=item render_current_page
+
+=item blank_frame
+
+=back
+
+This may change, please bear with me.
+
 =head1 CAVEATS / BUGS / TODO
 
 =over 4
+
+=item *
+
+20 January 2003: the directory tree part does not create directories
+unless the eponymous button is clicked.
 
 =item *
 
@@ -1302,7 +1299,7 @@ Wizard; set-up; setup; installer; uninstaller; install; uninstall; Tk; GUI.
 
 Copyright (c) Daniel T Hable, 2/2002.
 
-Modifications Copyright (C) Lee Goddard, 11/2002 ff.
+Modifications Copyright (C) Lee Goddard, 11/2002 - 01/2003.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -1319,6 +1316,8 @@ CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFT
 DEALINGS IN THE SOFTWARE.
 
 THIS SOFTWARE AND THE AUTHORS OF THIS SOFTWARE ARE IN NO WAY CONNECTED TO THE MICROSOFT CORP.
+
 THIS SOFTWARE IS NOT ENDORSED BY THE MICROSOFT CORP
+
 MICROSOFT IS A REGISTERED TRADEMARK OF MICROSOFT CROP.
 

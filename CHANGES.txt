@@ -1,4 +1,9 @@
 CHANGES
+
+VERSION 1.033 20 January 2003
+
+	*	Fixed lack of require of File::Path
+
 VERSION 1.032
 
 	*	Added &forward> and &backward, mainly to automate tests.

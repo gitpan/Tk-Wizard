@@ -48,7 +48,7 @@ $wizard->addPage( sub{ page_two($wizard) });
 our $user_chosen_dir;
 
 our $GET_DIR 	= $wizard->addDirSelectPage (
-	-nowarnings => "2",
+	-nowarnings => "1",
 	-variable => \$user_chosen_dir,
 	);
 print $GET_DIR==4? "ok 5\n":"not ok 5\n";
