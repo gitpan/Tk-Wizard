@@ -7,7 +7,7 @@ Tk::Wizard - GUI for step-by-step interactive logical process (ALPHA)
 =cut
 
 use vars qw/$VERSION/;
- $VERSION = 1.033;	# 20 January 2003 16:59
+ $VERSION = 1.034;	# 20 January 2003 16:59
 
 
 # Still alpha.
@@ -252,6 +252,7 @@ sub Populate { my ($cw, $args) = @_;
 	$args->{-height} = 370 unless $args->{-height};
 	# $cw->overrideredirect(1);
 	my $buttonPanel = $cw->Frame;
+
 	# right margin
 	$buttonPanel->Frame(-width=>10)->pack( -side => "right", -expand => 0,-pady=>10);
 	$cw->{cancelButton} = $buttonPanel->Button( -text => $LABELS{CANCEL},
@@ -808,7 +809,7 @@ sub page_dirSelect { my ($self,$args) = (shift,shift);
 		)->pack( -side => 'right', -anchor => 'w', -padx=>'10', );
 	}
 	foreach (&$_drives){
-		($_) = /^(\w+:)/;
+		($_) =~ /^(\w+:)/;
 		if ($args->{-nowarnings} and ($args->{-nowarnings} eq "1"
 		or $^O !~ /MSWin32/i)){
 			$dirs->configure(-directory=>$_) if chdir  $_;

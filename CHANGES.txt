@@ -1,5 +1,10 @@
 CHANGES
 
+VERSION 1.034 21 January 2003
+
+	*	Typed = instead of =~, resulting in
+		incomplete dir listings in DirTrees.
+
 VERSION 1.033 20 January 2003
 
 	*	Fixed lack of require of File::Path
