@@ -1,10 +1,4 @@
 #! perl -w
-#
-# Tk::Wizard test.pl - mailto:lgoddard@cpan.org
-#
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-#########################
 our $VERSION = 0.1;	# 29 November 2002 14:39 CET
 
 use strict;
@@ -21,10 +15,10 @@ our ($PB);	# Index number of page
 our $bar;	# Progress bar
 
 my $wizard = new Tk::Wizard(
-	-title => "A title",
-	-imagepath => cwd."/setup_blue.gif",
+	-title => "ProgressBar Test",
+	-imagepath => cwd."/wizard_blue.gif",
 	-style	=> 'top',
-	-topimagepath => cwd."/setup_blue_top.gif",
+	-topimagepath => cwd."/wizard_blue_top.gif",
 );
 print ref $wizard eq "Tk::Wizard"? "ok 2\n" : "not ok 2\n";
 $wizard->configure(

@@ -1,5 +1,13 @@
 CHANGES
 
+VERSION 1.031
+
+	* Added method &addTaskListPage (etc) to Tk::Wizard;
+
+	* Added -resizable switch; added warnings in addPage.
+
+	* Added method &addFileListPage (etc) to Tk::Wizard::Installer
+
 VERSION 1.03
 
 	*	Added basic tests/examples using Test::Harness.

@@ -6,10 +6,12 @@ Wizard.pm
 Wizard/Installer.pm
 Wizard/Installer/Win32.pm
 perl_licence_blab.txt
-setup_blue.gif
-setup_blue_top.gif
+wizard_blue.gif
+wizard_blue_top.gif
 t/Installer.t
 t/Win32.t
 t/bad_arg.t
 t/Wizard.t
 t/pb.t
+todo.gif
+done.gif

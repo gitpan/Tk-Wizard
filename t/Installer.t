@@ -1,10 +1,4 @@
 #! perl -w
-#
-# Tk::Wizard test.pl - mailto:lgoddard@cpan.org
-#
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-#########################
 our $VERSION = 0.3;	# 28 November 2002 23:30 CET
 
 use strict;
@@ -21,10 +15,10 @@ print "ok 1\n";
 #
 
 my $wizard = new Tk::Wizard::Installer(
-	-title => "A title",
-	-imagepath => cwd."/setup_blue.gif",
+	-title => "Installer Test",
+	-imagepath => cwd."/wizard_blue.gif",
 	-style	=> 'top',
-	-topimagepath => cwd."/setup_blue_top.gif",
+	-topimagepath => cwd."/wizard_blue_top.gif",
 );
 
 print ref $wizard eq "Tk::Wizard::Installer"? "ok 2\n" : "not ok 2\n";

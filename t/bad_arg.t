@@ -1,7 +1,4 @@
 #! perl -w
-#
-# Tk::Wizard test.pl - mailto:lgoddard@cpan.org
-#
 our $VERSION = 0.1;	# 29 November 2002 14:41 CET
 
 use strict;
@@ -14,10 +11,10 @@ use Tk::ProgressBar;
 print "ok 1\n";
 
 my $wizard = new Tk::Wizard(
-	-title => "A title",
-	-imagepath => cwd."/setup_blue.gif",
+	-title => "Bad Argument Test",
+	-imagepath => cwd."/wizard_blue.gif",
 	-style	=> 'top',
-	-topimagepath => cwd."/setup_blue_top.gif",
+	-topimagepath => cwd."/wizard_blue_top.gif",
 );
 
 print ref $wizard eq "Tk::Wizard"? "ok 2\n" : "not ok 2\n";
@@ -33,7 +30,7 @@ $_ = $wizard->addPage( sub{
 print $_==1? "ok 3\n":"not ok 3\n";
 
 eval (' $_ = $wizard->addPage( "This will break" ) ');
-
+warn $@;
 print $@=~/addPage requires one or more CODE references as arguments/? "ok 4\n":"not ok 4\n";
 
 

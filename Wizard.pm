@@ -1,6 +1,6 @@
 package Tk::Wizard;
 use vars qw/$VERSION/;
-$VERSION = 1.03;	# 28/11/2002 15:36
+$VERSION = 1.031;	# 02 December 2002 18:17
 
 BEGIN {
 	use Carp;
@@ -13,10 +13,11 @@ BEGIN {
 
 use strict;
 use base  qw(Tk::MainWindow);
-Tk::Widget->Construct('WizardTest');
+Tk::Widget->Construct('Wizard');
+
+use vars qw/%LABELS %DRIVETYPES/;
 
 # See INTERNATIONALISATION
-use vars qw/%LABELS/;
 %LABELS = (
 	# Buttons
 	BACK => "< Back",	NEXT => "Next >",
@@ -24,9 +25,15 @@ use vars qw/%LABELS/;
 	HELP => "Help", OK => "OK",
 );
 
+# Only used in Win32: see &page_dirSelect
+%DRIVETYPES = (
+	3=>1, 4=>1,6=>1,
+);
+
+
 =head1 NAME
 
-Tk::Wizard - GUI for step-by-step logical process
+Tk::Wizard - GUI for step-by-step interactive logical process
 
 =head1 SYNOPSIS
 
@@ -43,7 +50,7 @@ Tk::Wizard - GUI for step-by-step logical process
 	$wizard->addPage( sub {
 		return $wizard->blank_frame(
 			-title	=> "Page Title",
-			-text	=> "Stand-first text.",
+			-text	=> "Some text.",
 		);
 	});
 	$wizard->Show;
@@ -59,24 +66,22 @@ C<Tk> and modules of the current standard Perl Tk distribution.
 
 On MS Win32 only: C<Win32API::File>.
 
-And if you plan to use the method C<register_with_windows> (available on MsWin32 only),
-you'll need C<Win32::TieRegistry>.
-
 =head1 DESCRIPTION
 
 The C<Tk::Wizard> module automates a large part of the creation of a wizard program
 to collect information and then perform some complex task based upon it.
 
 The Wizard was developed to aid software installation by end-users using ActiveState's
-ActivePerl, but should function under other OS and circumstances. There package does
-contain a number of routines specific to software installation: these may be removed to
-a sub-class at a later date.
+ActivePerl, but should function under other OS and circumstances.
+
+The package did contain a number of routines specific to software installation:
+these may now be found elsewhere in the C<Tk::Wizard> CPAN heirachy.
 
 The wizard feel is largly based upon the Microsoft(TM,etc) wizard style: the default is
 simillar to that found in Microsoft Windows 95; a more Windows 2000-like feel is also
 supported (see the C<-style> entry in L<WIDGET-SPECIFIC OPTIONS>.
 
-B<THIS IS AN ALPHA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!>
+NB: B<THIS IS AN ALPHA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!>
 
 =head1 WHAT IS A WIZARD?
 
@@ -105,13 +110,10 @@ aesthetics and/or architecture.
 
 =back
 
-At the time of writing (28 November 2002, 18:07 CET) there has yet to emmerge a
-consensus of opinion on this matter, with suggestions being put forward by a couple
-of parties that the C<Tk> namespace should contain sub-categories named
-after various platforms, and that each of these have a C<Wizard> namespace, with
-that possibly having further sub-categories.
-
-The L<perlport/DESCRIPTION> suggests a 'general rule':
+There have been a few suggestions that the C<Tk> namespace should contain sub-categories
+named after various platforms, and that each of these have a C<Wizard> namespace, with
+that possibly having further sub-categories.  This may not really be in keeping with
+the philosophy outlined in the perldocs: the L<perlport/DESCRIPTION> suggests a 'general rule':
 
     ... When you approach a task commonly done using a
     whole range of platforms, think about writing portable code. That way,
@@ -121,28 +123,26 @@ The L<perlport/DESCRIPTION> suggests a 'general rule':
     some unique feature of a particular platform, as is often the case with
     systems programming ... consider writing platform-specific code.
 
-As there has yet to emmerge a suggestion of a task a cross-platform C<Tk::Wizard>
-base-class cannot impliment, I urge you, in the spirit of the three virtues
-(perl/NOTES), to visit comp.lang.perl.tk and cast an opinion one way or another.
+But it's a free CPAN...!
 
 Please also see L<IMPLIMENTATION NOTES>.
 
 =head1 IMPLIMENTATION NOTES
 
 This widget is implimented using the Tk 'standard' API as far as possible,
-given my almost two weeks of exposure to Tk. Please, if you have a suggestion,
+given my almost three weeks of exposure to Tk. Please, if you have a suggestion,
 send it to me directly: C<LGoddard@CPAN.org>.
+
+The widget is a C<MainWindow> and not a C<TopLevel> window. The reasoning is that
+Wizards are applications in their own right, and not usually parts of other
+applications. Although I've only three weeks of Tk, I believe it should be possible
+to embed a C<Tk::Wizard> into another window using C<-use> and C<-container> -- but
+any info on this practice would be appreciated.
 
 There is one outstanding bug which came about when this Wizard was translated
 from an even more naive implimentation to the more-standard manner. That is:
-C<Wizard> is a sub-class of C<MainWIndow>, the C<-background> is inacessible
+because C<Wizard> is a sub-class of C<MainWIndow>, the C<-background> is inacessible
 to me. Useful suggestions much appreciated.
-
-There is one item included which, despite the ramble in the section above, is platform
-specific. This is simply present at present for my own convenience - this module
-is currently being developed for a commercial project with a tight schedule.  These
-methods will later be removed to the sub-classes C<Tk::Wizard::Installer> and
-C<Tk::Wizard::Installer::Win32>.
 
 =head1 NOTES ON SUB-CLASSING Tk::Wizard
 
@@ -214,7 +214,7 @@ maintain or restore any initial current working directory.
 
 =item *
 
-The supplied images F<setup_blue.gif> and F<setup_blue_top.gif> are used by default.
+The supplied images F<wizard_blue.gif> and F<wizard_blue_top.gif> are used by default.
 If you supply others you will probably have to set the Wizard's C<-width> and
 C<-height> properties, as there is (currently) no image-sized checking performed.
 
@@ -236,9 +236,18 @@ Please see notes the C<-imagepath> entry, above.
 
 =item Class:  ""
 
-=item Switch: nohelpbutton
+=item Switch: -nohelpbutton
 
 Set to anything to disable the display of the I<Help> buton.
+
+=item Name:   resizable
+
+=item Class:  ""
+
+=item Switch: -resizable
+
+Supply a boolean value to allow resizing of the window: default
+is to disable that feature to minimise display issues.
 
 =back
 
@@ -250,9 +259,10 @@ sub Populate { my ($cw, $args) = @_;
     $cw->SUPER::Populate($args);
     $cw->ConfigSpecs(
 # ?		-title			=> ['SELF','title','Title','Generic Wizard'],
+# ?		-resizable		=> ['SELF','resizable','Resizable',undef],
 		-command    	=> ['CALLBACK', undef, undef, undef ],
 #		-foreground 	=> ['PASSIVE', 'foreground','Foreground', 'black'],
-		-background 	=> ['METHOD', 'background','Background', $Tk::platform eq 'MSWin32'? 'SystemButtonFace':'gray'],
+		-background 	=> ['METHOD', 'background','Background', $^O eq 'MSWin32'? 'SystemButtonFace':'gray'],
 		-style			=> ['PASSIVE',"style","Style","95"],
 		-imagepath		=> ['PASSIVE','topimagepath', 'Imagepath', undef],
 		-topimagepath	=> ['PASSIVE','topimagepath', 'Topimagepath', undef],
@@ -313,12 +323,20 @@ sub Populate { my ($cw, $args) = @_;
 		qw/ -relief groove -bd 1 -height 2/,
 	)->pack(qw/-side bottom -fill x/);
 
+	# Desktops for dir select: thanks to Slaven Rezic who also suggested SHGetSpecialFolderLocation for Win32. l8r
+	if ($^O eq 'MSWin32' and -d "$ENV{USERPROFILE}/Desktop"){
+		$cw->{desktop_dir} = "$ENV{USERPROFILE}/Desktop"
+	} elsif (-d "$ENV{HOME}/Desktop"){
+		$cw->{desktop_dir} = "$ENV{HOME}/Desktop";
+	} elsif (-d "$ENV{HOME}/.gnome-desktop"){
+		$cw->{desktop_dir} = "$ENV{HOME}/.gnome-desktop";
+	}
 	# Font used for &blank_frame titles
 	$cw->fontCreate(qw/TITLE_FONT -family verdana -size 12 -weight bold/);
 	# Fonts used if -style=>"top"
 	$cw->fontCreate(qw/TITLE_FONT_TOP -family verdana -size 8 -weight bold/);
 	$cw->fontCreate(qw/SUBTITLE_FONT  -family verdana -size 8 /);
-	# Font used in licence agreement
+	# Font used in licence agreement	XXX REMOVE TO CORRECT MODULE
 	$cw->fontCreate(qw/SMALL_FONT -family verdana -size 8 /);
 	# Font used in all other places
 	$cw->fontCreate(qw/DEFAULT_FONT -family verdana -size 8 /);
@@ -348,20 +366,22 @@ sub background { my ($self,$operand)=(shift,shift);
 	$wizard->addPage ($page_code_ref1 ... $page_code_refN)
 
 Adds a page to the wizard. The parameters must be references to code that
-evaluate to C<Tk::Frame> objects, such as those returned by the methods C<blank_frame>,
-C<addLicencePage> and C<addDirSelectPage>.
+evaluate to C<Tk::Frame> objects, such as those returned by the methods C<blank_frame>
+and C<addDirSelectPage>.
 
 Pages are (currently) stored and displayed in the order added.
 
 Returns the index of the page added, which is useful as a page UID when peforming
 checks as the I<Next> button is pressed (see file F<test.pl> supplied with the distribution).
 
-See also L<METHOD blank_frame>, L<METHOD addLicencePage> and L<METHOD addDirSelectPage>.
+See also L<METHOD blank_frame> and L<METHOD addDirSelectPage>.
 
 =cut
 
 sub addPage { my ($self, @pages) = (shift,@_);
-	croak __PACKAGE__."::addPage requires one or more CODE references as arguments" if grep {ref ne 'CODE'} @_;
+	if (grep {ref $_ ne 'CODE'} @pages){
+		croak "addPage requires one or more CODE references as arguments"
+	}
 	push @{$self->{wizardPageList}}, @pages;
 }
 
@@ -383,7 +403,7 @@ sub Show { my $self = shift;
 	$self->initial_layout;
 	$self->render_current_page;
 
-	$self->resizable( 0, 0);        # forbid resize
+	$self->resizable( 0, 0)	unless $self->{-resizable} and $self->{-resizable} =~/^(1|yes|true)$/i;
 	$self->withdraw;                # position in screen center
 	$self->Popup;
 	$self->transient;               # forbid minimize
@@ -440,7 +460,6 @@ sub render_current_page { my $self = shift;
 	$self->{nextButton}->focus(); # Default focus possibly over-ridden in wizardFrame
 	$self->{wizardFrame}->packForget if $self->{wizardFrame};
 	$self->{wizardFrame} = $self->{wizardPageList}->[$self->{wizardPagePtr}]->()->pack(qw/-side top/);
-#	$self->update;
 }
 
 
@@ -502,7 +521,7 @@ Also:
 
 	-width -height -background -font
 
-See also L<METHOD addLicencePage> and L<METHOD addDirSelectPage>.
+See also L<METHOD addDirSelectPage>.
 
 =cut
 
@@ -533,9 +552,8 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 		$main_wi = $args->{-width} || 300;
 	}
 	# Frame is the page container
-	my $frame = $self->parent->Frame(
-		-width=>$main_wi, -height=>$args->{-height}||316,
-	);
+	my $frame = $self->parent->Frame( -width=>$main_wi, -height=>$args->{-height}||316, );
+#	my $frame = $self->parent->Scrolled("Frame", -scrollbars=>'osoe',-width=>$main_wi, -height=>$args->{-height}||316, );
 	$frame->configure(-background => $main_bg) if $main_bg;
 
 	# For 'top' style pages other than first and last
@@ -585,7 +603,7 @@ sub blank_frame { my ($self,$args) = (shift,{@_});
 			$args->{-text} = "\n".$args->{-text};
 			$_ = $frame->Label(
 				-font => $args->{-font},
-				-justify => 'left',  -anchor=> 'n',
+				-justify => 'left',  -anchor=> 'w',
 				-wraplength => $wrap + 100,
 				-justify => "left", -text => $args->{-text}
 			)->pack(-side=>'top',-expand=>'1',-fill=>'x',-padx=>10);
@@ -716,8 +734,11 @@ including, on Win32, logical drives.
 Supply in C<-variable> a reference to a variable to set the initial directory,
 and to have set with the chosen path.
 
-Supply C<-nowarnings> to list only drives which are accessible, thus avoiding C<Tk::DirTree>
-warnings on Win32 where removable drives have no media.
+Supply C<-nowarnings> with a value of C<1> to list only drives which are accessible, thus avoiding C<Tk::DirTree>
+warnings on Win32 where removable drives have no media. Supply C<-nowarnings> with any other
+value to avoid listing drives which are both inacessible and - on Win32 - are either
+fixed drives, network drives, or RAM drives (that is types 3, 4, and 6, according
+to C<Win32API::File::GetDriveType>.
 
 You may also specify the C<-title>, C<-subtitle> and C<-text> paramters, as in L<METHOD blank_frame>.
 
@@ -734,23 +755,30 @@ sub addDirSelectPage { my ($self,$args) = (shift,{@_});
 #
 # As blank_frame plus:
 # -variable => Reference to a variable to set.
-# -nowarnings => chdir to each drive first and only list if accessible
+# -nowarnings => 1 : chdir to each drive first and only list if accessible
+#             => >1: as 1, plus on types 3,4 and 6.
 #
 sub page_dirSelect { my ($self,$args) = (shift,shift);
+	if (not $args->{-variable}){
+		croak "You must supply a -varialbe paramter";
+	} elsif (not ref $args->{-variable}){
+		croak "The -variable parameter must be a reference";
+	}
 	my $_drives = sub {
-		return '/' if $Tk::platform ne 'MSWin32';
+		return '/' if $^O !~ /MSWin32/i;
 		eval('require Win32API::File');
 		return Win32API::File::getLogicalDrives();
 	};
 	my ($frame,@pl) = $self->blank_frame(
 		-title => $args->{-title} || "Please choose a directory",
-		-subtitle => $args->{-text}  || "After you have made your choice, press Next to continue.",
+		-subtitle => $args->{-subtitle}  || "After you have made your choice, press Next to continue.",
+		-text => $args->{-text} || "",
 	);
 	$frame->Frame(-height=>10)->pack();
 	my $entry	= $frame->Entry(
 		-justify		=> 'left',
 		-width			=> 40,
-		-textvariable	=>$args->{-variable},
+		-textvariable	=> $args->{-variable},
 	)->pack(-side=>'top',-anchor=>'w',-fill=>"x", -padx=>10, -pady=>10,);
 	$entry->configure(-background=>$self->cget("-background")) if $self->cget("-background");
 	my $dirs	= $frame->Scrolled ( "DirTree",
@@ -788,7 +816,7 @@ sub page_dirSelect { my ($self,$args) = (shift,shift);
 			}
 		}, # end of -command sub
 	)->pack( -side => 'right', -anchor => 'w', -padx=>'10', );
-	if (-d "$ENV{USERPROFILE}/Desktop"){ # Where are desktops outside of Win32?
+	if ($self->{desktop_dir}){ # Thanks, Slaven Rezic.
 		$frame->Button( -text => "Desktop",
 			command => sub {
 				${$args->{-variable}} = "$ENV{USERPROFILE}/Desktop";
@@ -799,10 +827,16 @@ sub page_dirSelect { my ($self,$args) = (shift,shift);
 	}
 	foreach (&$_drives){
 		($_) = /^(\w+:)/;
-		if ($args->{-nowarnings}){
-			$dirs->configure(-directory=>$_) if chdir  $_
+		if ($args->{-nowarnings} and ($args->{-nowarnings} eq "1"
+		or $^O !~ /MSWin32/i)){
+			$dirs->configure(-directory=>$_) if chdir  $_;
+		} elsif ($args->{-nowarnings}){
+			if ($DRIVETYPES{Win32API::File::GetDriveType($_)}
+			and chdir  $_){
+				$dirs->configure(-directory=>$_);
+			}
 		} else {
-			$dirs->configure(-directory=>$_)
+			$dirs->configure(-directory=>$_);
 		}
 	}
 	return $frame;
@@ -840,8 +874,7 @@ sub callback_dirSelect { my ($self,$var) = (shift,shift);
 			-title => 'Directory does not exist',
 			-message => "The directory you selected does not exist.\n\n"."Shall I create ".$$var." ?"
 		);
-		if ($button eq 'yes'){
-			eval ('use File::Path');
+		if (lc $button eq 'yes'){
 			return 1 if File::Path::mkpath $$var;
 			$self->parent->messageBox(
 				-icon => 'warning', -type => 'ok',
@@ -862,6 +895,139 @@ sub callback_dirSelect { my ($self,$var) = (shift,shift);
 }
 
 
+=head2 METHOD addTaskListPage
+
+Adds a page to the Wizard that will perform a series of tasks, keeping the user
+informed by ticking-off a list as each task is accomplished.
+
+Whilst the task list is being executed, both the I<Back> and I<Next> buttons
+are disabled.
+
+Paramters are as for C<blank_frame> (see L<METHOD blank_frame>), plus:
+
+=over 4
+
+=item -tasks
+
+The tasks to perform, supplied as a reference to an array, where each entry is a pair (ie a two-member list),
+the first of which is a text string to display, the second a reference to code to execute.
+
+=item -delay
+
+The length of the  delay, in milliseconds, after the page has been displayed and
+before execution the task list is begun. See L<the entry for the 'after' routine in the Tk::After manpage|Tk::After>.
+
+=item -todo_photo
+
+=item -done_photo
+
+Optional: both C<Tk::Photo> objects, the former displayed before an item on the taks list has been executed,
+which is changed to the latter after completion of the item. If not provided, then not displayed.
+
+If I knew more about TK bitmaps, or any bitmaps other than Vic-20, I'd extend this to have defaults.
+
+=item -frame_args
+
+Optional: the arguments to pass in the creation of the C<Frame> object used to contain the list.
+
+=item -frame_pack
+
+Optional: array-refernce to pass to the C<pack> method of the C<Frame> containing the list.
+
+=back
+
+Example:
+
+	$wizard->addTaskListPage(
+		-title => "Toy example",
+		-tasks => [
+			"Wait five seconds" => sub { warn "waiting for 5 ...."; sleep 5;  print "ok 8\n"},
+			"Wait ten seconds!" => sub { warn "waiting for 10...."; sleep 10; print "ok 9\n"},
+		],
+	);
+
+=cut
+
+sub addTaskListPage { my ($self,$args) = (shift,{@_});
+	$self->addPage( sub { $self->page_taskList($args)  } );
+}
+
+
+=head2 METHOD page_taskList
+
+The same as C<addTaskListPage> (see L<METHOD addTaskListPage>)
+but does not add the page to the Wizard.
+
+Note that unlink C<addTaskListPage>, arguments are expected in a hash reference.
+
+Useful for a task list that cannot be filled before the call
+to C<Show()>.
+
+=cut
+
+sub page_taskList { my ($self,$args) = (shift,shift);
+	my @tasks;
+	if (not $args->{-todo_photo}){
+		warn "No -todo_photo" if $^W;
+	} elsif  (!-r $args->{-todo_photo}
+		or not $self->Photo( "todo", -file => $args->{-todo_photo})){
+		warn "Could not read -todo_photo at $args->{-todo_photo}" if $^W;
+		undef $args->{-todo_photo};
+	}
+	if (not $args->{-done_photo}){
+		warn "No -done_photo" if $^W;
+	} elsif (!-r $args->{-done_photo}
+	or !$self->Photo( "done", -file => $args->{-done_photo})){
+		warn "Could not read $args->{-done_photo}" if $^W;
+		undef $args->{-done_photo};
+	}
+	$args->{-frame_pack} = [qw/-pady 10 -padx 50 -fill x -expand 1/] unless $args->{-frame_pack};
+	$args->{-frame_args} = [-relief=>"groove",-bd=>1] unless $args->{-frame_args};
+
+	my $frame = $self->blank_frame(
+		-title => $args->{-title} || "Performing Taks",
+		-subtitle => $args->{-subtitle}  || "Please wait whilst the Wizard performs these tasks.",
+		-text => $args->{-text}  || "",
+	);
+	if ($#{$args->{-tasks}}==-1){
+		$frame->Label(-text=>'Please press next to continue.')->pack();
+		return $frame;
+	}
+	my $task_frame = $frame->Frame(@{$args->{-frame_args}})->pack( @{$args->{-frame_pack}} );
+	foreach ( my $i=0; $i<=$#{$args->{-tasks}}; $i+=2 ){
+		my $icn="-1";
+		$_ = $task_frame->Frame()->pack(-side=>'top',-anchor=>"w");
+		if (defined $args->{-todo_photo}){
+			$icn = $_->Label(-image=>"todo",-anchor=>"w")->pack(-side=>"left");
+		}
+		$_->Label(-text=>@{$args->{-tasks}}[$i],-anchor=>"w")->pack(-side=>"left");
+		push @tasks, [$icn,@{$args->{-tasks}}[$i+1]];
+	}
+	$self->{nextButton}->configure(-state=>"disabled");
+	$self->{backButton}->configure(-state=>"disabled");
+	$frame->after( $args->{-delay} || 1000, sub {
+		foreach my $task (@tasks){
+			&{@$task[1]};
+			if (ref @$task[0]){
+				@$task[0]->configure(-image=>"done")
+			}
+			$self->update;
+		}
+		$self->{nextButton}->configure(-state=>"normal");
+		$self->{backButton}->configure(-state=>"normal");
+	});
+	return $frame;
+}
+
+
+
+
+
+
+
+
+
+
 
 # Returns true if to continue
 # By default, may be called by close window or pressing cancel
@@ -871,7 +1037,7 @@ sub DIALOGUE_really_quit { my $self = shift;
 		my $button = $self->parent->messageBox('-icon' => 'question', -type => 'yesno',
 		-default => 'no', -title => 'Quit Setup?',
 		-message => "Setup has not finished installing.\n\nIf you quit now, you will not be able to run the software.\n\nDo you really wish to quit?");
-		$self->{really_quit} = $button eq 'yes'? 1:0;
+		$self->{really_quit} = lc $button eq 'yes'? 1:0;
 	}
 	return !$self->{really_quit};
 }
@@ -959,9 +1125,6 @@ The handler code should return a Boolean value, signifying whether the remainder
 the action should continue. If a false value is returned, execution of the event
 handler halts.
 
-Note that you may find it necessary to call the C<update> method upon the Wizard
-object whilst performing time consuming actions: see L<Tk::Widget/DESCRIPTION>.
-
 =over 4
 
 =item -preNextButtonAction =>
@@ -1048,7 +1211,7 @@ The labels of the buttons can be changed (perhaps into a language other an Engli
 by changing the values of the package-global C<%LABELS> hash, where keys are
 C<BACK>, C<NEXT>, C<CANCEL>, C<HELP>, and C<FINISH>.
 
-The text of the licence agreement page and callbacks can also be changed via the
+The text of the callbacks can also be changed via the
 C<%LABELS> hash: see the top of the source code for details.
 
 =head1 CAVEATS / BUGS / TODO
