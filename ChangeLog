@@ -1,0 +1,244 @@
+2007-03-12    <Daddy@C-3PO>
+
+	* multiple-files: cleaned up for new CVS repository
+	* Wizard.pm (currentPage): bug fix for off-by-one
+	* Wizard.pm (page_dirSelect): bug fix for $dirs being the wrong widget
+
+Version 1.953, 4 Mar. 2007 (interim release by Martin Thurn)	
+	
+	* Installer.pm (install_files): use catpath rather than raw slashes
+
+Version 1.952, 27 Feb. 2007 (interim release by Martin Thurn)	
+
+	* 52_Installer.t: does not rely on $ENV{TMP} now
+	* Installer.pm: $VERSION now works on linux
+	* Wizard.pm: $VERSION now works on linux
+
+Version 1.951, 19 Feb. 2007 (interim release by Martin Thurn)	
+	
+	* Wizard.pm: All "ButtonAction" callbacks now must really return non-false value in order for operation to continue, as the documentation has always said.  (Previous release seemed to be opposite?)
+	* Wizard.pm: new method addFileSelectPage()
+	* All tests pass (with some ignorable warnings) on MSWin32 with ActivePerl build 819; not tested on other platforms (yet).
+	
+Version 1.9451, 19 June 2006
+
+	* Wizard.pm: CloseWindowEventCycle was calling self->destroy but should have called parent->self->destroy if the parent was defined by itself
+
+Version 1.945, 18 June 2006
+	
+	* Wizard.pm: fixed -resizable
+	* Wizard.pm: fixed -width and -height for individual pages
+	* Wizard.pm: Withraw the parent during our lifetime
+	* Wizard.pm: Assume we are passed a MainWindow like a normal widget; add one if it doesn't exist, to maintain backwards compatability and to be useful in my installer scripts
+
+Version 1.944, 18 May 2006
+
+	* 50_Installer.t - Installer test checks if we're online by using LWP - no ExtUtils to do this...?
+	* Wizard.pM: Lee added finishButtonAction again	
+	* Wizard.pm: ET#19340 for clothohk, allowed the -height and -width to adjust the window size per frame
+	
+Version 1.943, 17 May 2006
+
+	* Wizard.pM: Lee added fixed typo in test causing RT #19297 by clothohk
+	* Wizard.pM: Lee added destroy to finishButtonAction prototype
+	* Wizard.pm: Lee fiddled with CloseWindowEventCycle destroy 
+	* Wizard.pm: Lee updated POD to reflect auto-destroy of previous version.
+	* Wizard.pm: Lee added -debug.
+	* Installer.pm: update to SYNOPSIS from clothohk
+	
+Version 1.942, 24 April 2006
+
+	* Wizard.pm: added &fix_wait to prevent weird Tk error messages
+	* Wizard.pm: call &fix_wait in blank_frame
+	* Installer.pm: &fix_wait 
+	* Installer.pm: remove progress bars when job is done and replace with -done_text
+	* Updated Installer.t to use Test::More
+
+VERSION 1.941, 23 April 2006
+	
+	* Wizard.pm: Added Martin's patch to by default support Base64 photos in TaskList
+	* Wizard.pm: Added to TaskList more photo states added state indicators
+	* Wizard.pm: Added POD for 'destroy'
+	* Wizard.pm: Remvoed POD for postFinishButtonAction
+	* Wizard.pm: Added preFinishButtonAction
+	* Wizard.pm: bug fix in NextButtonEventCycle: CloseWindowEventCycle ends logic,
+	  rather than falling through to the remainder of the next button actions.
+	
+VERSION 1.94, 22 April 2006
+
+	* Patch by Martin Thurn: sorry it's late:
+	* Wizard.pm: fix a typo "image_idr"
+ 	* Wizard.pm: Removed image_dir option
+ 	* Removed binary images in lib/Wizard/images
+ 	* Added Tk::Wizard::Image to supply Base 64 images
+	* Wizard.pm: add a sentence of pod for postNextButtonAction
+
+VERSION 1.92
+
+	* Patch by Martin Thurn: thanks!
+	* in Installer.pm, prevent Tk core dump when background is undef
+	* in Installer.pm, eliminate the big empty space on the licence_page
+	* in Wizard.pm, make all of the user portion (but none of the button/borders) expand when the window is resized
+
+VERSION 1.90, May 2005
+	
+	Um... had my first child, can't remember what the patch was.
+	
+VERSION 1.08,
+
+	* Mainly release to get the test suite working again,
+	  and totally automated and devoid of net-access requirement
+	* added -image_dir to help test suite
+	- Martin said images are found in sitelibexp, not installsitearch
+	  but that is not the case from the test suite.
+	* replaced -wait to test suite for automated testing
+	* dir select page for Win32 now tests for fixed drives when -nowarnings ne 1
+	* test script for dir selet page -nowarnings=9
+	* propogate -wait to all routines based on blank_frame, even dirselect for auto tests
+	* weird errors from NextButtonEventCycle when final page has -wait call "forward"
+	* simplified Installer test, remvoing dir select
+	* Added hashes to Installer warnings
+	* Passes all tests on Windoze. Will try Debian on Monday.
+
+VERSION 1.07, patched by Martin Thurn <mthurn@verizon.net>:
+
+	* lib/Tk/Wizard.pm (Show, render_current_page): BUGFIX for DirSelectPage leaving Cwd in an unknown place
+	* lib/Tk/Wizard.pm: Fixed [most!] typos in pod
+	* lib/Tk/Wizard.pm (page_dirSelect): FIX: if caller dictates height, expand widgets to fit
+	* lib/Tk/Wizard.pm (blank_frame): BUGFIX: top image had wrong bgcolor
+	* lib/Tk/Wizard.pm (Populate): BUGFIX: -imagepath instead of -topimagepath in 2 places
+	* lib/Tk/Wizard.pm (Populate): FIX for some widgets having wrong bgcolor
+	* lib/Tk/Wizard.pm (page_dirSelect): clean up extraneous hardcoded references to %ENV
+	* lib/Tk/Wizard.pm (page_dirSelect): BUGFIX: missing '-' in front of 'command'
+	* lib/Tk/Wizard.pm (Populate): cleaned up the "tag text" (still not perfect, but better)
+	* lib/Tk/Wizard.pm (_font_family): more flexible font handling; better default fonts on Unix
+	* lib/Tk/Wizard.pm (Populate): images are found in sitelibexp, not installsitearch
+
+VERSION 1.06
+
+	*	Tk::Installer supports downloads;
+
+	*	-continue dropped for semmantically inverse but more apt -wait
+
+	*	Tk::Wizard::Installer::Win32 uses Win32.pm falls back to Win32::OLE
+
+	*	Tk::Wizard - added -wait to blank_page
+
+	*	First and last frames fill frame when -style=>top is specified
+
+	*	DIALOGUE_really_quit referred to "Set Up" which wasn't very generic.
+		Now just refers to the wizard.
+
+	*	Bug fixed for default -style.
+
+VERSION 1.038, 11 April 2003
+
+	*	Images install to perlsitearch dir and are
+		used by default; added more warnings.
+
+	*	Win32::Installer can now create shortcuts!
+
+VERSION 1.037, 08 April 2003
+
+	*	Added addStartMenuPage to Tk::Wizard::Installer::Win32
+
+	*	Added -tag_text to Tk::Wizard
+
+	*	Removed BACK and CANCEL buttons from Finish page.
+
+VERSION 1.036, 04 April 2003
+
+	*	New page type, text_frame via addTextFrame.
+
+	*	New page type, multiple choice.
+
+VERSION 1.035, 02 April 2003
+
+	*	-nohelpbutton bug now corrected
+
+	*	-continue now works for empty task lists
+		(previously it asked for a key to be pressed)
+
+VERSION 1.034, 21 January 2003
+
+	*	Typed = instead of =~, resulting in
+		incomplete dir listings in DirTrees.
+
+VERSION 1.033, 20 January 2003
+
+	*	Fixed lack of require of File::Path
+
+VERSION 1.032
+
+	*	Added &forward> and &backward, mainly to automate tests.
+
+	*	Added -continue method to &Tk::Wizard::Installer::addFileListPage
+		and &Tk::Wizard::addTaskListPage.
+
+VERSION 1.031
+
+	*	Added method &addTaskListPage (etc) to Tk::Wizard;
+
+	*	Added -resizable switch; added warnings in addPage.
+
+	*	Added method &addFileListPage (etc) to Tk::Wizard::Installer
+
+VERSION 1.03
+
+	*	Added basic tests/examples using Test::Harness.
+
+	*	Re-arranged buttons so CANCEL is in most accessible place;
+		added button spacing
+
+	*	Some more error checking
+
+	*   Implimented as a Tk "composite" widget, based on
+		"Tk::MainWindow".
+
+	*   Removed licence method to Tk::Wizard::Installer
+		and the Windows' registry method to Tk::Wizard::Installer::Win32.
+
+	*   Added "-nowarnings" to "addDirSelectPage" method.
+
+	*   Solaris "SystemButtonFace" resolved with little satisfaction to
+		a pre-defined colour.
+
+VERSION 1.021
+
+	*   More minor display tweeks.
+
+	*   Added internationalisation of button labels.
+
+VERSION 1.02
+
+	*   All known display issues fixed.
+
+	*   Warnings about stupid things if run undef "-w".
+
+	*   Directory selection method cleaned, fixed and extended.
+
+	*   "-style="top> implimented.
+
+	*   Windows "uninstall" feature: thanks to James Tillman and Paul
+		Barker for info.
+
+VERSION 1.01
+
+	*   Added method "blank_frame" that can take title and standfirst
+		text.
+
+	*   Added licence agreement bits.
+
+	*   Modified spacing, added default font and background; changed
+		"filename" field to "-imagepath" for readability; made all
+		arguments begin with "-" to fit in with Tk "switches"; made the
+		supply of a "MainWindow" to the constructor optional, and
+		changed the supply method from a reference to part of the passed
+		name/value list.
+
+VERSION 1.0
+
+	Initial version by Daniel T Hable, found with Google, at
+	http://perlmonks.thepen.com/139336.html.
+
+#

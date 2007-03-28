@@ -3,6 +3,7 @@ our $VERSION = 0.1;	# 29 November 2002 14:41 CET
 
 use strict;
 use Cwd;
+use lib '../lib';
 
 print "1..4\n";
 
@@ -12,9 +13,6 @@ print "ok 1\n";
 
 my $wizard = new Tk::Wizard(
 	-title => "Bad Argument Test",
-	-imagepath => cwd."/wizard_blue.gif",
-	-style	=> 'top',
-	-topimagepath => cwd."/wizard_blue_top.gif",
 );
 
 print ref $wizard eq "Tk::Wizard"? "ok 2\n" : "not ok 2\n";

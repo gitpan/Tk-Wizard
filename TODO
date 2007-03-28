@@ -1,0 +1,11 @@
+Tk::Wizard TODO
+
+* Fix the shadowy text along the line above the buttons.
+
+* Fit text to pages, with scrollbars.
+
+* Make MainWindow an option
+
+* TaskList background when coloured
+
+$Id: TODO,v 1.2 2007/03/13 00:30:31 martinthurn Exp $
