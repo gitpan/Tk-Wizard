@@ -1,16 +1,17 @@
 #! perl -w
 
-my $VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
-
 use Cwd;
 use ExtUtils::testlib;
 use Test::More tests => 25;
 
 use strict;
 
-BEGIN {
-	use_ok('Tk::Wizard');
-};
+BEGIN
+  {
+  use_ok('Tk::Wizard');
+  }
+
+my $VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
 my $WAIT = 1;
 

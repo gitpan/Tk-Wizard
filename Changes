@@ -1,3 +1,7 @@
+2007-04-18    <Daddy@C-3PO>
+
+	* Wizard.pm (addTextFrame): fix args grabbing and passing (thanks Peter Weber!)
+
 2007-03-12    <Daddy@C-3PO>
 
 	* multiple-files: cleaned up for new CVS repository

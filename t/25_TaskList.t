@@ -1,14 +1,16 @@
 
+# $Id: 25_TaskList.t,v 1.2 2007/04/19 02:39:57 martinthurn Exp $
+
 use ExtUtils::testlib;
-use Test::More tests=>6;
+use Test::More tests => 6;
 use warnings;
 use strict;
-use lib '../lib';
 my $class;
-BEGIN {
-	$class = 'Tk::Wizard';
-	use_ok($class)
-};
+BEGIN
+  {
+  $class = 'Tk::Wizard';
+  use_ok($class);
+  }
 
 my $wizard = new $class( -title => "Task List Test", );
 isa_ok($wizard, $class);
@@ -29,20 +31,23 @@ ok($wizard->addTaskListPage(
 
 $wizard->Show();
 MainLoop;
-ok(1,'Post MainLoop');
+pass('after MainLoop');
 exit;
 
-sub task_good {
+sub task_good
+  {
   sleep 1;
   return 1;
   }
 
-sub task_fail {
+sub task_fail
+  {
   sleep 1;
   return 0;
   }
 
-sub page_splash {
+sub page_splash
+  {
   my $wizard = shift;
   return $wizard->blank_frame(
                               -wait => 2,

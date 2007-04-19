@@ -1,12 +1,12 @@
 
-# $Id: Wizard.pm,v 2.12 2007/03/28 12:13:09 martinthurn Exp $
+# $Id: Wizard.pm,v 2.13 2007/04/19 02:55:07 martinthurn Exp $
 
 package Tk::Wizard;
 
 $Tk::Wizard::DEBUG = undef;
 
 our
-$VERSION = do { my @r = (q$Revision: 2.12 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 2.13 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -980,9 +980,11 @@ Accepts the usual C<-title>, C<-subtitle>, and C<-text> like C<blank_frame>.
 
 =cut
 
-sub addTextFrame { my ($self,$args) = (shift,{@_});
-	return $self->addPage( sub { $self->text_frame($args)  } );
-}
+sub addTextFrame
+  {
+  my ($self, @args) = (shift, @_);
+  return $self->addPage( sub { $self->text_frame(@args)  } );
+  } # addTextFrame
 
 
 sub text_frame { my ($self,$args) = (shift,{@_});

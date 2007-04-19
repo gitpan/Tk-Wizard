@@ -1,21 +1,21 @@
 #! perl -w
-our $VERSION = 0.5;	# 03 June 2006
 
 use strict;
-use Cwd;
+use ExtUtils::testlib;
+use Test::More 'no_plan';
 
-BEGIN {
-	use lib '../lib';
-	use Test::More;
-	if( $^O !~ /win/i ) {
-		plan skip_all => "MSWin32 module on $^O";
-	}
-	else {
-		plan tests => 1;
-	}
-}
+BEGIN
+  {
+  use_ok('Tk::Wizard');
+  }
 
-use_ok("Tk::Wizard::Installer::Win32");
+my $VERSION = do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
+my $iWIN32 = ($^O =~ m!win32!i);
+SKIP:
+  {
+  skip 'because this computer is not MSWin32', 1 if $iWIN32;
+  use_ok("Tk::Wizard::Installer::Win32");
+  } # end of SKIP block
 
-1;
+__END__

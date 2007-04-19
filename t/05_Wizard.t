@@ -3,13 +3,12 @@
 use ExtUtils::testlib;
 use Test::More no_plan;
 
-BEGIN {
-	use lib '../lib';
-	use_ok('Tk::Wizard')
-};
+BEGIN
+  {
+  use_ok('Tk::Wizard');
+  }
 
-
-my $VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+my $VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 use warnings;
 use strict;
 use Cwd;

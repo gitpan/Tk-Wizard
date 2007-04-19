@@ -3,12 +3,12 @@
 use ExtUtils::testlib;
 use Test::More no_plan;
 
-BEGIN {
-	use lib '../lib';
-	use_ok('Tk::Wizard')
-};
+BEGIN
+  {
+  use_ok('Tk::Wizard');
+  }
 
-my $VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+my $VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
 use strict;
 use FileHandle;
@@ -66,30 +66,33 @@ foreach my $style ('top', '95') {
 			-value=>'two',},
 		],
 	) );
-	$GET_DIR = $wizard->addDirSelectPage (
-		-wait		=> $WAIT,
-		-nowarnings => "9",
-		-variable	=> \$user_chosen_dir,
-	);
+	$GET_DIR = $wizard->addDirSelectPage(
+                                             -wait => $WAIT,
+                                             -nowarnings => "9",
+                                             -variable => \$user_chosen_dir,
+                                            );
 	is($GET_DIR, 7);
-	$GET_FILE = $wizard->addFileSelectPage (
-                                                -wait => $WAIT,
-                                                -variable	=> \$user_chosen_file,
-                                               );
+	$GET_FILE = $wizard->addFileSelectPage(
+                                               -wait => $WAIT,
+                                               -variable => \$user_chosen_file,
+                                              );
 	is($GET_FILE, 8);
-
-	my $p = $wizard->addPage(
-		sub {
-			$wizard->blank_frame (
-				-wait		=> $WAIT,
-				-title		=>"Finished",
-				-subtitle 	=> "Please press Finish to leave the Wizard.",
-				-text => "If you saw some error messages, they came from Tk::DirTree, and show "
-				."that some of your drives are inacessible - perhaps a CD-ROM drive without "
-				."media.  Such warnings can be turned off - please see the documentation for details."
-			);
-		}
-	);
+	my $iTEXT = $wizard->addTextFrame(
+                                          -wait => $WAIT,
+                                          -title =>"Text Page Title",
+                                          -text => "Text Page Text",
+                                         );
+	is($iTEXT, 9);
+	my $p = $wizard->addPage(sub
+                                   {
+                                   $wizard->blank_frame(
+                                                        -wait => $WAIT,
+                                                        -title =>"Finished",
+                                                        -subtitle => "Please press Finish to leave the Wizard.",
+                                                        -text => "If you saw some error messages, they came from Tk::DirTree, and show that some of your drives are inacessible - perhaps a CD-ROM drive without media.  Such warnings can be turned off - please see the documentation for details."
+                                                       );
+                                   },
+                                );
 	ok($p);
 	isa_ok($wizard->parent, "Tk::MainWindow");
 	$wizard->Show;

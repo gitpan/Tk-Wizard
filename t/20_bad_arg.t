@@ -1,37 +1,33 @@
 #! perl -w
-our $VERSION = 0.1;	# 29 November 2002 14:41 CET
 
 use strict;
-use Cwd;
-use lib '../lib';
+use ExtUtils::testlib;
+use Test::More 'no_plan';
 
-print "1..4\n";
+BEGIN
+  {
+  use_ok('Tk::Wizard');
+  }
 
-use Tk::Wizard;
-use Tk::ProgressBar;
-print "ok 1\n";
+my $VERSION = do { my @r = (q$Revision: 1.3 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
 my $wizard = new Tk::Wizard(
-	-title => "Bad Argument Test",
-);
+                            -title => "Bad Argument Test",
+                           );
+isa_ok($wizard, "Tk::Wizard");
 
-print ref $wizard eq "Tk::Wizard"? "ok 2\n" : "not ok 2\n";
+my $i1 = $wizard->addPage( sub{
+                             return $wizard->blank_frame(-title => "title",
+                                                         -text => 'test',
+                                                        );
+                             });
+is($i1, 1);
 
-$_ = $wizard->addPage( sub{
-	return $wizard->blank_frame(-title=>"Welcome to the Wizard Test 'pb'",
-		-text=>
-			"This script tests and hopefully demonstrates the 'postNextButtonAction' feature.\n\n"
-			."When you click Next, a Tk::ProgressBar widget should slowly be udpated."
-		);
-});
-
-print $_==1? "ok 3\n":"not ok 3\n";
-
-eval (' $_ = $wizard->addPage( "This will break" ) ');
-warn $@;
-print $@=~/addPage requires one or more CODE references as arguments/? "ok 4\n":"not ok 4\n";
-
+eval(' $wizard->addPage( "This will break" ) ');
+like($@, qr/addPage requires one or more CODE references as arguments/);
 
 exit;
+
+__END__
 
 
