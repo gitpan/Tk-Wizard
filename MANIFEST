@@ -20,6 +20,7 @@ t/05_Wizard.t
 t/06_AutoDestroy.t
 t/10_Wizard.t
 t/20_bad_arg.t
+t/22_skip.t
 t/25_TaskList.t
 t/30_pb.t
 t/40_Win32.t
@@ -28,4 +29,8 @@ t/52_Installer.t
 t/70_TopLevel.t
 t/77_dirselect.t
 t/99_prepost.t
+t/dos.txt
+t/extra.txt
+t/pod.t
+t/unix.txt
 TODO

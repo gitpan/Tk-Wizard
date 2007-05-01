@@ -1,10 +1,13 @@
 
-# $Id: Installer.pm,v 2.6 2007/03/13 03:36:11 martinthurn Exp $
+# $Id: Installer.pm,v 2.10 2007/04/28 14:21:51 martinthurn Exp $
 
 package Tk::Wizard::Installer;
 
+use strict;
+use warnings;
+
 our
-$VERSION = do { my @r = (q$Revision: 2.6 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 2.10 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -34,10 +37,7 @@ Tk::Wizard::Installer - building-blocks for a software install wizard
 
 =cut
 
-use strict;
 use Carp;
-use warnings;
-no warnings 'redefine';
 use Cwd;
 use File::Path;
 use File::Copy;
@@ -96,23 +96,23 @@ plus those listed in the remainder of this document.
   $wizard->addLicencePage ( -filepath => $path_to_licence_text )
 
 Adds a page (C<Tk::Frame>) that contains a scroll text box of a licence text file
-specifed in the C<-filepath> argument. Presents the user with two
-options: accept and continue, or don't accept and quit. The user
-I<cannot> progress until the former option has been chosen. The
+specifed in the C<-filepath> argument.  Presents the user with two
+options: accept, or don't accept.  The user
+I<cannot> progress until the former option has been chosen.  The
 choice is entered into the object field C<licence_agree>, which you
 can test as the I<Next> button is pressed, either using your own
 function or with the Wizard's C<callback_licence_agreement> function.
-
-You could supply a copy of the licence that comes with Perl.
 
 See L<CALLBACK callback_licence_agreement> and L<METHOD page_licence_agreement>.
 
 =cut
 
-sub addLicencePage { my ($self,$args) = (shift, {@_});
-	die "No -filepath argument present" if not $args->{-filepath};
-	$self->addPage( sub { $self->page_licence_agreement($args->{-filepath} )  } );
-}
+sub addLicencePage
+  {
+  my ($self, $args) = (shift, {@_});
+  die "No -filepath argument present" if not $args->{-filepath};
+  $self->addPage( sub { $self->page_licence_agreement($args) } );
+  } # addLicencePage
 
 
 #
@@ -132,57 +132,78 @@ sub addLicencePage { my ($self,$args) = (shift, {@_});
 #
 # See also L<CALLBACK callback_licence_agreement>.
 #
-sub page_licence_agreement { my ($self,$licence_file) = (shift,shift);
-	local *IN;
-	my $text;
-	my $padx = $self->cget(-style) eq 'top'? 30 : 5;
-	$self->{licence_agree} = undef;
-	open IN,$licence_file or croak "Could not read licence: $licence_file; $!";
-	read IN,$text,-s IN;
-	close IN;
-	my ($frame,@pl) = $self->blank_frame(
-		-title	 =>"End-user Licence Agreement",
-		-subtitle=>"Please read the following licence agreement carefully.",
-	);
-	my $t = $frame->Scrolled(
-		qw/ROText -relief sunken -borderwidth 2 -font SMALL_FONT -width 10 -setgrid true
-		-height 9 -scrollbars e -wrap word/
-	);
-
-	$t->insert('0.0', $text);
-	$t->configure(-state => "disabled");
-	$t->pack(qw/-expand 1 -fill both -padx 10 -pady 10/);
-	my %opts1 = (
-		-font => $self->{defaultFont},
-		-text     => $LABELS{LICENCE_OPTION_YES},
-		-variable => \${$self->{licence_agree}},
-		-relief   => 'flat',
-		-value    => 1,
-		-anchor	=> 'w',
-	);
-        # Setting -background to undef causes core dump deep inside Tk!
-        $opts1{-background} = $self->cget("-background") if $self->cget("-background");
-
-	if ($^O !~ /(win32|cygwin)/i){
-		$opts1{-underline} = 2;
-	}
-	$frame->Radiobutton( %opts1 )->pack(-padx=>$padx, -anchor=>'w',);
-	my %opts2 = (
-		-font => $self->{defaultFont},
-		-text     => $LABELS{LICENCE_OPTION_NO},
-		-variable => \${$self->{licence_agree}},
-		-relief   => 'flat',
-		-value    => 0,
-		-anchor	=> 'w',
-	);
-        # Setting -background to undef causes core dump deep inside Tk!
-        $opts2{-background} = $self->cget("-background") if $self->cget("-background");
-	if ($^O !~ /(win32|cygwin)/i){
-		$opts2{-underline} = 5;
-	}
-    $frame->Radiobutton(%opts2)->pack(-padx=>$padx, -anchor=>'w',);
-	return $frame;
-}
+sub page_licence_agreement
+  {
+  my ($self,$args) = (shift,shift);
+  local *IN;
+  my $text;
+  my $padx = $self->cget(-style) eq 'top'? 30 : 5;
+  $self->{licence_agree} = undef;
+  my $sFname = $args->{-filepath};
+  open IN, $sFname or croak "Could not read licence from $sFname: $!";
+  read IN, $text, -s IN;
+  close IN or warn;
+  # Clean up line endings because Tk::ROText on *NIX displays them:
+  $text =~ s![\r\n]+!\n!g;
+  my ($frame,@pl) = $self->blank_frame(
+                                       -title => "End-user Licence Agreement",
+                                       -subtitle => "Please read the following licence agreement carefully.",
+                                      );
+  my $t = $frame->Scrolled('ROText',
+                           -relief => 'sunken',
+                           -borderwidth => 2,
+                           -font => 'SMALL_FONT',
+                           -width => 10,
+                           -setgrid => 'true',
+                           -height => 9,
+                           -scrollbars => 'e',
+                           -wrap => 'word',
+                          );
+  $t->insert('0.0', $text);
+  $t->configure(-state => "disabled");
+  $t->pack(qw/-expand 1 -fill both -padx 10 -pady 10/);
+  my %opts1 = (
+               -font => $self->{defaultFont},
+               -text     => $LABELS{LICENCE_OPTION_YES},
+               -variable => \${$self->{licence_agree}},
+               -relief   => 'flat',
+               -value    => 1,
+               -anchor	=> 'w',
+              );
+  # Setting -background to undef causes core dump deep inside Tk!
+  $opts1{-background} = $self->cget("-background") if $self->cget("-background");
+  if ($^O !~ /(win32|cygwin)/i)
+    {
+    $opts1{-underline} = 2;
+    } # if
+  $frame->Radiobutton( %opts1 )->pack(-padx=>$padx, -anchor=>'w',);
+  my %opts2 = (
+               -font => $self->{defaultFont},
+               -text     => $LABELS{LICENCE_OPTION_NO},
+               -variable => \${$self->{licence_agree}},
+               -relief   => 'flat',
+               -value    => 0,
+               -anchor	=> 'w',
+              );
+  # Setting -background to undef causes core dump deep inside Tk!
+  $opts2{-background} = $self->cget("-background") if $self->cget("-background");
+  if ($^O !~ /(win32|cygwin)/i)
+    {
+    $opts2{-underline} = 5;
+    } # if
+  $frame->Radiobutton(%opts2)->pack(-padx=>$padx, -anchor=>'w',);
+  if ($args->{-wait})
+    {
+    Tk::Wizard::fix_wait( \$args->{-wait} );
+    # $frame->after($args->{-wait},sub{$self->forward});
+    $frame->after($args->{-wait}, sub {
+                    $self->{nextButton}->configure(-state=>'normal');
+                    $self->{nextButton}->invoke;
+                    }
+                 );
+    } # if WAIT
+  return $frame;
+  } # page_licence_agreement
 
 
 =head2 CALLBACK callback_licence_agreement
@@ -392,7 +413,7 @@ sub page_fileList { my ($self,$args) = (shift,shift);
 					$self->{nextButton}->invoke;
 				}
 			);
-		}
+		} # if WAIT
 
 	});
 	return $frame;
@@ -550,7 +571,7 @@ this dialogue refers to "the Instllaer", rather than "the Wizard".
 
 =cut
 
-sub Tk::Wizard::DIALOGUE_really_quit { my $self = shift;
+sub DIALOGUE_really_quit { my $self = shift;
 	return 0 if $self->{nextButton}->cget(-text) eq $LABELS{FINISH};
 	warn "# Installer DIALOGUE_really_quit  ...\n" if $self->{-debug};
 	unless ($self->{really_quit}){
@@ -658,7 +679,7 @@ if it cannot download the requested data.
 
 Text to display when complete. Default: I<complete>.
 
-= back
+=back
 
 Would it be useful to impliment globbing for FTP URIs?
 
@@ -913,8 +934,8 @@ sub download_quit { my ($self,$failed) = (shift,shift);
 	$self->CloseWindowEventCycle if lc $button eq 'yes';
 }
 
-
 1;
+
 __END__
 
 =head1 INTERNATIONALISATION
@@ -937,7 +958,7 @@ It would be nice to have an 'Estimated Time Remaining' feature for the copy rout
 
 How about a remove-before-copy feature, and removing of directories?  When there is time, yes.
 
-=cut
+=back
 
 =head1 SEE ALSO
 

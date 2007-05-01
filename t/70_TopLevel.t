@@ -8,7 +8,7 @@ BEGIN
   use_ok('Tk::Wizard')
   }
 
-my $VERSION = do { my @r = (q$Revision: 1.4 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+my $VERSION = do { my @r = (q$Revision: 1.5 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
 use strict;
 use FileHandle;
@@ -19,7 +19,7 @@ my $root = cwd =~ /\/t$/? '..' : '.';
 
 use vars qw/$GET_DIR $user_chosen_dir $SPLASH/;
 
-our $WAIT = 1;
+our $WAIT = 100;
 my $MW;
 
 #

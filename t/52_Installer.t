@@ -1,16 +1,20 @@
-#! perl
+# $Id: 52_Installer.t,v 1.7 2007/04/28 14:22:41 martinthurn Exp $
 
-my $VERSION = 1.952;  # Martin Thurn, 2007-02-27
+my
+$VERSION = do { my @r = (q$Revision: 1.7 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
+use ExtUtils::testlib;
 use Test::More no_plan;
 
-use warnings;
 use strict;
-use ExtUtils::testlib;
+use warnings;
 
-use_ok("Tk::Wizard::Installer");
+BEGIN
+  {
+  use_ok("Tk::Wizard::Installer");
+  }
 
-my $WAIT = 1;
+my $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 111;
 my @asFrom = qw( 1 2 );
 my @asDest = qw( 3 4 );
 
@@ -41,6 +45,7 @@ for (@asDest)
   ok(! -e $sDest, qq'destination file $sDest does not exist before test');
   } # for 3,4
 
+my $iPageCount = 0;
 my $wizard = Tk::Wizard::Installer->new(
                                         -title	=> "Installer Test",
                                        );
@@ -55,12 +60,26 @@ ok( $wizard->configure(
 isa_ok($wizard->cget(-preNextButtonAction), "Tk::Callback");
 isa_ok($wizard->cget(-finishButtonAction), "Tk::Callback");
 
-
 # Create pages
 #
 my $SPLASH  = $wizard->addPage( sub{ page_splash ($wizard)} );
-is($SPLASH,1,'Splash page is first');
-
+is($SPLASH, 1, 'Splash page is first');
+$iPageCount++;
+ok($wizard->addLicencePage(
+                           -wait => $WAIT,
+                           -filepath => 't/dos.txt',
+                          ), 'added DOS license page');
+$iPageCount++;
+ok($wizard->addLicencePage(
+                           -wait => $WAIT,
+                           -filepath => 't/unix.txt',
+                          ), 'added UNIX license page');
+$iPageCount++;
+ok($wizard->addLicencePage(
+                           -wait => $WAIT,
+                           -filepath => 't/extra.txt',
+                          ), 'added "extra" license page');
+$iPageCount++;
 ok(
    $wizard->addFileListPage(
                             -wait => $WAIT,
@@ -69,7 +88,7 @@ ok(
                             -to => [ map { "$testdir/$_" } @asDest ],
                            )
    , 'added File List page');
-
+$iPageCount++;
 ok( $wizard->addPage( sub {
 	return $wizard->blank_frame(
 		-wait	=> $WAIT,
@@ -78,12 +97,13 @@ ok( $wizard->addPage( sub {
 		-text => "Please report bugs via rt.cpan.org - thanks!"
 	);
 }),'Add finish page');
+$iPageCount++;
 
-isa_ok($wizard->{wizardPageList},'ARRAY', 'Page list array');
-is(scalar(@{$wizard->{wizardPageList}}), 3, 'Number of pages');
-foreach (0..2)
+isa_ok($wizard->{wizardPageList}, 'ARRAY', 'Page list array');
+is(scalar(@{$wizard->{wizardPageList}}), $iPageCount, 'Number of pages');
+foreach my $iPage (1..$iPageCount)
   {
-  isa_ok($wizard->{wizardPageList}->[$_], 'CODE', qq'Page $_ in list');
+  isa_ok($wizard->{wizardPageList}->[$iPage-1], 'CODE', qq'Page $iPage in list');
   } # foreach
 
 ok($wizard->Show, "Show");
@@ -101,11 +121,7 @@ for (@asDest)
   unlink $sDest or diag "Can not remove $sDest: $!";
   } # for
 
-
 unlink $testdir;
-
-exit;
-
 
 sub page_splash { my $wizard = shift;
 	my ($frame,@pl) = $wizard->blank_frame(
@@ -115,9 +131,7 @@ sub page_splash { my $wizard = shift;
 		-text		=> "Test Installer's addFileListPage feature for RT #19300."
 	);
 	return $frame;
-}
-
-
+} # page_splash
 
 sub preNextButtonAction { return 1; }
 

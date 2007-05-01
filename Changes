@@ -1,3 +1,18 @@
+2007-05-01    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (setPageSkip): new method
+	(setPageUnskip): new method
+
+2007-04-28    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard/Installer.pm (page_licence_agreement): fix line endings on license text
+	(addLicencePage): pass all arguments to page creation function
+
+2007-04-21    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm: fix pod syntax errors
+	* lib/Tk/Wizard/Installer.pm: fix pod syntax errors
+
 2007-04-18    <Daddy@C-3PO>
 
 	* Wizard.pm (addTextFrame): fix args grabbing and passing (thanks Peter Weber!)

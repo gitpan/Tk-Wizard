@@ -1,29 +1,33 @@
 
-# $Id: Win32.pm,v 2.7 2007/03/13 03:36:11 martinthurn Exp $
+# $Id: Win32.pm,v 2.8 2007/04/21 20:41:44 martinthurn Exp $
 
 package Tk::Wizard::Installer::Win32;
 
-our
-$VERSION = do { my @r = (q$Revision: 2.7 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+use strict;
 
-BEGIN {
-	use Carp;
-	use Tk::Wizard::Installer;
-	use Win32::Shortcut;
-	use File::Path;
-	require Exporter;
-	@ISA = "Tk::Wizard::Installer";
-	@EXPORT = ("MainLoop");
-	use Cwd;
-	require Win32;
-	if ($Win32::VERSION lt 0.2)
-          {
-          eval 'use Win32::OLE'; # autouse is still not very good?
-          die "Could not load Win32::OLE: $@" if $@;
-          }
-	use Win32;
-	use Win32::TieRegistry( Delimiter=>"/", ArrayValues=>0 );
-        }
+use Carp;
+use File::Path;
+use Tk::Wizard::Installer;
+require Exporter;
+my @ISA = "Tk::Wizard::Installer";
+my @EXPORT = ("MainLoop");
+use Cwd;
+
+our
+$VERSION = do { my @r = (q$Revision: 2.8 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+
+BEGIN
+  {
+  use Win32::Shortcut;
+  require Win32;
+  if ($Win32::VERSION lt 0.2)
+    {
+    eval 'use Win32::OLE'; # autouse is still not very good?
+    die "Could not load Win32::OLE: $@" if $@;
+    } # if
+  use Win32;
+  use Win32::TieRegistry( Delimiter=>"/", ArrayValues=>0 );
+  } # end of BEGIN block
 
 
 =head1 NAME
@@ -283,6 +287,7 @@ for me - suggestions welcomed for a better idea.
 
 
 sub page_start_menu { my ($self) = (shift);
+                      my $args;
 	if (ref $_[0] eq 'HASH'){
 		$args = shift
 	} else {
@@ -554,30 +559,8 @@ sub callback_create_shortcuts { my $self = shift;
 	return wantarray? @paths : \@paths;
 }
 
+1;
 
-
-
-
-
-=head1 DIALOUGE METHOD DIALOGUE_really_quit
-
-Refers to the Instllaer, rather than the Wizard.
-
-=cut
-
-sub DIALOGUE_really_quit { my $self = shift;
-	return 0 if $self->{nextButton}->cget(-text) eq $LABELS{FINISH};
-	unless ($self->{really_quit}){
-		my $button = $self->parent->messageBox('-icon' => 'question', -type => 'yesno',
-		-default => 'no', -title => 'Quit The Wizard?',
-		-message => "The Installer has not finished running.\n\nIf you quit now, the installation will be incomplete.\n\nDo you really wish to quit?");
-		$self->{really_quit} = lc $button eq 'yes'? 1:0;
-	}
-	return !$self->{really_quit};
-}
-
-
- 1;
 __END__
 
 =head1 CAVEATS AND BUGS
@@ -586,7 +569,7 @@ __END__
 
 =head1 CHANGES
 
-Please see the file F<CHANGES.txt> included with the distribution.
+Please see the file F<Changes> included with the distribution.
 
 =head1 AUTHOR
 
@@ -608,3 +591,5 @@ Wizard; set-up; setup; installer; uninstaller; install; uninstall; Tk; GUI; wind
 Copyright (C) Lee Goddard, 11/2002 ff.
 
 Distributed under the same terms as Perl itself.
+
+=cut
