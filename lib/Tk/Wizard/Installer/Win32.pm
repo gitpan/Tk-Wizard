@@ -9,26 +9,23 @@ use Carp;
 use File::Path;
 use Tk::Wizard::Installer;
 require Exporter;
-my @ISA = "Tk::Wizard::Installer";
+my @ISA    = "Tk::Wizard::Installer";
 my @EXPORT = ("MainLoop");
 use Cwd;
 
 our
-$VERSION = do { my @r = (q$Revision: 2.8 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+  $VERSION = do { my @r = ( q$Revision: 2.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
-BEGIN
-  {
-  use Win32::Shortcut;
-  require Win32;
-  if ($Win32::VERSION lt 0.2)
-    {
-    eval 'use Win32::OLE'; # autouse is still not very good?
-    die "Could not load Win32::OLE: $@" if $@;
-    } # if
-  use Win32;
-  use Win32::TieRegistry( Delimiter=>"/", ArrayValues=>0 );
-  } # end of BEGIN block
-
+BEGIN {
+    use Win32::Shortcut;
+    require Win32;
+    if ( $Win32::VERSION lt 0.2 ) {
+        eval 'use Win32::OLE';    # autouse is still not very good?
+        die "Could not load Win32::OLE: $@" if $@;
+    }    # if
+    use Win32;
+    use Win32::TieRegistry( Delimiter => "/", ArrayValues => 0 );
+}    # end of BEGIN block
 
 =head1 NAME
 
@@ -166,33 +163,38 @@ registry tree in the current location: YMMV.
 
 =cut
 
-sub register_with_windows { my ($self,$args) = (shift,{@_});
-	return 1 if $^O!~/(mswin32|cygwin)/i;
-	unless ($args->{DisplayName} and $args->{UninstallString}
-		and ($args->{uninstall_key_name} or $args->{app_path})
-	){
-		die __PACKAGE__."::register_with_windows requires an argument of name/value pairs which must include the keys 'UninstallString', 'uninstall_key_name' and 'DisplayName'";
-	}
+sub register_with_windows {
+    my ( $self, $args ) = ( shift, {@_} );
+    return 1 if $^O !~ /(mswin32|cygwin)/i;
+    unless ($args->{DisplayName}
+        and $args->{UninstallString}
+        and ( $args->{uninstall_key_name} or $args->{app_path} ) )
+    {
+        die __PACKAGE__
+          . "::register_with_windows requires an argument of name/value pairs which must include the keys 'UninstallString', 'uninstall_key_name' and 'DisplayName'";
+    }
 
-	if (not $args->{UninstallString} and not $args->{app_path}){
-		die __PACKAGE__."::register_with_windows requires either argument 'app_path' or 'UninstallString' be set.";
-	}
-	if ($args->{app_path}){
-		$args->{app_path} = "perl -e '$args->{app_path} -u'";
-	}
-	my $uninst_key_ref =
-	$Registry->{'LMachine/SOFTWARE/Microsoft/Windows/CurrentVersion/Uninstall/'} ->
-		CreateKey( $args->{uninstall_key_name} );
-	die "Perl Win32::TieRegistry error" if !$uninst_key_ref;
+    if ( not $args->{UninstallString} and not $args->{app_path} ) {
+        die __PACKAGE__
+          . "::register_with_windows requires either argument 'app_path' or 'UninstallString' be set.";
+    }
+    if ( $args->{app_path} ) {
+        $args->{app_path} = "perl -e '$args->{app_path} -u'";
+    }
+    my $uninst_key_ref =
+      $Registry->{
+        'LMachine/SOFTWARE/Microsoft/Windows/CurrentVersion/Uninstall/'}
+      ->CreateKey( $args->{uninstall_key_name} );
+    die "Perl Win32::TieRegistry error" if !$uninst_key_ref;
 
-	foreach (keys %$args){
-		next if $_ =~ /^(app_path|uninstall_key_name)$/g;
-		$uninst_key_ref->{"/$_"} = $args->{$_};
-	}
-	return 1;
-	# return $!? undef : 1;
+    foreach ( keys %$args ) {
+        next if $_ =~ /^(app_path|uninstall_key_name)$/g;
+        $uninst_key_ref->{"/$_"} = $args->{$_};
+    }
+    return 1;
+
+    # return $!? undef : 1;
 }
-
 
 =head1 METHOD page_start_menu
 
@@ -285,140 +287,162 @@ for me - suggestions welcomed for a better idea.
 #	return $self->addPage( sub { $self->page_start_menu($args)  } );
 #}
 
+sub page_start_menu {
+    my ($self) = (shift);
+    my $args;
+    if ( ref $_[0] eq 'HASH' ) {
+        $args = shift;
+    }
+    else {
+        $args = {@_};
+    }
+    local *DIR;
+    my ( @list, $dir );
+    my $cwd    = cwd;
+    my $do_set = 1;
+    croak "You must set -variable parameter"
+      unless exists $args->{-variable};
+    $args->{-background} = 'white'  unless exists $args->{-background};
+    $args->{-relief}     = 'sunken' unless exists $args->{-relief};
+    $args->{-border}     = 1        unless exists $args->{-border};
+    $args->{-listHeight} = 10       unless exists $args->{-listHeight};
+    $args->{-title} = "Create Shortcuts" unless exists $args->{-title};
+    $args->{-subtitle} =
+      "Please select where to place an icon on the start menu"
+      unless exists $args->{-subtitle};
+    $args->{-label_nochoice} = "Do not create a shortcut on the Start Menu"
+      unless exists $args->{-label_nochoice};
+    $self->{-program_group} = $args->{-program_group};
 
-sub page_start_menu { my ($self) = (shift);
-                      my $args;
-	if (ref $_[0] eq 'HASH'){
-		$args = shift
-	} else {
-		$args = {@_};
-	}
-	local *DIR;
-	my (@list,$dir);
-	my $cwd = cwd;
-	my $do_set = 1;
-	croak "You must set -variable parameter"
-		unless exists $args->{-variable};
-	$args->{-background} = 'white' unless exists $args->{-background};
-	$args->{-relief} = 'sunken' unless exists $args->{-relief};
-	$args->{-border} = 1 unless exists $args->{-border};
-	$args->{-listHeight} = 10 unless exists $args->{-listHeight};
-	$args->{-title} = "Create Shortcuts" unless exists  $args->{-title};
-	$args->{-subtitle} = "Please select where to place an icon on the start menu" unless exists  $args->{-subtitle};
-	$args->{-label_nochoice} = "Do not create a shortcut on the Start Menu" unless exists $args->{-label_nochoice};
-	$self->{-program_group} = $args->{-program_group};
+    my $common_args;    # formatting
+    $common_args->{-background} = $args->{-background}
+      if exists $args->{-background};
+    $common_args->{-relief} = $args->{-relief} if exists $args->{-relief};
+    $common_args->{-highlightthickness} = $args->{-highlightthickness}
+      if exists $args->{-highlightthickness};
+    $common_args->{-borderwidth} = $args->{-borderwidth}
+      if exists $args->{-borderwidth};
+    $common_args->{-cursor} = $args->{-cursor} if exists $args->{-cursor};
+    $common_args->{-highlightcolor} = $args->{-highlightcolor}
+      if exists $args->{-highlightcolor};
+    $common_args->{-foreground} = $args->{-foreground}
+      if exists $args->{-foreground};
+    $common_args->{-font} = $args->{-font} if exists $args->{-font};
 
-	my $common_args; # formatting
-	$common_args->{-background} = $args->{-background} if exists $args->{-background};
-	$common_args->{-relief} = $args->{-relief} if exists $args->{-relief};
-	$common_args->{-highlightthickness} = $args->{-highlightthickness} if exists $args->{-highlightthickness};
-	$common_args->{-borderwidth} = $args->{-borderwidth} if exists $args->{-borderwidth};
-	$common_args->{-cursor} = $args->{-cursor} if exists $args->{-cursor};
-	$common_args->{-highlightcolor} = $args->{-highlightcolor} if exists $args->{-highlightcolor};
-	$common_args->{-foreground} = $args->{-foreground} if exists $args->{-foreground};
-	$common_args->{-font} = $args->{-font} if exists $args->{-font};
-	# Don't pass these to other modules
-	my $variable = $args->{-variable};
-	delete $args->{-variable};
-	my $group = $args->{-program_group};
-	delete $args->{-program_group};
+    # Don't pass these to other modules
+    my $variable = $args->{-variable};
+    delete $args->{-variable};
+    my $group = $args->{-program_group};
+    delete $args->{-program_group};
 
-	my $frame = $self->blank_frame(%$args);
+    my $frame = $self->blank_frame(%$args);
 
-	if ($Win32::VERSION gt 0.1999999){
-		$self->{startmenu_dir_current} =
-			eval('Win32::GetFolderPath(Win32::CSIDL_STARTMENU)')
-			. '\Programs';
-		$self->{startmenu_dir_common}  =
-			eval('Win32::GetFolderPath(Win32::CSIDL_COMMON_STARTMENU)')
-			. '\Programs';
-	}
-	# The above may not work if non-standard/non-English setup, so:
-	if (not $self->{startmenu_dir_current}
-	or not $self->{startmenu_dir_common}){
-		my $WshShell = eval 'Win32::OLE->CreateObject("WScript.Shell")';
-		if (ref $WshShell eq 'Win32::OLE'){
-			$self->{startmenu_dir_current} = $WshShell->SpecialFolders(17);
-			$self->{startmenu_dir_common}  = $WshShell->SpecialFolders(2);
-		} else {
-			warn "Could not find special folders using Win32 or OLE!";
-			return undef;
-		}
-	}
-	if ($args->{-user} eq 'current'){
-		$dir = [$self->{startmenu_dir_current}];
-	} elsif ($args->{-user} eq 'all') {
-		$dir = [$self->{startmenu_dir_common}];
-	} else {
-		$dir = [
-			$self->{startmenu_dir_common},
-			$self->{startmenu_dir_current}
-		];
-	}
-	$$variable = @$dir[0]."\\".$group;
-	foreach my $dodir (@$dir){
-		chdir $dodir;
-		opendir DIR,$dodir or croak "I couldn't open the start menu ($dodir)";
-		push @list, grep {-d && !/^\.\.?$/ && s/^(.*)$/$dodir\\$1/} sort readdir DIR;
-		close DIR;
-	}
-	chdir $cwd;
-	my $listbox = $frame->Scrolled("HList",
-		-scrollbars => "osoe",
-		-selectmode => 'single',
-		-height		=> $args->{-listHeight},
-		-itemtype   => 'text',
-		-separator  => '',
-		-browsecmd	=> sub {
-			$$variable = shift;
-			$$variable .= "\\".$group if $group;
-		},
-		%$common_args
-	)->pack(qw/ -expand 1 -fill x -padx 10 -pady 10 /);
+    if ( $Win32::VERSION gt 0.1999999 ) {
+        $self->{startmenu_dir_current} =
+          eval('Win32::GetFolderPath(Win32::CSIDL_STARTMENU)') . '\Programs';
+        $self->{startmenu_dir_common} =
+          eval('Win32::GetFolderPath(Win32::CSIDL_COMMON_STARTMENU)')
+          . '\Programs';
+    }
 
-	foreach my $i (@list){
-		#my ($t) = $i =~ m/([^\\\/]+)$/;
-		my $t = $i;
-		unless ($listbox->info("exists", $t)){
-			$listbox->add( $t,
-				-text => $t,
-				-data => $i,
-			);
-		}
-	}
+    # The above may not work if non-standard/non-English setup, so:
+    if (   not $self->{startmenu_dir_current}
+        or not $self->{startmenu_dir_common} )
+    {
+        my $WshShell = eval 'Win32::OLE->CreateObject("WScript.Shell")';
+        if ( ref $WshShell eq 'Win32::OLE' ) {
+            $self->{startmenu_dir_current} = $WshShell->SpecialFolders(17);
+            $self->{startmenu_dir_common}  = $WshShell->SpecialFolders(2);
+        }
+        else {
+            warn "Could not find special folders using Win32 or OLE!";
+            return undef;
+        }
+    }
+    if ( $args->{-user} eq 'current' ) {
+        $dir = [ $self->{startmenu_dir_current} ];
+    }
+    elsif ( $args->{-user} eq 'all' ) {
+        $dir = [ $self->{startmenu_dir_common} ];
+    }
+    else {
+        $dir =
+          [ $self->{startmenu_dir_common}, $self->{startmenu_dir_current} ];
+    }
+    $$variable = @$dir[0] . "\\" . $group;
+    foreach my $dodir (@$dir) {
+        chdir $dodir;
+        opendir DIR, $dodir or croak "I couldn't open the start menu ($dodir)";
+        push @list,
+          grep { -d && !/^\.\.?$/ && s/^(.*)$/$dodir\\$1/ } sort readdir DIR;
+        close DIR;
+    }
+    chdir $cwd;
+    my $listbox = $frame->Scrolled(
+        "HList",
+        -scrollbars => "osoe",
+        -selectmode => 'single',
+        -height     => $args->{-listHeight},
+        -itemtype   => 'text',
+        -separator  => '',
+        -browsecmd  => sub {
+            $$variable = shift;
+            $$variable .= "\\" . $group if $group;
+        },
+        %$common_args
+    )->pack(qw/ -expand 1 -fill x -padx 10 -pady 10 /);
 
-	my $text	= $frame->Label( # Entry(
-		-justify		=> 'left',
-		-textvariable	=> $variable,
-		-anchor => 'w',
-		%$common_args
-	)->pack(
-		-side=>'top',-anchor=>'w',-expand=>1,-fill=>"x", -padx=>10,
-	);
-	my $button;
+    foreach my $i (@list) {
 
-	unless ($args->{-disable_nochoice}){
-		$button = $frame->Checkbutton(
-			-text	=> $args->{-label_nochoice},
-			-anchor	=> 'w',
-			-command => sub {
-				$do_set = !$do_set;
-				if (not $do_set){	# De-activate
-					$$variable = '';
-					$text->configure(-background=>$self->cget(-background));
-					$listbox->configure(-background=>$self->cget(-background));
-				} else {
-					$$variable = $listbox->info('anchor');
-					$$variable .= "\\".$group if $group;
-					$text->configure(-background=>$args->{-background});
-					$listbox->configure(-background=>$args->{-background} );
-				}
-			},
-		)->pack(qw/-side left -anchor w -padx 2 -pady 2/);
-	};
-	return $frame;
+        #my ($t) = $i =~ m/([^\\\/]+)$/;
+        my $t = $i;
+        unless ( $listbox->info( "exists", $t ) ) {
+            $listbox->add(
+                 $t,
+                -text => $t,
+                -data => $i,
+            );
+        }
+    }
+
+    my $text = $frame->Label(    # Entry(
+        -justify      => 'left',
+        -textvariable => $variable,
+        -anchor       => 'w',
+        %$common_args
+      )->pack(
+        -side   => 'top',
+        -anchor => 'w',
+        -expand => 1,
+        -fill   => "x",
+        -padx   => 10,
+      );
+    my $button;
+
+    unless ( $args->{-disable_nochoice} ) {
+        $button = $frame->Checkbutton(
+            -text    => $args->{-label_nochoice},
+            -anchor  => 'w',
+            -command => sub {
+                $do_set = !$do_set;
+                if ( not $do_set ) {    # De-activate
+                    $$variable = '';
+                    $text->configure(
+                        -background => $self->cget( -background ) );
+                    $listbox->configure(
+                        -background => $self->cget( -background ) );
+                }
+                else {
+                    $$variable = $listbox->info('anchor');
+                    $$variable .= "\\" . $group if $group;
+                    $text->configure( -background    => $args->{-background} );
+                    $listbox->configure( -background => $args->{-background} );
+                }
+            },
+        )->pack(qw/-side left -anchor w -padx 2 -pady 2/);
+    }
+    return $frame;
 }
-
 
 =head1 CALLBACK callback_create_shortcut
 
@@ -493,48 +517,49 @@ On success, returns the C<-save_path>; on failure, C<undef>.
 
 =cut
 
-sub callback_create_shortcut { my ($self,$args) = (shift,{@_});
-	croak "-target is required (you gave ".(join", ",keys %$args).")"	 unless defined $args->{-target};
-	croak "-save_path is required  (you gave ".(join", ",keys %$args).")"		unless defined $args->{-save_path};
-	$args->{-arguments} 	= '' unless exists $args->{-arguments};
-	$args->{-description}	= '' unless exists $args->{-description};
-	$args->{-show}			= '' unless exists $args->{-show};
-	$args->{-hotkey} 		= '' unless exists $args->{-hotkey};
-	$args->{-iconpath} 		= '' unless exists $args->{-iconpath};
-	$args->{-iconindex}		= '' unless exists $args->{-iconindex};
-	undef $self->{-program_group} if exists $args->{-no_program_group};
-	if (exists $self->{-program_group}
-	and exists $args->{-save_path}
-	){
-		my ($base,$file) = $args->{-save_path} =~ /(.*?)([^\/\\]+)$/;
-		$base .= "\\".$self->{-program_groups};
-		mkpath $base if !-e $base;
-		$args->{-save_path} = $base."\\".$file;
-		$args->{-save_path} =~ s/[\\\/]+/\\/g;
-	}
-	if ($args->{-target} =~ /^(ht|f)tp:\/\//
-		and $args->{-save_path} !~ /\.uri$/i){
-		croak "Internet shortcuts require a .uri ending!"
-	}
-	if ($args->{-target} !~ /^(ht|f)tp:\/\//
-		and $args->{-save_path} =~ /\.uri$/i){
-		croak "Only internet shortcuts require a .uri ending!"
-	}
-	my $s = new Win32::Shortcut;
-	$s->Set(
-		$args->{-target},
-		$args->{-arguments},
-		$args->{-workingdir},
-		$args->{-description},
-		$args->{-show},
-		$args->{-hotkey},
-		$args->{-iconpath},
-		$args->{-iconindex},
-	);
-	my $r = $s->Save($args->{-save_path})?
-		$args->{-save_path} : undef;
-	$s->Close;
-	return $r;
+sub callback_create_shortcut {
+    my ( $self, $args ) = ( shift, {@_} );
+    croak "-target is required (you gave " . ( join ", ", keys %$args ) . ")"
+      unless defined $args->{-target};
+    croak "-save_path is required  (you gave "
+      . ( join ", ", keys %$args ) . ")"
+      unless defined $args->{-save_path};
+    $args->{-arguments}   = '' unless exists $args->{-arguments};
+    $args->{-description} = '' unless exists $args->{-description};
+    $args->{-show}        = '' unless exists $args->{-show};
+    $args->{-hotkey}      = '' unless exists $args->{-hotkey};
+    $args->{-iconpath}    = '' unless exists $args->{-iconpath};
+    $args->{-iconindex}   = '' unless exists $args->{-iconindex};
+    undef $self->{-program_group} if exists $args->{-no_program_group};
+
+    if (    exists $self->{-program_group}
+        and exists $args->{-save_path} )
+    {
+        my ( $base, $file ) = $args->{-save_path} =~ /(.*?)([^\/\\]+)$/;
+        $base .= "\\" . $self->{-program_groups};
+        mkpath $base if !-e $base;
+        $args->{-save_path} = $base . "\\" . $file;
+        $args->{-save_path} =~ s/[\\\/]+/\\/g;
+    }
+    if (    $args->{-target} =~ /^(ht|f)tp:\/\//
+        and $args->{-save_path} !~ /\.uri$/i )
+    {
+        croak "Internet shortcuts require a .uri ending!";
+    }
+    if (    $args->{-target} !~ /^(ht|f)tp:\/\//
+        and $args->{-save_path} =~ /\.uri$/i )
+    {
+        croak "Only internet shortcuts require a .uri ending!";
+    }
+    my $s = new Win32::Shortcut;
+    $s->Set(
+        $args->{-target},      $args->{-arguments}, $args->{-workingdir},
+        $args->{-description}, $args->{-show},      $args->{-hotkey},
+        $args->{-iconpath},    $args->{-iconindex},
+    );
+    my $r = $s->Save( $args->{-save_path} ) ? $args->{-save_path} : undef;
+    $s->Close;
+    return $r;
 }
 
 =head1 CALLBACK callback_create_shortcut
@@ -550,13 +575,14 @@ See L<CALLBACK callback_create_shortcut>.
 
 =cut
 
-sub callback_create_shortcuts { my $self = shift;
-	my @paths;
-	foreach (@_){
-		confess "Not a hash reference" unless ref $_ eq 'HASH';
-		$self->callback_create_shortcut(%$_);
-	}
-	return wantarray? @paths : \@paths;
+sub callback_create_shortcuts {
+    my $self = shift;
+    my @paths;
+    foreach (@_) {
+        confess "Not a hash reference" unless ref $_ eq 'HASH';
+        $self->callback_create_shortcut(%$_);
+    }
+    return wantarray ? @paths : \@paths;
 }
 
 1;
