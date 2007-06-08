@@ -35,4 +35,4 @@ requires:
   Win32: 0.2
   Win32::Shortcut: 0
   Win32::TieRegistry: 0
-version: 2.007
+version: 2.008
