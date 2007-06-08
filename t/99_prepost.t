@@ -1,27 +1,38 @@
-#! perl -w
+#!/usr/bin/perl -w
 
 use strict;
 use ExtUtils::testlib;
-use Test::More tests => 33;
+use Test::More;
+use Tk;
 
-my $VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+BEGIN
+  {
+  my $mwTest;
+  eval { $mwTest = Tk::MainWindow->new };
+  if ($@)
+    {
+    plan skip_all => 'Test irrelevant without a display';
+    }
+  else
+    {
+    plan tests => 33;
+    }
+  $mwTest->destroy if Tk::Exists($mwTest);
+  use_ok('Tk::Wizard');
+  } # end of BEGIN block
+
+my $VERSION = do { my @r = ( q$Revision: 1.6 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my @out;
-my $class;
-
-BEGIN {
-    $class = 'Tk::Wizard';
-    use_ok( $class => 1.945 );
-}
-
 my $Wait = 1000;
 
+
 foreach my $style (qw[ top 95 ]) {
-    my $wizard = new $class(
+    my $wizard = Tk::Wizard->new(
         -debug => undef,
         -style => $style,
     );
-    isa_ok( $wizard, $class );
+    isa_ok( $wizard, 'Tk::Wizard');
     ok(
         $wizard->configure(
             -preNextButtonAction   => sub { &preNextButtonAction($wizard) },

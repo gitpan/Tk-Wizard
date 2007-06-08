@@ -1,4 +1,5 @@
 Changes
+examples/application.pl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Can.pm
@@ -7,6 +8,7 @@ inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
+lib/Tk/.#Wizard.pm.2.18
 lib/Tk/Wizard.pm
 lib/Tk/Wizard/Image.pm
 lib/Tk/Wizard/Installer.pm
@@ -31,6 +33,7 @@ t/77_dirselect.t
 t/99_prepost.t
 t/dos.txt
 t/extra.txt
+t/pod-coverage.t
 t/pod.t
 t/unix.txt
 TODO

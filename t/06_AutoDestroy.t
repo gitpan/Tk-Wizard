@@ -1,16 +1,33 @@
-#! perl -w
+
+# $Id: 06_AutoDestroy.t,v 1.8 2007/06/08 00:57:01 martinthurn Exp $
+
+use strict;
+use warnings;
 
 use Cwd;
 use ExtUtils::testlib;
-use Test::More tests => 25;
+use Test::More;
+use Tk;
 
 use strict;
 
-BEGIN {
-    use_ok('Tk::Wizard');
-}
+BEGIN
+  {
+  my $mwTest;
+  eval { $mwTest = Tk::MainWindow->new };
+  if ($@)
+    {
+    plan skip_all => 'Test irrelevant without a display';
+    }
+  else
+    {
+    plan tests => 25;
+    }
+  $mwTest->destroy if Tk::Exists($mwTest);
+  use_ok('Tk::Wizard');
+  } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.5 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $WAIT = 1;
 
@@ -74,8 +91,9 @@ THREE:
     isa_ok( $wizard, "Tk::Wizard", "Wizard survived CloseWindowEventCycle" );
     ok( 1, 'end of THREE block' );
 }    # end of THREE block
+
 pass;
-exit;
+
 
 sub page_splash {
     my $wizard = shift;

@@ -1,24 +1,29 @@
 
-# $Id: Makefile.PL,v 2.9  $
+# $Id: Makefile.PL,v 2.11 2007/06/08 00:57:39 martinthurn Exp $
 
 use inc::Module::Install;
 
 name('Tk-Wizard');
 abstract('GUI for step-by-step interactive logical process');
-version(2.006); # 2.005_01
+version(2.007);
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');
 
 requires("Carp");
 requires("Cwd");
+test_requires("ExtUtils::testlib");
 requires("File::Copy");
 requires("File::Path");
 requires("File::Spec");
+test_requires("FileHandle");
+test_requires("Test::More");
 requires('Tk');
+requires("Tk::After");
 requires("Tk::DialogBox");
 requires("Tk::DirTree");
 requires("Tk::ErrorDialog");
 requires("Tk::Frame");
+requires("Tk::LabFrame");
 requires("Tk::MainWindow");
 requires("Tk::ProgressBar");
 requires("Tk::ROText");
@@ -27,6 +32,7 @@ if ($^O =~ m/win/i)
   {
   requires('Win32::Shortcut');
   requires('Win32::TieRegistry');
+
   eval 'require Win32;';
   if (! $@)
     {

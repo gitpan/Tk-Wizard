@@ -1,5 +1,5 @@
 
-# $Id: Win32.pm,v 2.8 2007/04/21 20:41:44 martinthurn Exp $
+# $Id: Win32.pm,v 2.9 2007/05/11 14:59:45 leegee Exp $
 
 package Tk::Wizard::Installer::Win32;
 
@@ -14,7 +14,7 @@ my @EXPORT = ("MainLoop");
 use Cwd;
 
 our
-  $VERSION = do { my @r = ( q$Revision: 2.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+  $VERSION = do { my @r = ( q$Revision: 2.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 BEGIN {
     use Win32::Shortcut;

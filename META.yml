@@ -1,19 +1,38 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         Tk-Wizard-Bases
-version:      1.953
-version_from: 
-installdirs:  site
-requires:
-    File::Path:                    0
-    Tk:                            0.1
-    Tk::DirTree:                   0
-    Tk::LabFrame:                  0.1
-    Tk::ProgressBar:               0.1
-    Tk::ROText:                    0
-    Win32:                         0.2
-    Win32::Shortcut:               0.03
-    Win32::TieRegistry:            0.1
-
+--- 
+abstract: GUI for step-by-step interactive logical process
+author: cpan-at-lgoddard-dot-net & mthurn@cpan.org
+build_requires: 
+  ExtUtils::testlib: 0
+  FileHandle: 0
+  Test::More: 0
 distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.30
+generated_by: Module::Install version 0.67
+license: perl
+meta-spec: 
+  url: http://module-build.sourceforge.net/META-spec-v1.3.html
+  version: 1.3
+name: Tk-Wizard
+no_index: 
+  directory: 
+    - inc
+    - t
+requires: 
+  Carp: 0
+  Cwd: 0
+  File::Copy: 0
+  File::Path: 0
+  File::Spec: 0
+  Tk: 0
+  Tk::After: 0
+  Tk::DialogBox: 0
+  Tk::DirTree: 0
+  Tk::ErrorDialog: 0
+  Tk::Frame: 0
+  Tk::LabFrame: 0
+  Tk::MainWindow: 0
+  Tk::ProgressBar: 0
+  Tk::ROText: 0
+  Win32: 0.2
+  Win32::Shortcut: 0
+  Win32::TieRegistry: 0
+version: 2.007

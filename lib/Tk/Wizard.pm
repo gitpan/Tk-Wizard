@@ -1,12 +1,12 @@
 
-# $Id: Wizard.pm,v 2.17 2007/05/01 21:12:22 martinthurn Exp $
+# $Id: Wizard.pm,v 2.24 2007/06/08 02:20:19 martinthurn Exp $
 
 package Tk::Wizard;
 
 $Tk::Wizard::DEBUG = undef;
 
 our
-  $VERSION = do { my @r = ( q$Revision: 2.18 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+  $VERSION = do { my @r = ( q$Revision: 2.24 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -302,7 +302,7 @@ Please see also L<ACTION EVENT HANDLERS>.
 # not supplied by the caller. Not supplying one suits me, but Mr Rothenberg requires one.
 sub new {
     my $inv = ref( $_[0] ) ? ref( $_[0] ) : $_[0];
-    shift;
+    shift; # Ignore invocant
     my @args = @_;
     unless (
         scalar(@_) % 2    # not a simple list
@@ -327,7 +327,9 @@ sub new {
 sub Populate {
     my ( $self, $args ) = @_;
     warn "# Enter Populate" if $self->{-debug};
+
     $self->SUPER::Populate($args);
+    $self->withdraw;
     my $sFontFamily      = &_font_family();
     my $iFontSize        = &_font_size();
     my $sTagTextDefault  = 'Perl Wizard';
@@ -337,13 +339,13 @@ sub Populate {
     $self->ConfigSpecs(
 
         # -title => ['SELF','title','Title','Generic Wizard'],
+        # -title      => [ 'PASSIVE',  undef, undef, 'Wizard' ],
         # -resizable => ['SELF','resizable','Resizable',undef],
         -resizable => [ 'SELF', 'resizable', 'Resizable', undef ],
 
         # -foreground => ['PASSIVE', 'foreground','Foreground', 'black'],
         -parent => [ 'PASSIVE', undef, undef, undef ]
         ,    # potentially a mainwindow
-        -title      => [ 'PASSIVE',  undef, undef, 'Generic Wizard' ],
         -command    => [ 'CALLBACK', undef, undef, undef ],
         -background => [
             'METHOD', 'background', 'Background',
@@ -386,6 +388,12 @@ sub Populate {
        # -width => [$self->{-style} eq 'top'? 500 : 570) unless $args->{-width};
     );
 
+#	if ($self->parent){
+#    	$self->parent->configure( -title => $args->{-title} );
+#	}
+#	$self->configure( -title => $args->{-title} );
+
+
     # $self->{wizardFrame} = 0;
     if ( exists $args->{-imagepath} and not -e $args->{-imagepath} ) {
         confess "Can't find file at -imagepath: " . $args->{-imagepath};
@@ -396,59 +404,24 @@ sub Populate {
     $self->{-imagepath}     = $args->{-imagepath};
     $self->{-topimagepath}  = $args->{-topimagepath};
     $self->{wizardPageList} = [];
-    $self->{wizardPagePtr}  = 0;
     $self->{-debug}         = $args->{-debug} || $Tk::Wizard::DEBUG || undef;
     $self->{background_userchoice} = $args->{-background}
       || $self->ConfigSpecs->{-background}[3];
     $self->{background} = $self->{background_userchoice};
     $self->{-style} = $args->{-style} || "top";
+    $self->{wizardPagePtr} = 0;
 
     # $self->overrideredirect(1); # Removes borders and controls
   CREATE_BUTTON_PANEL:
-    {
-        my $buttonPanel = $self->Frame;
-
-        # right margin
-        $buttonPanel->Frame( -width => 10 )
-          ->pack( -side => "right", -expand => 0, -pady => 10 );
-
-        # Bottom
-        $self->{cancelButton} = $buttonPanel->Button(
-            -text    => $LABELS{CANCEL},
-            -command => [ \&CancelButtonEventCycle, $self, $self ],
-            -width   => 10,
-        )->pack( -side => "right", -expand => 0, -pady => 10 );
-        $buttonPanel->Frame( -width => 10 )
-          ->pack( -side => "right", -expand => 0, -pady => 10 );
-        $self->{nextButton} = $buttonPanel->Button(
-            -text    => $LABELS{NEXT},
-            -command => [ \&NextButtonEventCycle, $self ],
-            -width   => 10
-        )->pack( -side => "right", -expand => 0, -pady => 10 );
-        $self->{backButton} = $buttonPanel->Button(
-            -text    => $LABELS{BACK},
-            -command => [ \&BackButtonEventCycle, $self ],
-            -width   => 10,
-            -state   => "disabled"
-        )->pack( -side => "right", -expand => 0, -pady => 10 );
-        if ( $self->cget( -nohelpbutton ) ) {
-            $self->{helpButton} = $buttonPanel->Button(
-                -text    => $LABELS{HELP},
-                -command => [ \&HelpButtonEventCycle, $self ],
-                -width   => 10,
-              )->pack(
-                -side   => 'left',
-                -anchor => 'w',
-                -pady   => 10,
-                -padx   => 10
-              );
-            $self->Advertise( helpButton => $self->{helpButton} );
-        }    # if
-        $buttonPanel->pack(qw/ -side bottom -fill x/);
-        $self->Advertise( nextButton   => $self->{nextButton} );
-        $self->Advertise( backButton   => $self->{backButton} );
-        $self->Advertise( cancelButton => $self->{cancelButton} );
-        $self->Advertise( buttonPanel  => $buttonPanel );
+      {
+      my $buttonPanel = $self->Frame->pack(qw/ -side bottom -fill x/);
+      # right margin:
+      $buttonPanel->Frame(
+                          -width => 10,
+                          -bg => 'magenta', # for debugging
+                         )->pack( -side => "right", -expand => 0, -pady => 10 );
+      $self->Advertise( buttonPanel  => $buttonPanel );
+      $self->_repack_buttons;
     }    # end of CREATE_BUTTON_PANEL block
          # Tag text:
   CREATE_TAGLINE:
@@ -565,25 +538,70 @@ sub Populate {
         -size   => $iFontSize
     );
     $self->{defaultFont} = 'DEFAULT_FONT';
-}    # Populate
+}
+
+sub _repack_buttons
+  {
+  my $self = shift;
+  my $panel = $self->Subwidget('buttonPanel');
+  warn "# Enter _repack_buttons, panel=$panel=" if $self->{-debug};
+  $self->{cancelButton}->packForget if Tk::Exists($self->{cancelButton});
+  $self->{cancelButton} = $panel->Button(
+                                         -text    => $LABELS{CANCEL},
+                                         -command => [ \&CancelButtonEventCycle, $self, $self ],
+                                         -width   => 10,
+                                        )->pack( -side => "right", -expand => 0, -pady => 10 );
+  $panel->Frame( -width => 10 )->pack( -side => "right", -expand => 0, -pady => 10 );
+  $self->{nextButton}->packForget if Tk::Exists($self->{nextButton});
+  $self->{nextButton} = $panel->Button(
+                                       -text    => $LABELS{NEXT},
+                                       -command => [ \&NextButtonEventCycle, $self ],
+                                       -width   => 10
+                                      )->pack( -side => "right", -expand => 0, -pady => 10 );
+  $self->{backButton}->packForget if Tk::Exists($self->{backButton});
+  $self->{backButton} = $panel->Button(
+                                       -text    => $LABELS{BACK},
+                                       -command => [ \&BackButtonEventCycle, $self ],
+                                       -width   => 10,
+                                       -state   => "disabled"
+                                      )->pack( -side => "right", -expand => 0, -pady => 10 );
+  if ( $self->cget( -nohelpbutton ) )
+    {
+    $self->{helpButton}->packForget if Tk::Exists($self->{helpButton});
+    $self->{helpButton} = $panel->Button(
+                                         -text    => $LABELS{HELP},
+                                         -command => [ \&HelpButtonEventCycle, $self ],
+                                         -width   => 10,
+                                        )->pack(
+                                                -side   => 'left',
+                                                -anchor => 'w',
+                                                -pady   => 10,
+                                                -padx   => 10
+                                               );
+    $self->Advertise( helpButton => $self->{helpButton} );
+    } # if
+  $self->Advertise( nextButton   => $self->{nextButton} );
+  $self->Advertise( backButton   => $self->{backButton} );
+  $self->Advertise( cancelButton => $self->{cancelButton} );
+  } # _repack_buttons
 
 # Private method: returns a font family name suitable for the operating system.
 sub _font_family {
     return 'verdana'   if ( $^O =~ m!win32!i );
     return 'helvetica' if ( $^O =~ m!solaris!i );
     return 'helvetica';
-}    # _font_family
+}
 
 # Private method: returns a font size suitable for the operating system.
 sub _font_size {
     return 8  if ( $^O =~ m!win32!i );
     return 12 if ( $^O =~ m!solaris!i );
-    return 10;
-}    # _font_family
+    return 14;
+}
 
 sub background {
-    my ( $self, $operand ) = ( shift, shift );
-    if ( defined $operand ) {
+    my ( $self, $operand ) = @_;
+    if ( defined($operand) ) {
         $self->{background} = $operand;
         return $operand;
     }
@@ -638,10 +656,12 @@ and must precede the C<MainLoop> call.
 sub Show {
     my $self = shift;
     warn "# Enter Show" if $self->{-debug};
-    return              if exists $self->{_Shown};
+    return if $self->{_showing};
     if ( $^W and $self->_last_page == 0 ) {
         warn "# Showing a Wizard that is only one page long";
     }
+    $self->{wizardPagePtr} = 0;
+    $self->_repack_buttons;
     $self->initial_layout;
     $self->resizable( 0, 0 )
       unless $self->{Configure}{-resizable}
@@ -654,7 +674,7 @@ sub Show {
     $self->packPropagate(0);
     $self->configure( -background => $self->cget("-background") );
     $self->render_current_page;
-    ++$self->{_Shown};
+    $self->{_showing} = 1;
     warn "# Leave Show" if $self->{-debug};
     return 1;
 }
@@ -698,8 +718,8 @@ sub backward {
 #
 sub initial_layout {
     my $self = shift;
-    warn "# Enter Initial_layout" if $self->{-debug};
-
+    warn "# Enter initial_layout" if $self->{-debug};
+    return if $self->{_laid_out};
     # Wizard 98/95 style
     if ( $self->cget( -style ) eq '95' or $self->{wizardPagePtr} == 0 ) {
         my $im = $self->cget( -imagepath );
@@ -735,6 +755,7 @@ sub initial_layout {
         }
     }
     $self->Advertise( imagePane => $self->{left_object} );
+    $self->{_laid_out}++;
 }
 
 #
@@ -742,8 +763,7 @@ sub initial_layout {
 #
 sub render_current_page {
     my $self = shift;
-    warn "# Enter render_current_page $self->{wizardPagePtr}"
-      if $self->{-debug};
+    warn "# Enter render_current_page $self->{wizardPagePtr}" if $self->{-debug};
     my %frame_pack = ( -side => "top" );
     if (
         (
@@ -784,9 +804,13 @@ sub render_current_page {
         Carp::croak
 'render_current_page called without any frames: did you add frames to the wizard?';
     }
-    $self->{wizardFrame} =
-      $self->{wizardPageList}->[ $self->{wizardPagePtr} ]->()
-      ->pack(%frame_pack);
+    my $rPage = $self->{wizardPageList}->[$self->{wizardPagePtr}];
+    warn " DDD in render_current_page, rPage=$rPage=" if $self->{-debug};
+    if (! ref $rPage)
+      {
+      Carp::croak 'render_current_page called for a non-existent frame: did you add frames to the wizard?';
+      } # if
+    $self->{wizardFrame} = $rPage->()->pack(%frame_pack);
     if ( ref $self->{wizardFrame} ) {
         $self->{wizardFrame}->update;
         $self->Advertise( wizardFrame => $self->{wizardFrame} );
@@ -974,8 +998,8 @@ sub blank_frame {
         #
         if ( $args->{-title} ) {
 
-# Padding left of title: -height should come from font metrics of TITLE_FONT_TOP;
-# 	but what about if the line wraps?
+			# Padding left of title: -height should come from font metrics of TITLE_FONT_TOP;
+			# 	but what about if the line wraps? LG: add an ellipsis at the end...
             $title_frame->Frame(qw/-background white -width 10 -height 30/)
               ->pack(qw/-fill x -anchor n -side left/);
 
@@ -1225,9 +1249,10 @@ sub dispatch {
 }    # dispatch
 
 # Returns the number of the last page (zero-based):
-sub _last_page {
-    return $#{ shift->{wizardPageList} };
-}    # _last_page
+sub _last_page
+  {
+  return $#{ shift->{wizardPageList} };
+  } # _last_page
 
 # Increments the page pointer forward to the next logical page,
 # honouring the Skip flags:
@@ -1262,36 +1287,47 @@ sub _page_backward {
 #              wizard button bar. This includes dispatching the preNextButtonAction and
 #              postNextButtonAction handler at the appropriate times.
 #
-sub NextButtonEventCycle {
-    my $self = shift;
-    if ( dispatch( $self->cget( -preNextButtonAction ) ) ) { return; }
-
-    # Advance the wizard page pointer and then adjust the navigation buttons.
-    # Redraw the frame when finished to get changes to take effect.
-    $self->_page_forward;
-    $self->{backButton}->configure( -state => "normal" );
-    if ( $self->{nextButton}->cget("-text") eq $LABELS{FINISH} ) {
-        if ( dispatch( $self->cget( -preFinishButtonAction ) ) ) { return; }
-        if ( dispatch( $self->cget( -finishButtonAction ) ) )    { return; }
-        $self->{really_quit}++;
-        $self->CloseWindowEventCycle();
-
-        # Can't do anything now, we're dead
-        # $self->destroy;
+sub NextButtonEventCycle
+  {
+  my $self = shift;
+  if ( dispatch( $self->cget( -preNextButtonAction ) ) )
+    {
+    warn " DDD preNextButtonAction says we should not go ahead\n" if $self->{-debug};
+    return;
+    } # if
+  # Advance the wizard page pointer and then adjust the navigation buttons.
+  # Redraw the frame when finished to get changes to take effect.
+  $self->_page_forward;
+  $self->{backButton}->configure( -state => "normal" );
+  if ( $self->{nextButton}->cget("-text") eq $LABELS{FINISH} )
+    {
+    if ( dispatch( $self->cget( -preFinishButtonAction ) ) )
+      {
+      warn " DDD preFinishButtonAction says we should not go ahead\n" if $self->{-debug};
+      return;
+      } # if
+    if ( dispatch( $self->cget( -finishButtonAction ) ) )
+      {
+      warn " DDD finishButtonAction says we should not go ahead\n" if $self->{-debug};
+      return;
+      } # if
+    $self->{really_quit}++;
+    $self->CloseWindowEventCycle();
+    # Can't do anything now, we're dead
     }
-    else {
-        if ( $self->{wizardPagePtr} == $self->_last_page ) {
-            $self->{cancelButton}->packForget() if $self->{cancelButton};
-            $self->{backButton}->packForget()   if $self->{backButton};
-            $self->{nextButton}->configure( -text => $LABELS{FINISH} )
-              if $self->{nextButton};
-        }
-        $self->render_current_page;
-
-        # print STDERR " DDD this is before dispatch postNextButtonAction\n";
-        if ( dispatch( $self->cget( -postNextButtonAction ) ) ) { return; }
+  else
+    {
+    if ( $self->{wizardPagePtr} == $self->_last_page ) {
+      $self->{cancelButton}->packForget() if $self->{cancelButton};
+      $self->{backButton}->packForget()   if $self->{backButton};
+      $self->{nextButton}->configure( -text => $LABELS{FINISH} )
+      if $self->{nextButton};
+      }
+    $self->render_current_page;
+    # print STDERR " DDD this is before dispatch postNextButtonAction\n";
+    if ( dispatch( $self->cget( -postNextButtonAction ) ) ) { return; }
     }
-}
+  } # NextButtonEventCycle
 
 sub BackButtonEventCycle {
     my $self = shift;
@@ -1314,13 +1350,13 @@ sub HelpButtonEventCycle {
     if ( dispatch( $self->cget( -postHelpButtonAction ) ) ) { return; }
 }
 
-sub CancelButtonEventCycle {
-    my ( $self, $args ) = ( shift, @_ );
-    return
-      if $self->Callback(
-        -preCancelButtonAction => $self->{-preCancelButtonAction} );
-    $self->CloseWindowEventCycle($args);
-}
+sub CancelButtonEventCycle
+  {
+  my ( $self, $args ) = ( shift, @_ );
+  return if $self->Callback(
+                            -preCancelButtonAction => $self->{-preCancelButtonAction} );
+  $self->CloseWindowEventCycle($args);
+  } # CancelButtonEventCycle
 
 =head1 CloseWindowEventCycle
 
@@ -1329,39 +1365,43 @@ the calling object's C<destroy> method is called, by default closing the Wizard.
 
 =cut
 
-sub CloseWindowEventCycle {
-    my ( $self, $hGUI ) = ( shift, @_ );
-    warn "# Close window ec ... really=[$self->{really_quit}]\n"
-      if $self->{-debug};
-    unless ( $self->{really_quit} ) {
-        warn "# Really?\n" if $self->{-debug};
-        if (
-            $self->Callback(
-                -preCloseWindowAction => $self->{-preCloseWindowAction}
-            )
-          )
-        {
-            return;
-        }
-    }
-
-    #	return if dispatch( $self->cget(-preCloseWindowAction));
-    warn "# DESTROY!\n" if $self->{-debug};
-    $hGUI->destroy      if defined $hGUI;
-    if ( $self->{Configure}{-kill_parent_on_destroy}
-        && Tk::Exists( $self->parent ) )
+sub CloseWindowEventCycle
+  {
+  my ($self, $hGUI) = @_;
+  warn "# Enter CloseWindowEventCycle... really=[$self->{really_quit}]\n" if $self->{-debug};
+  if (! $self->{really_quit})
     {
-        warn "Kill parent "
-          . $self->parent . " "
-          . $self->{Configure}{ -parent }
-          if $self->{-debug};
-        $self->parent->destroy;
+    warn "# Really?\n" if $self->{-debug};
+    if (
+        $self->Callback(
+                        -preCloseWindowAction => $self->{-preCloseWindowAction}
+                       )
+       )
+      {
+      warn " DDD preCloseWindowAction says we should not go ahead\n" if $self->{-debug};
+      return;
+      } # if
+    } # if
+  # return if dispatch( $self->cget(-preCloseWindowAction));
+  if (Tk::Exists($hGUI))
+    {
+    warn "# hGUI=$hGUI= withdraw\n" if $self->{-debug};
+    $hGUI->withdraw;
+    } # if
+  if ( $self->{Configure}{-kill_parent_on_destroy}
+       && Tk::Exists( $self->parent ) )
+    {
+    warn "Kill parent ". $self->parent ." ". $self->{Configure}{ -parent } if $self->{-debug};
+    $self->parent->destroy;
     }
-    else {
-        $self->destroy;    # Legacy
+  else
+    {
+    warn "# Legacy withdraw\n" if $self->{-debug};
+    $self->{_showing} = 0;
+    $self->withdraw;    # Legacy
     }
-    return undef;
-}    # CloseWindowEventCycle
+  return undef;
+  } # CloseWindowEventCycle
 
 =head1 DIALOGUE_really_quit
 
@@ -1750,9 +1790,13 @@ callback of the I<Next> button at the end of the task.
 
 =item -error_photo
 
-In progress. Optional: all C<Tk::Photo> objects, displayed as appropriate.
-C<-ok_photo> is displayed if the task code reference returns a true value, otherwise
-C<-error_photo> is displayed. These have defaults taken from L<Tk::Wizard::Image|Tk::Wizard::Image>.
+=item -na_photo
+
+Optional: all C<Tk::Photo> objects, displayed as appropriate.
+C<-na_photo> is displayed if the task code reference returns an undef value, otherwise:
+C<-ok_photo> is displayed if the task code reference returns a true value, otherwise:
+C<-error_photo> is displayed.
+These have defaults taken from L<Tk::Wizard::Image|Tk::Wizard::Image>.
 
 =item -label_frame_title
 
@@ -1804,24 +1848,23 @@ contains the task list. Default label is the boring C<Performing Tasks:>.
 sub page_taskList {
     my ( $self, $args ) = ( shift, shift );
     my @tasks;
-    my @states = qw[ todo doing ok error ];
+    my @states = qw[ todo doing ok error na ];
     my $photos = {};
 
-    foreach my $state (@states) {
-        if ( not $args->{ "-" . $state . "_photo" } ) {
-            $photos->{$state} =
-              $self->Photo( $state,
-                -data => $Tk::Wizard::Image::TASK_LIST{$state} );
-        }
-        elsif ( !-r $args->{ "-" . $state . "_photo" }
-            or not $self->Photo( $state,
-                -file => $args->{ "-" . $state . "_photo" } ) )
-        {
-            warn "# Could not read -todo_photo at "
-              . $args->{ "-" . $state . "_photo" }
-              if $^W;
-        }
-    }
+    foreach my $state (@states)
+      {
+      my $sArg = "-". $state ."_photo";
+        if ( ! $args->{ $sArg } )
+          {
+          $photos->{$state} = $self->Photo($state,
+                                           -data => $Tk::Wizard::Image::TASK_LIST{$state} );
+          }
+        elsif ( ! -r $args->{$sArg}
+                || ! $self->Photo($state, -file => $args->{$sArg}))
+          {
+          warn "# Could not read $sArg from " . $args->{$sArg} if $^W;
+          }
+      } # foreach
 
     $args->{-frame_pack} = [qw/-expand 1 -fill x -padx 40 -pady 10/]
       unless $args->{-frame_pack};
@@ -1883,7 +1926,7 @@ sub page_taskList {
                 $self->update;
                 my $result = &{ @$task[1] };
                 if ( ref @$task[0] ) {
-                    @$task[0]->configure( -image => $result ? "ok" : "error" );
+                    @$task[0]->configure( -image => defined($result) ? $result ? 'ok' : 'error' : 'na' );
                 }
                 $self->update;
             }

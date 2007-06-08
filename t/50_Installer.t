@@ -1,25 +1,40 @@
-#! perl
 
-my $VERSION = 3.1;    # 2007-03-04
+# $Id: 50_Installer.t,v 1.6 2007/06/08 00:57:01 martinthurn Exp $
+
+my $VERSION = do { my @r = ( q$Revision: 1.6 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 no warnings;
 use strict;
 
 use ExtUtils::testlib;
-use Test::More;
 use LWP::UserAgent;
-my $ua = LWP::UserAgent->new;
-$ua->timeout(10);
-$ua->env_proxy;
-my $response = $ua->get('http://search.cpan.org/');
-if ( $response->is_error ) {
+use Test::More;
+use Tk;
+
+BEGIN
+  {
+  my $mwTest;
+  eval { $mwTest = Tk::MainWindow->new };
+  if ($@)
+    {
+    plan skip_all => 'Test irrelevant without a display';
+    }
+  $mwTest->destroy if Tk::Exists($mwTest);
+  my $ua = LWP::UserAgent->new;
+  $ua->timeout(10);
+  $ua->env_proxy;
+  my $response = $ua->get('http://search.cpan.org/');
+  if ( $response->is_error )
+    {
     plan skip_all => "LWP cannot get cpan, guess we're not able to get online";
-}
-else {
+    }
+  else
+    {
     plan tests => 18;
     pass('can get cpan');
-}
-use_ok("Tk::Wizard::Installer");
+    }
+  use_ok("Tk::Wizard::Installer");
+  } # end of BEGIN block
 
 my $WAIT  = 1;
 my $files = {

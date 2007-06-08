@@ -1,18 +1,31 @@
 
-# $Id: 22_skip.t,v 1.1 2007/05/01 21:05:27 martinthurn Exp $
+# $Id: 22_skip.t,v 1.4 2007/06/08 00:57:01 martinthurn Exp $
 
 use strict;
 use warnings;
 
-use ExtUtils::testlib;
-use Test::More 'no_plan';
-
-BEGIN {
-    use_ok('Tk::Wizard');
-}    # end of BEGIN block
-
-my $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 use Cwd;
+use ExtUtils::testlib;
+use Test::More;
+use Tk;
+
+BEGIN
+  {
+  my $mwTest;
+  eval { $mwTest = Tk::MainWindow->new };
+  if ($@)
+    {
+    plan skip_all => 'Test irrelevant without a display';
+    }
+  else
+    {
+    plan "no_plan"; # TODO Can't count tests atm
+    }
+  $mwTest->destroy if Tk::Exists($mwTest);
+  use_ok('Tk::Wizard');
+  } # end of BEGIN block
+
+my $VERSION = do { my @r = ( q$Revision: 1.4 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $wizard = new Tk::Wizard(
     -debug => undef,

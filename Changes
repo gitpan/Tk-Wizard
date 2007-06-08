@@ -1,3 +1,24 @@
+2007-06-07    <Daddy@C-3PO>
+
+	* t/25_TaskList.t: new test for "N/A" status icon
+	* lib/Tk/Wizard/Image.pm: new "N/A" status icon
+	* lib/Tk/Wizard.pm (page_taskList): new "N/A" status for task list items
+	(_repack_buttons): new private method
+	(Show): modified to allow reuse of wizard within an application!
+
+2007-05-11	Lee Goddard
+
+	* Default font size for non-Solaris, non-Windows
+	* Fixed RT #26935, missing -title
+
+2007-05-08	Lee Goddard
+
+	* Spelling in POD
+
+2007-05-05    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (Populate): withdraw after SUPER::Populate to eliminate "flicker" and ghost windows
+
 2007-05-01    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard.pm (setPageSkip): new method
@@ -23,28 +44,28 @@
 	* Wizard.pm (currentPage): bug fix for off-by-one
 	* Wizard.pm (page_dirSelect): bug fix for $dirs being the wrong widget
 
-Version 1.953, 4 Mar. 2007 (interim release by Martin Thurn)	
-	
+Version 1.953, 4 Mar. 2007 (interim release by Martin Thurn)
+
 	* Installer.pm (install_files): use catpath rather than raw slashes
 
-Version 1.952, 27 Feb. 2007 (interim release by Martin Thurn)	
+Version 1.952, 27 Feb. 2007 (interim release by Martin Thurn)
 
 	* 52_Installer.t: does not rely on $ENV{TMP} now
 	* Installer.pm: $VERSION now works on linux
 	* Wizard.pm: $VERSION now works on linux
 
-Version 1.951, 19 Feb. 2007 (interim release by Martin Thurn)	
-	
+Version 1.951, 19 Feb. 2007 (interim release by Martin Thurn)
+
 	* Wizard.pm: All "ButtonAction" callbacks now must really return non-false value in order for operation to continue, as the documentation has always said.  (Previous release seemed to be opposite?)
 	* Wizard.pm: new method addFileSelectPage()
 	* All tests pass (with some ignorable warnings) on MSWin32 with ActivePerl build 819; not tested on other platforms (yet).
-	
+
 Version 1.9451, 19 June 2006
 
 	* Wizard.pm: CloseWindowEventCycle was calling self->destroy but should have called parent->self->destroy if the parent was defined by itself
 
 Version 1.945, 18 June 2006
-	
+
 	* Wizard.pm: fixed -resizable
 	* Wizard.pm: fixed -width and -height for individual pages
 	* Wizard.pm: Withraw the parent during our lifetime
@@ -53,28 +74,28 @@ Version 1.945, 18 June 2006
 Version 1.944, 18 May 2006
 
 	* 50_Installer.t - Installer test checks if we're online by using LWP - no ExtUtils to do this...?
-	* Wizard.pM: Lee added finishButtonAction again	
+	* Wizard.pM: Lee added finishButtonAction again
 	* Wizard.pm: ET#19340 for clothohk, allowed the -height and -width to adjust the window size per frame
-	
+
 Version 1.943, 17 May 2006
 
 	* Wizard.pM: Lee added fixed typo in test causing RT #19297 by clothohk
 	* Wizard.pM: Lee added destroy to finishButtonAction prototype
-	* Wizard.pm: Lee fiddled with CloseWindowEventCycle destroy 
+	* Wizard.pm: Lee fiddled with CloseWindowEventCycle destroy
 	* Wizard.pm: Lee updated POD to reflect auto-destroy of previous version.
 	* Wizard.pm: Lee added -debug.
 	* Installer.pm: update to SYNOPSIS from clothohk
-	
+
 Version 1.942, 24 April 2006
 
 	* Wizard.pm: added &fix_wait to prevent weird Tk error messages
 	* Wizard.pm: call &fix_wait in blank_frame
-	* Installer.pm: &fix_wait 
+	* Installer.pm: &fix_wait
 	* Installer.pm: remove progress bars when job is done and replace with -done_text
 	* Updated Installer.t to use Test::More
 
 VERSION 1.941, 23 April 2006
-	
+
 	* Wizard.pm: Added Martin's patch to by default support Base64 photos in TaskList
 	* Wizard.pm: Added to TaskList more photo states added state indicators
 	* Wizard.pm: Added POD for 'destroy'
@@ -82,7 +103,7 @@ VERSION 1.941, 23 April 2006
 	* Wizard.pm: Added preFinishButtonAction
 	* Wizard.pm: bug fix in NextButtonEventCycle: CloseWindowEventCycle ends logic,
 	  rather than falling through to the remainder of the next button actions.
-	
+
 VERSION 1.94, 22 April 2006
 
 	* Patch by Martin Thurn: sorry it's late:
@@ -100,9 +121,9 @@ VERSION 1.92
 	* in Wizard.pm, make all of the user portion (but none of the button/borders) expand when the window is resized
 
 VERSION 1.90, May 2005
-	
+
 	Um... had my first child, can't remember what the patch was.
-	
+
 VERSION 1.08,
 
 	* Mainly release to get the test suite working again,

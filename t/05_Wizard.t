@@ -1,26 +1,40 @@
-#! perl -w
+
+# $Id: 05_Wizard.t,v 1.8 2007/06/08 00:57:00 martinthurn Exp $
+
+use strict;
+use warnings;
 
 use ExtUtils::testlib;
-use Test::More no_plan;
+use Test::More;
+use Tk;
 
-BEGIN {
-    use_ok('Tk::Wizard');
-}
+BEGIN
+  {
+  my $mwTest;
+  eval { $mwTest = Tk::MainWindow->new };
+  if ($@)
+    {
+    plan skip_all => 'Test irrelevant without a display';
+    }
+  else
+    {
+    plan "no_plan"; # TODO Can't count tests atm
+    }
+  $mwTest->destroy if Tk::Exists($mwTest);
+  use_ok('Tk::Wizard');
+  } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.5 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
-use warnings;
-use strict;
-use Cwd;
+my $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
-my $root = cwd =~ /\/t$/ ? '..' : '.';
 
-my $wizard = new Tk::Wizard(
-    -debug => undef,
-    -title => "Test",
-    -style => 'top',
-);
+my $wizard;
+$wizard = new Tk::Wizard(
+                         # -debug => 3,
+                         -title => "Test",
+                         -style => 'top',
+                        );
 isa_ok( $wizard, "Tk::Wizard" );
-
+ok
 $wizard->addPage(
     sub {
         $wizard->blank_frame(
@@ -32,6 +46,7 @@ $wizard->addPage(
         );
     }
 );
+ok
 $wizard->addPage(
     sub {
         $wizard->blank_frame(
@@ -43,6 +58,7 @@ $wizard->addPage(
         );
     }
 );
+ok
 $wizard->addPage(
     sub {
         $wizard->blank_frame(
@@ -57,6 +73,7 @@ $wizard->addPage(
 
 $wizard->Show;
 MainLoop;
-ok(1);
+pass('after MainLoop');
 exit;
 
+__END__

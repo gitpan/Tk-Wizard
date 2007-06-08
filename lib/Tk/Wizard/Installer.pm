@@ -1,5 +1,5 @@
 
-# $Id: Installer.pm,v 2.10 2007/04/28 14:21:51 martinthurn Exp $
+# $Id: Installer.pm,v 2.11 2007/05/11 14:59:45 leegee Exp $
 
 package Tk::Wizard::Installer;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-  $VERSION = do { my @r = ( q$Revision: 2.10 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+  $VERSION = do { my @r = ( q$Revision: 2.11 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 

@@ -1,17 +1,31 @@
-#! perl -w
 
-my $VERSION = do { my @r = ( q$Revision: 1.6 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
-
-use Cwd;
-use ExtUtils::testlib;
-use Test::More no_plan;
+# $Id: 30_pb.t,v 1.9 2007/06/08 00:57:01 martinthurn Exp $
 
 use strict;
 
-BEGIN {
-    use_ok('Tk::Wizard');
-    use_ok('Tk::ProgressBar');
-}
+my $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
+use Cwd;
+use ExtUtils::testlib;
+use Test::More ;
+use Tk;
+
+BEGIN
+  {
+  my $mwTest;
+  eval { $mwTest = Tk::MainWindow->new };
+  if ($@)
+    {
+    plan skip_all => 'Test irrelevant without a display';
+    }
+  else
+    {
+    plan "no_plan"; # TODO Can't count tests atm
+    }
+  $mwTest->destroy if Tk::Exists($mwTest);
+  use_ok('Tk::Wizard');
+  use_ok('Tk::ProgressBar');
+  } # end of BEGIN block
 
 our $PB;     # Index number of page
 our $bar;    # Progress bar

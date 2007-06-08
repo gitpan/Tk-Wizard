@@ -1,18 +1,33 @@
-#! perl -w
 
-use ExtUtils::testlib;
-use Test::More no_plan;
-
-BEGIN {
-    use_ok('Tk::Wizard');
-}
-
-my $VERSION = do { my @r = ( q$Revision: 1.5 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+# $Id: 10_Wizard.t,v 1.8 2007/06/08 00:57:01 martinthurn Exp $
 
 use strict;
-use FileHandle;
-autoflush STDOUT 1;
+
 use Cwd;
+use ExtUtils::testlib;
+use FileHandle;
+use Test::More ;
+use Tk;
+
+BEGIN
+  {
+  my $mwTest;
+  eval { $mwTest = Tk::MainWindow->new };
+  if ($@)
+    {
+    plan skip_all => 'Test irrelevant without a display';
+    }
+  else
+    {
+    plan "no_plan"; # TODO Can't count tests atm
+    }
+  $mwTest->destroy if Tk::Exists($mwTest);
+  use_ok('Tk::Wizard');
+  } # end of BEGIN block
+
+my $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
+autoflush STDOUT 1;
 
 my $root = cwd =~ /\/t$/ ? '..' : '.';
 
