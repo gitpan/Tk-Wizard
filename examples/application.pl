@@ -2,9 +2,13 @@
 
 # This is an example of using a Wizard embedded in an application.
 
+# Based on code supplied by Peter Weber.
+
 use strict;
 use warnings;
 
+use ExtUtils::testlib;  # This lets you run this example before
+                        # installing the module
 use Tk;
 use Tk::Wizard;
 
@@ -16,8 +20,6 @@ $wizard = $mw->Wizard(
                       -title => 'Component Wizard',
                       -style => 'top',
                       -tag_text => "Component Wizard",
-                      # THE NEXT LINE IS VITAL!
-                      -finishButtonAction  => sub { $wizard->withdraw; return 1; }
                      );
 $wizard->addPage( sub
                     {
@@ -25,6 +27,15 @@ $wizard->addPage( sub
                                          -title => "First Frame",
                                          -subtitle => "Step by step setup",
                                          -text => "This wizard will guide you through the complete setup"
+                                        );
+                    }
+                );
+$wizard->addPage( sub
+                    {
+                    $wizard->blank_frame(
+                                         -title => "Second page",
+                                         -subtitle => "Second step setup",
+                                         -text => "Second test text"
                                         );
                     }
                 );

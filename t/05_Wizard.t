@@ -1,5 +1,5 @@
 
-# $Id: 05_Wizard.t,v 1.8 2007/06/08 00:57:00 martinthurn Exp $
+# $Id: 05_Wizard.t,v 1.9 2007/07/05 00:13:37 martinthurn Exp $
 
 use strict;
 use warnings;
@@ -24,8 +24,7 @@ BEGIN
   use_ok('Tk::Wizard');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
-
+my $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $wizard;
 $wizard = new Tk::Wizard(

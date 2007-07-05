@@ -1,5 +1,5 @@
 
-# $Id: 10_Wizard.t,v 1.8 2007/06/08 00:57:01 martinthurn Exp $
+# $Id: 10_Wizard.t,v 1.9 2007/07/05 00:28:44 martinthurn Exp $
 
 use strict;
 
@@ -25,7 +25,7 @@ BEGIN
   use_ok('Tk::Wizard');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 autoflush STDOUT 1;
 
@@ -183,7 +183,7 @@ sub page_text_textbox1 {
 
     # diag('start page_text_textbox1');
     my $text  = "This is in a box";
-    my $frame = $wizard->text_frame(
+    my $frame = $wizard->_text_frame(
         -wait      => $WAIT,
         -title     => "1: Text from literal",
         -boxedtext => \$text,
@@ -195,7 +195,7 @@ sub page_text_textbox2 {
     my $wizard = shift;
 
     # diag('start page_text_textbox2');
-    my $frame = $wizard->text_frame(
+    my $frame = $wizard->_text_frame(
         -wait      => $WAIT,
         -title     => "2: Text from filename",
         -boxedtext => $root . '/perl_licence_blab.txt',

@@ -1,3 +1,9 @@
+2007-07-04    <Daddy@C-3PO>
+
+	* examples/application.pl: do not need finishButtonAction because:
+	* lib/Tk/Wizard.pm (Populate): default finishButtonAction now does withdraw rather than destroy
+	(_CloseWindowEventCycle): new option -kill_self_after_finish
+
 2007-06-07    <Daddy@C-3PO>
 
 	* t/25_TaskList.t: new test for "N/A" status icon
