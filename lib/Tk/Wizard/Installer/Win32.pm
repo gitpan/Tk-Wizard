@@ -1,5 +1,5 @@
 
-# $Id: Win32.pm,v 2.9 2007/05/11 14:59:45 leegee Exp $
+# $Id: Win32.pm,v 2.10 2007/07/18 00:52:08 martinthurn Exp $
 
 package Tk::Wizard::Installer::Win32;
 
@@ -14,7 +14,7 @@ my @EXPORT = ("MainLoop");
 use Cwd;
 
 our
-  $VERSION = do { my @r = ( q$Revision: 2.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+  $VERSION = do { my @r = ( q$Revision: 2.10 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 BEGIN {
     use Win32::Shortcut;
@@ -46,17 +46,7 @@ have a look for I<PathTool.exe>, a tiny Windows 32-bit executable
 by Luke Bailey (C<luke@notts.flexeprint.com>). This tool can also be
 used to add new, persistant environment variables to the system.
 
-=head1 DEPENDENCIES
-
-	Tk::Wizard
-	Tk::Wizard::Installer
-	Win32::TieRegistry
-	Tk::Hlist
-	Win32
-	Win32::Shortcut
-	File::Path
-
-=head1 METHODS
+=head1 METHODS AND CALLBACKS
 
 =head2 METHOD register_with_windows
 
@@ -196,7 +186,7 @@ sub register_with_windows {
     # return $!? undef : 1;
 }
 
-=head1 METHOD page_start_menu
+=head2 METHOD page_start_menu
 
 Returns a page (a filled C<Tk::Frame> object) that allows
 users to select a location on the Windows "Start Menu",
@@ -444,7 +434,7 @@ sub page_start_menu {
     return $frame;
 }
 
-=head1 CALLBACK callback_create_shortcut
+=head2 CALLBACK callback_create_shortcut
 
 A convenience interface to C<Win32::Shortcut> method that creates a shortcut
 at the path specified. Parameters are pretty much what you see when
@@ -562,7 +552,7 @@ sub callback_create_shortcut {
     return $r;
 }
 
-=head1 CALLBACK callback_create_shortcut
+=head2 CALLBACK callback_create_shortcuts
 
 Convenience method to create multiple shortcuts at once.
 Supply an array of hashes, each hash being arguments

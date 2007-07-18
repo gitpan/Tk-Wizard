@@ -1,3 +1,8 @@
+2007-07-17    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (Populate): pretty up the tag text line
+	* lib/Tk/Wizard/Installer.pm (addFileListPage): make sure all functions have pod
+
 2007-07-04    <Daddy@C-3PO>
 
 	* examples/application.pl: do not need finishButtonAction because:

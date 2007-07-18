@@ -1,12 +1,18 @@
 
-# $Id: Wizard.pm,v 2.30 2007/07/05 00:23:24 martinthurn Exp $
+# $Id: Wizard.pm,v 2.34 2007/07/18 00:49:13 martinthurn Exp $
 
 package Tk::Wizard;
 
-$Tk::Wizard::DEBUG = undef;
+use strict;
+if ( $^V and $^V gt v5.8.0 )
+  {
+  eval "use warnings";
+  }
+
+my $DEBUG = undef;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.30 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.34 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -28,25 +34,21 @@ use Tk::MainWindow;
 use Tk::ROText;
 use Tk::Wizard::Image;
 
-BEGIN {
-    require Exporter;    # Exporting Tk's MainLoop so that
-    @ISA    = ( "Exporter", );    # I can just use strict and Tk::Wizard without
-    @EXPORT = ("MainLoop");       # having to use Tk
-}
+use vars qw( @EXPORT @ISA );
+BEGIN
+  {
+  require Exporter;    # Exporting Tk's MainLoop so that
+  @ISA    = ( "Exporter", );    # I can just use strict and Tk::Wizard without
+  @EXPORT = ("MainLoop");       # having to use Tk
+  } # end of BEGIN block
 
 our $DEFAULT_WIDTH  = 550;        # 400
 our $DEFAULT_HEIGHT = 360;        # 316
 
-#use base  qw(Tk::MainWindow);
 use base qw[Tk::Derived Tk::Toplevel ];
 Tk::Widget->Construct('Wizard');
 
-use strict;
-if ( $^V and $^V gt v5.8.0 ) {
-    eval "use warnings";
-}
-
-use vars qw/%LABELS/;
+use vars qw/ %LABELS @asTaglinePackArgs /;
 
 # See INTERNATIONALISATION
 %LABELS = (
@@ -159,15 +161,15 @@ The buttons in the C<buttonPanel>.
 
 =item tagLine
 
-The line above the C<buttonpanel>
+The line above the C<buttonpanel>, a Tk::Frame object.
 
 =item tagText
 
-The grayed-out text above the C<buttonpanel>.
+The grayed-out text above the C<buttonpanel>, a Tk::Label object.
 
 =item tagBox
 
-The frame holding the tag text.
+A Tk::Frame holding the tagText and tagLine.
 
 =item imagePane
 
@@ -279,16 +281,7 @@ is to disable that feature to minimise display issues.
 =item Switch: -tag_text
 
 Text to supply in a 'tag line' above the wizard's control buttons.
-
-=item Switch: -tag_width
-
-Width for C<-tag_text>, above: when I work out better C<pack>ing,
-this will no longer be needed.
-Default value is based on the length of your -tag_text.
-
-=item Switch: -tag_disable
-
-Disables display of the C<-tag_text>, above.
+Specify empty string to disable the display of the tag text box.
 
 =item -image_dir
 
@@ -308,6 +301,11 @@ the Wizard will instead be destroyed after the "finish" button is clicked.
 Please see also L<ACTION EVENT HANDLERS>.
 
 =head1 METHODS
+
+=head2 new
+
+Create a new Tk::Wizard object.
+You can provide custom values for any or all of the standard widget options or widget-specific options
 
 =cut
 
@@ -332,6 +330,14 @@ sub new
   return $inv->SUPER::new(@args);
   } # new
 
+=head2 Populate
+
+This method is part of the underlying Tk inheritance mechanisms.
+You the programmer do not necessarily even need to know it exists;
+we document it here only to satisfy Pod coverage tests.
+
+=cut
+
 sub Populate {
     my ( $self, $args ) = @_;
     warn "# Enter Populate" if $self->{-debug};
@@ -341,7 +347,6 @@ sub Populate {
     my $sFontFamily      = &_font_family();
     my $iFontSize        = &_font_size();
     my $sTagTextDefault  = 'Perl Wizard';
-    my $iTagWidthDefault = $iFontSize * length($sTagTextDefault) / 1.5;
 
     # $composite->ConfigSpecs(-attribute => [where,dbName,dbClass,default]);
     $self->ConfigSpecs(
@@ -387,7 +392,7 @@ sub Populate {
         -preCloseWindowAction =>
           [ 'CALLBACK', undef, undef, sub { $self->DIALOGUE_really_quit } ],
         -tag_text  => [ 'PASSIVE', "tag_text",  "TagText",  $sTagTextDefault ],
-        -tag_width => [ 'PASSIVE', "tag_width", "TagWidth", $iTagWidthDefault ],
+        -tag_width => [ 'PASSIVE', "tag_width", "TagWidth", 0 ],
         -width     => [ 'SELF',    'width',     'Width',    $DEFAULT_WIDTH ],
         -height    => [ 'SELF',    "height",    "Height",   $DEFAULT_HEIGHT ],
         -wizardFrame => [ 'PASSIVE', undef, undef, 0 ],
@@ -430,89 +435,26 @@ sub Populate {
       $self->Advertise( buttonPanel  => $buttonPanel );
       $self->_repack_buttons;
       }    # end of CREATE_BUTTON_PANEL block
-  CREATE_TAGLINE:
+ CREATE_TAGLINE:
       {
-      $args->{-tag_text} ||= $sTagTextDefault;
-      $iTagWidthDefault = $iFontSize * length( $args->{-tag_text} ) / 1.5;
-      $args->{-tag_width} ||= $iTagWidthDefault;
-      $args->{-tag_width} ||= $DEFAULT_WIDTH;
       my $tagbox = $self->Frame(
-                                -width => $self->cget(-width) - $args->{-tag_width},
-                                # -background=>$self->cget(-background),
+                                # -background => 'red', # for debugging
                                 -height => 12,
-                               )->pack(qw/-side bottom -fill x/);
-      if (0)
-        {
-        # This is the old Canvas-based shadowy-text style:
-        $self->fontCreate(
-                          'TAG',
-                          -family => $sFontFamily,
-                          -size   => $iFontSize,
-                          -weight => 'bold',
-                         );
-        $self->{tagtext} = $tagbox->Canvas(
-                                           -relief => 'flat',
-                                           -border => 1,
-                                           -height => $iFontSize * 1.5,
-                                           -width  => $args->{-tag_width},
-                                          )->pack( -side => 'left', -anchor => 'e' );
-        $self->{tagtext}->createText(
-                                     4, 7,
-                                     -text   => $args->{-tag_text},
-                                     -fill   => '#999999',
-                                     -anchor => 'w',
-                                     -font   => 'TAG',
-                                    );
-        $self->{tagtext}->createText(
-                                     4, 9,
-                                     -text   => $args->{-tag_text},
-                                     -fill   => 'white',
-                                     -anchor => 'w',
-                                     -font   => 'TAG',
-                                    );
-        $self->{tagtext}->createText(
-                                     4, 8,
-                                     -text   => $args->{-tag_text},
-                                     -fill   => 'gray',
-                                     -anchor => 'w',
-                                     -font   => 'TAG',
-                                    );
-        } # if
-      else
-        {
-        # This is a new, simpler, accurate-width Label way of doing it:
-        my $f = $tagbox->Frame(
-                               # -background => 'magenta', # debug
-                              )->pack(qw( -side left ));
-        # Add grooves on three sides:
-        $f->Frame(
-                  # -background => 'red', # debug
-                  qw( -relief groove -bd 1 -width 2),
-                 )->pack(qw(-side right -expand 1 -fill y));
-        $f->Frame(
-                  # -background => 'blue', # debug
-                  qw( -relief groove -bd 1 -height 2),
-                 )->pack(qw(-side top -expand 1 -fill x));
-        $self->{tagtext} = $f->Label(
-                                     -relief => 'flat',
-                                     -border => 2,
-                                     -text => $args->{-tag_text},
-                                     -foreground => 'gray50',
-                                    )->pack( qw( -side top -padx 2 ));
-        $f->Frame(
-                  # -background => 'green', # debug
-                  qw( -relief groove -bd 1 -height 2),
-                 )->pack(qw(-side bottom -expand 1 -fill x));
-        } # else
-      # This is the line above buttons:
-      # print STDERR " DDD in Populate, args are ", Dumper($args);
+                               )->pack(qw/-side bottom -fill x -expand 1/);
+      # This is a new, simpler, accurate-width Label way of doing it:
+      @asTaglinePackArgs = qw( -side right -expand 1 -fill x );
+      $self->{tagtext} = $tagbox->Label(
+                                        -border => 2,
+                                        -foreground => 'gray50',
+                                       );
+      $self->_maybe_pack_tag_text;
+      # This is the line that extends to the right from the tag text:
       $self->{tagline} = $tagbox->Frame(
-                                        -width  => $args->{-tag_width},
-                                        # -background => $self->cget(-background),
+                                        # -background => 'yellow',
                                         -relief => 'groove',
                                         -bd => 1,
                                         -height => 2,
-                                       )->pack( -side => 'left', -anchor => 'e' );
+                                       )->pack(@asTaglinePackArgs);
       $self->Advertise( tagLine => $self->{tagline} );
       $self->Advertise( tagBox  => $tagbox );
       $self->Advertise( tagText => $self->{tagtext} );
@@ -575,6 +517,15 @@ sub Populate {
     );
     $self->{defaultFont} = 'DEFAULT_FONT';
 }
+
+sub _maybe_pack_tag_text
+  {
+  my $self = shift;
+  # print STDERR " DDD in _maybe_p_t_t, tag_text is =", $self->{Configure}{-tag_text}, "=\n";
+  return if (($self->{Configure}{-tag_text} || '') eq '');
+  $self->{tagtext}->configure(-text => $self->{Configure}{-tag_text}. ' ');
+  $self->{tagtext}->pack(qw( -side left -padx 0 -ipadx 2 ));
+  } # _maybe_pack_tag_text
 
 sub _repack_buttons
   {
@@ -800,50 +751,50 @@ sub initial_layout {
     }
     $self->Advertise( imagePane => $self->{left_object} );
     $self->{_laid_out}++;
-}
+} # initial_layout
 
 #
 # Maybe sub-class me
 #
-sub render_current_page {
-    my $self = shift;
-    warn "# Enter render_current_page $self->{wizardPagePtr}" if $self->{-debug};
-    my %frame_pack = ( -side => "top" );
-    if (
-        (
-            $self->{wizardPagePtr} > 0
-            && ( $self->{wizardPagePtr} < $self->_last_page )
-        )
-        && ( $self->{-style} ne '95' )
+sub render_current_page
+  {
+  my $self = shift;
+  warn "# Enter render_current_page $self->{wizardPagePtr}" if $self->{-debug};
+  my %frame_pack = ( -side => "top" );
+  if (
+      (
+       $self->{wizardPagePtr} > 0
+       && ( $self->{wizardPagePtr} < $self->_last_page )
       )
+      && ( $self->{-style} ne '95' )
+     )
     {
-        $self->{tagtext}->packForget;
-        $self->{tagline}->packForget;
-        $self->{tagtext}->pack( -side => 'left', -anchor => 'e' );
-        $self->{tagline}->pack( -side => 'left', -anchor => 'e' );
+    $self->{tagtext}->packForget;
+    $self->_maybe_pack_tag_text;
     }
-    else {
-        $self->{tagtext}->packForget;
-        $self->{tagline}->pack( -side => 'left', -anchor => 'e' );
+  else
+    {
+    $self->{tagtext}->packForget;
     }
-
-    if (   $self->{wizardPagePtr} == 0
+  if (   $self->{wizardPagePtr} == 0
         or $self->{wizardPagePtr} == $self->_last_page )
     {
-        $self->{left_object}->pack( -side => "left", -anchor => "w" );
-        if ( $self->{-style} ne '95' ) {
-            $frame_pack{-expand} = 1;
-            $frame_pack{-fill}   = 'both';
-        }
+    $self->{left_object}->pack( -side => "left", -anchor => "w" );
+    if ( $self->{-style} ne '95' )
+      {
+      $frame_pack{-expand} = 1;
+      $frame_pack{-fill}   = 'both';
+      }
     }
-    elsif ( $self->cget( -style ) eq 'top' ) {
-        $self->{left_object}->packForget;
+  elsif ( $self->cget( -style ) eq 'top' )
+    {
+    $self->{left_object}->packForget;
     }
 
-    # xxx
-    $self->configure( -background => $self->cget("-background") );
-    $self->{wizardFrame}->packForget
-      if $self->{wizardFrame} and ref $self->{wizardFrame} ne 'CODE';
+  # xxx
+  $self->configure( -background => $self->cget("-background") );
+  $self->{wizardFrame}->packForget
+  if $self->{wizardFrame} and ref $self->{wizardFrame} ne 'CODE';
     if ( not defined $self->{wizardPageList}->[0] ) {
         Carp::croak
 'render_current_page called without any frames: did you add frames to the wizard?';
@@ -1190,7 +1141,7 @@ sub blank_frame {
  #  $p->packPropagate(0);
 
     if ( $args->{ -wait } ) {
-        Tk::Wizard::fix_wait( \$args->{ -wait } );
+        _fix_wait( \$args->{ -wait } );
 
         #  $frame->after($args->{-wait},sub{$self->forward});
         $frame->after(
@@ -1259,17 +1210,17 @@ sub _text_frame {
 } # _text_frame
 
 #
-# Function (NOT a method!):       dispatch
+# Function (NOT a method!):       _dispatch
 # Description:  Thin wrapper to dispatch event cycles as needed
-# Parameters:    The dispatch function is an internal function used to determine if the dispatch back reference
+# Parameters:    The _dispatch function is an internal function used to determine if the dispatch back reference
 #         is undefined or if it should be dispatched.  Undefined methods are used to denote dispatchback
 #         methods to bypass.  This reduces the number of method dispatches made for each handler and also
 #         increased the usability of the set methods when trying to unregister event handlers.
 #
-sub dispatch {
+sub _dispatch {
     my $handler = shift;
 
-    # print STDERR " DDD dispatch($handler)\n";
+    # print STDERR " DDD _dispatch($handler)\n";
     if ( ref($handler) eq 'Tk::Callback' ) {
         return !$handler->Call();
     }    # if
@@ -1290,7 +1241,7 @@ sub dispatch {
       and ref $handler
       and ref $handler eq 'CODE';
     return 0;
-}    # dispatch
+}    # _dispatch
 
 # Returns the number of the last page (zero-based):
 sub _last_page
@@ -1334,7 +1285,7 @@ sub _page_backward {
 sub _NextButtonEventCycle
   {
   my $self = shift;
-  if ( dispatch( $self->cget( -preNextButtonAction ) ) )
+  if ( _dispatch( $self->cget( -preNextButtonAction ) ) )
     {
     warn " DDD preNextButtonAction says we should not go ahead\n" if $self->{-debug};
     return;
@@ -1345,12 +1296,12 @@ sub _NextButtonEventCycle
   $self->{backButton}->configure( -state => "normal" );
   if ( $self->{nextButton}->cget("-text") eq $LABELS{FINISH} )
     {
-    if ( dispatch( $self->cget( -preFinishButtonAction ) ) )
+    if ( _dispatch( $self->cget( -preFinishButtonAction ) ) )
       {
       warn " DDD preFinishButtonAction says we should not go ahead\n" if $self->{-debug};
       return;
       } # if
-    if ( dispatch( $self->cget( -finishButtonAction ) ) )
+    if ( _dispatch( $self->cget( -finishButtonAction ) ) )
       {
       warn " DDD finishButtonAction says we should not go ahead\n" if $self->{-debug};
       return;
@@ -1368,14 +1319,14 @@ sub _NextButtonEventCycle
       if $self->{nextButton};
       }
     $self->render_current_page;
-    # print STDERR " DDD this is before dispatch postNextButtonAction\n";
-    if ( dispatch( $self->cget( -postNextButtonAction ) ) ) { return; }
+    # print STDERR " DDD this is before _dispatch postNextButtonAction\n";
+    if ( _dispatch( $self->cget( -postNextButtonAction ) ) ) { return; }
     }
   } # _NextButtonEventCycle
 
 sub _BackButtonEventCycle {
     my $self = shift;
-    return if dispatch( $self->cget( -preBackButtonAction ) );
+    return if _dispatch( $self->cget( -preBackButtonAction ) );
 
 # move the wizard pointer back one position and then adjust the navigation buttons
 # to reflect any state changes. Don't fall off end of page pointer
@@ -1384,14 +1335,14 @@ sub _BackButtonEventCycle {
     $self->{backButton}->configure( -state => "disabled" )
       if ( $self->{wizardPagePtr} == 0 );
     $self->render_current_page;
-    if ( dispatch( $self->cget( -postBackButtonAction ) ) ) { return; }
+    if ( _dispatch( $self->cget( -postBackButtonAction ) ) ) { return; }
 }
 
 sub _HelpButtonEventCycle {
     my $self = shift;
-    if ( dispatch( $self->cget( -preHelpButtonAction ) ) )  { return; }
-    if ( dispatch( $self->cget( -helpButtonAction ) ) )     { return; }
-    if ( dispatch( $self->cget( -postHelpButtonAction ) ) ) { return; }
+    if ( _dispatch( $self->cget( -preHelpButtonAction ) ) )  { return; }
+    if ( _dispatch( $self->cget( -helpButtonAction ) ) )     { return; }
+    if ( _dispatch( $self->cget( -postHelpButtonAction ) ) ) { return; }
 }
 
 sub _CancelButtonEventCycle
@@ -1419,7 +1370,7 @@ sub _CloseWindowEventCycle
       return;
       } # if
     } # if
-  # return if dispatch( $self->cget(-preCloseWindowAction));
+  # return if _dispatch( $self->cget(-preCloseWindowAction));
   if (Tk::Exists($hGUI))
     {
     warn "# hGUI=$hGUI= withdraw\n" if $self->{-debug};
@@ -2115,7 +2066,7 @@ sub prompt {
 # Using a -wait value for After of less than this seems to cause a weird Tk dump
 # so call this whenever using a -wait
 #
-sub fix_wait {
+sub _fix_wait {
     my $wait_ref = shift;
     $$wait_ref += 200 if $$wait_ref < 250;
 }

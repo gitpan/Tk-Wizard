@@ -1,5 +1,5 @@
 
-# $Id: Installer.pm,v 2.11 2007/05/11 14:59:45 leegee Exp $
+# $Id: Installer.pm,v 2.13 2007/07/18 03:24:01 martinthurn Exp $
 
 package Tk::Wizard::Installer;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-  $VERSION = do { my @r = ( q$Revision: 2.11 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+  $VERSION = do { my @r = ( q$Revision: 2.13 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -86,13 +86,7 @@ If you are looking for a freeware software installer that is not
 dependent upon Perl, try I<Inno Setup> - C<http://www.jrsoftware.org/>. It's
 so good, even Microsoft have been caught using it.
 
-=head1 DEPENDENCIES
-
-  Tk::Wizard;
-  Tk::ProgressBar;
-  Tk::LabFrame;
-
-=head1 DETAILS
+=head1 METHODS, CALLBACKS, AND DIALOGS
 
 C<Tk::Wizard::Installer> supports all the methods and means of L<Tk::Wizard|Tk::Wizard>
 plus those listed in the remainder of this document.
@@ -109,34 +103,25 @@ choice is entered into the object field C<licence_agree>, which you
 can test as the I<Next> button is pressed, either using your own
 function or with the Wizard's C<callback_licence_agreement> function.
 
-See L<CALLBACK callback_licence_agreement> and L<METHOD page_licence_agreement>.
-
 =cut
 
 sub addLicencePage {
     my ( $self, $args ) = ( shift, {@_} );
     die "No -filepath argument present" if not $args->{-filepath};
-    $self->addPage( sub { $self->page_licence_agreement($args) } );
+    $self->addPage( sub { $self->_page_licence_agreement($args) } );
 }    # addLicencePage
 
-#
-# PRIVATE METHOD page_licence_agreement
-#
-#	my $COPYRIGHT_PAGE = $wizard->addPage( sub{ Tk::Wizard::page_licence_agreement ($wizard,$LICENCE_FILE)} );
-#
-# Accepts a C<TK::Wizard> object and the path to a text file
-# containing the licence.
+
+# PRIVATE METHOD _page_licence_agreement
 #
 # Returns a C<Tk::Wizard> page entitled "End-user Licence Agreement",
 # a scroll-box of the licence text, and an "Agree" and "Disagree"
 # option. If the user agrees, the caller's package's global (yuck)
 # C<$LICENCE_AGREE> is set to a Boolean true value.
 #
-# If the licence file cannot be read, this routine will call C<die $!>.
-#
 # See also L<CALLBACK callback_licence_agreement>.
-#
-sub page_licence_agreement {
+
+sub _page_licence_agreement {
     my ( $self, $args ) = ( shift, shift );
     local *IN;
     my $text;
@@ -200,7 +185,7 @@ sub page_licence_agreement {
     }    # if
     $frame->Radiobutton(%opts2)->pack( -padx => $padx, -anchor => 'w', );
     if ( $args->{ -wait } ) {
-        Tk::Wizard::fix_wait( \$args->{ -wait } );
+        Tk::Wizard::_fix_wait( \$args->{ -wait } );
 
         # $frame->after($args->{-wait},sub{$self->forward});
         $frame->after(
@@ -212,7 +197,7 @@ sub page_licence_agreement {
         );
     }    # if WAIT
     return $frame;
-}    # page_licence_agreement
+}    # _page_licence_agreement
 
 =head2 CALLBACK callback_licence_agreement
 
@@ -371,11 +356,20 @@ If not supplied, calls L<DIALOGUE pre_install_files_quit>.
 #
 sub addFileListPage {
     my ( $self, $args ) = ( shift, {@_} );
-    $self->addPage( sub { $self->page_fileList($args) } );
+    $self->addPage( sub { $self->page_filelist($args) } );
 }
 
-# See instasll_files and addFileListPage
-sub page_fileList {
+
+=head2 METHOD page_filelist
+
+The same as C<addFileListPage> (see L<METHOD addFileListPage>)
+but does not add the page to the Wizard.
+
+Note that unlike C<addFileListPage>, arguments are expected in a hash reference.
+
+=cut
+
+sub page_filelist {
     my ( $self, $args ) = ( shift, shift );
     croak "Arguments should be supplied as a hash ref"
       if not ref $args
@@ -429,17 +423,17 @@ sub page_fileList {
     $self->{-bar}->after(
         $args->{-delay} || 1000,
         sub {
-            my $todo = $self->pre_install_files($args);
+            my $todo = $self->_pre_install_files($args);
             warn "# Configure bar to $todo\n" if $self->{-debug};
             $self->{-bar}->configure( -to => $todo );
-            $self->install_files($args);
+            $self->_install_files($args);
             $self->{nextButton}->configure( -state => "normal" );
             $self->{backButton}->configure( -state => "normal" );
 
             #$self->{nextButton}->invoke unless $args->{-wait};
 
             if ( $args->{ -wait } ) {
-                Tk::Wizard::fix_wait( \$args->{ -wait } );
+                Tk::Wizard::_fix_wait( \$args->{ -wait } );
 
                 #			$frame->after($args->{-wait},sub{$self->forward});
                 $frame->after(
@@ -459,7 +453,7 @@ sub page_fileList {
 # Pre-parse, counting files and expanding directories if necessary
 # Return total number of files to process
 # Puts any failures into %{$self->{-failed}}
-sub pre_install_files {
+sub _pre_install_files {
     my ( $self, $args ) = ( shift, shift );
     croak "Arguments should be supplied as a hash ref"
       if not ref $args
@@ -521,10 +515,10 @@ sub pre_install_files {
     }
 
     return $total;    # why was it total+1?
-}
+} # _pre_install_files
 
-# See page_fileList
-sub install_files {
+# See page_filelist
+sub _install_files {
     my ( $self, $args ) = ( shift, shift );
     croak "Arguments should be supplied as a hash ref"
       if not ref $args
@@ -624,9 +618,9 @@ sub install_files {
     }
 
     return $total;    # why was it total + 1?
-}
+} # _install_files
 
-=head2 DIALOUGE METHOD DIALOGUE_really_quit
+=head2 DIALOGUE METHOD DIALOGUE_really_quit
 
 Called when the user tries to quit.
 As opposed to the base C<Wizard>'s dialogue of the same name,
@@ -660,7 +654,7 @@ sub DIALOGUE_really_quit {
     return !$self->{really_quit};
 }
 
-=head2 DIALOUGE METHOD pre_install_files_quit
+=head2 DIALOGUE METHOD pre_install_files_quit
 
 Asks if the user wishes to continue after file copy errors.
 
@@ -697,7 +691,7 @@ files to specified locations, updating two progress bars in the
 process.
 
 If a file cannot be downloaded, the user will be prompted to try
-again. If the user sooner or later wishes to carry on even though
+again.  If the user sooner or later wishes to carry on even though
 a file has not downloaded, the calling C<Wizard>'s C<-failed>
 slot is filled with the URIs of the files that could not be downloaded,
 and the supplied C<-on_error> argument comes into play - see below.
@@ -753,9 +747,19 @@ Would it be useful to implement globbing for FTP URIs?
 sub addDownloadPage {
     my ( $self, $args ) = ( shift, {@_} );
     $self->addPage( sub { $self->page_download($args) } );
-}
+} # addDownloadPage
 
-# See instasll_files and addFileListPage
+
+=head2 METHOD page_download
+
+The same as C<addDownloadPage> (see L<METHOD addDownloadPage>)
+but does not add the page to the Wizard.
+
+Note that unlike C<addDownloadPage>, arguments are expected in a hash reference.
+
+=cut
+
+# See install_files and addFileListPage
 sub page_download {
     my ( $self, $args ) = ( shift, shift );
     croak "Arguments should be supplied as a hash ref"
@@ -835,7 +839,7 @@ sub page_download {
                       ->configure( -label => $uri_msg || "Current File" );
                     $args->{file_label}->update;
                     if (
-                        $self->read_uri(
+                        $self->_read_uri(
                             bar    => $args->{-file_bar},
                             uri    => $uri,
                             target => $args->{-files}->{$uri},
@@ -857,7 +861,7 @@ sub page_download {
                       if $self->{-debug};
                     if (
                         $args->{-no_retry}
-                        or not $self->download_again(
+                        or not $self->confirm_download_again(
                             scalar keys %{ $args->{-files} }
                         )
                       )
@@ -900,9 +904,8 @@ sub page_download {
             # $self->{backButton}->configure(-state=>"normal");
             $self->{nextButton}->configure( -state => "normal" );
             if ( $args->{ -wait } ) {
-                Tk::Wizard::fix_wait( \$args->{ -wait } );
-
-                #			$frame->after($args->{-wait},sub{$self->forward});
+                Tk::Wizard::_fix_wait( \$args->{ -wait } );
+                # $frame->after($args->{-wait},sub{$self->forward});
                 $frame->after(
                     $args->{ -wait },
                     sub {
@@ -918,7 +921,7 @@ sub page_download {
 }
 
 # c/o PPM.pm
-sub read_uri {
+sub _read_uri {
     my ( $self, $args ) = ( shift, {@_} );
     carp "Require uri param"    unless defined $args->{uri};
     carp "Require target param" unless defined $args->{target};
@@ -934,14 +937,14 @@ sub read_uri {
     if ( defined $args->{proxy} ) {
         $proxy_user = $args->{HTTP_PROXY_USER};
         $proxy_pass = $args->{HTTP_PROXY_PASS};
-        warn("read_uri: calling env_proxy: $args->{http_proxy}")
+        warn("_read_uri: calling env_proxy: $args->{http_proxy}")
           if $self->{-debug};
         $ua->env_proxy;
     }
     elsif ( defined $ENV{HTTP_PROXY} ) {
         $proxy_user = $ENV{HTTP_PROXY_USER};
         $proxy_pass = $ENV{HTTP_PROXY_PASS};
-        warn("read_uri: calling env_proxy: $ENV{HTTP_proxy}")
+        warn("_read_uri: calling env_proxy: $ENV{HTTP_proxy}")
           if $self->{-debug};
         $ua->env_proxy;
     }
@@ -949,7 +952,7 @@ sub read_uri {
     my $req = HTTP::Request->new( GET => $args->{uri} );
     if ( defined $proxy_user and defined $proxy_pass ) {
         warn(
-"read_uri: calling proxy_authorization_basic($proxy_user, $proxy_pass)"
+"_read_uri: calling proxy_authorization_basic($proxy_user, $proxy_pass)"
         ) if $self->{-debug};
         $req->proxy_authorization_basic( $proxy_user, $proxy_pass );
     }
@@ -959,7 +962,7 @@ sub read_uri {
     # update the progress bar
     ( $self->{response}, $self->{bytes_transferred} ) = ( undef, 0 );
     $self->{response} =
-      $ua->request( $req, sub { &lwp_callback( $self, $args->{bar}, @_ ) },
+      $ua->request( $req, sub { &_lwp_callback( $self, $args->{bar}, @_ ) },
         , 4096 );
 
     if ( $self->{response} && $self->{response}->is_success ) {
@@ -968,7 +971,7 @@ sub read_uri {
             mkpath $dirs or croak "Could not make path $dirs : $!";
         }
         unless ( open OUT, ">$args->{target}" ) {
-            warn("read_uri: Couldn't open $args->{target} for writing")
+            warn("_read_uri: Couldn't open $args->{target} for writing")
               if $self->{-debug};
             $self->{errstr} = "Couldn't open $args->{target} for writing\n";
             return;
@@ -980,7 +983,7 @@ sub read_uri {
         return 1;
     }
     if ( $self->{response} ) {
-        warn(   "read_uri: Error(1) reading $args->{uri}: "
+        warn(   "_read_uri: Error(1) reading $args->{uri}: "
               . $self->{response}->code . " "
               . $self->{response}->message )
           if $self->{-debug};
@@ -990,14 +993,14 @@ sub read_uri {
           . $self->{response}->message . "\n";
     }
     else {
-        warn("read_uri: Error(2) reading $args->{uri} ") if $self->{-debug};
+        warn("_read_uri: Error(2) reading $args->{uri} ") if $self->{-debug};
         $self->{errstr} = "Error(2) reading $args->{uri} 	\n";
     }
     return 0;
 }
 
 # c/o PPM.pm
-sub lwp_callback {
+sub _lwp_callback {
     my $self = shift;
     my ( $bar, $data, $res, $protocol ) = @_;
     $bar->configure( -to => $res->header('Content-Length') );
@@ -1008,9 +1011,18 @@ sub lwp_callback {
     $self->{response} = $res;
     $self->{response}->add_content($data);
     $self->{bytes_transferred} += length $data;
-}
+} # _lwp_callback
 
-sub download_again {
+=head2 CALLBACK confirm_download_again
+
+This callback is triggered when a file download fails
+during a DownloadPage.
+In the default implementation, the user is asked if they would like to try again
+(Yes or No).
+
+=cut
+
+sub confirm_download_again {
     my ( $self, $failed ) = ( shift, shift );
     my $button = $self->parent->messageBox(
         -icon    => 'question',
@@ -1022,9 +1034,19 @@ sub download_again {
           . " were not downloaded.\n\nWould you like to try again?",
     );
     return lc $button eq 'yes' ? 1 : 0;
-}
+} # confirm_download_again
 
-sub download_quit {
+
+=head2 CALLBACK confirm_download_quit
+
+This callback is triggered when the -on_error condition happens
+at the end of a DownloadPage.
+In the default implementation, the user is asked if they would like to abort the entire installation process
+(Yes or No).
+
+=cut
+
+sub confirm_download_quit {
     my ( $self, $failed ) = ( shift, shift );
     my $button = $self->parent->messageBox(
         -icon    => 'error',
@@ -1037,7 +1059,7 @@ sub download_quit {
           . "Should the Installation process be aborted?",
     );
     $self->CloseWindowEventCycle if lc $button eq 'yes';
-}
+} # confirm_download_quit
 
 1;
 
