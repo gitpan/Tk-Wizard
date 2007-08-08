@@ -1,3 +1,14 @@
+2007-08-07    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard/Tester.pm: new module, for testing
+
+	* lib/Tk/Wizard.pm: cosmetic fixes and navigation improvements
+
+2007-08-06    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (_on_last_page): new private method
+	(_on_first_page): new private method
+
 2007-07-17    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard.pm (Populate): pretty up the tag text line

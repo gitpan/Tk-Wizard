@@ -16,6 +16,9 @@ no_index:
   directory: 
     - inc
     - t
+recommends: 
+  HTTP::Request: 0
+  LWP::UserAgent: 0
 requires: 
   Carp: 0
   Cwd: 0
@@ -35,4 +38,4 @@ requires:
   Win32: 0.2
   Win32::Shortcut: 0
   Win32::TieRegistry: 0
-version: 2.012
+version: 2.013

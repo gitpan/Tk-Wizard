@@ -1,7 +1,7 @@
 
-# $Id: 50_Installer.t,v 1.7 2007/06/11 00:44:10 martinthurn Exp $
+# $Id: 50_Installer.t,v 1.8 2007/07/20 22:17:48 martinthurn Exp $
 
-my $VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use warnings;
 use strict;
@@ -36,16 +36,17 @@ BEGIN
   use_ok("Tk::Wizard::Installer");
   } # end of BEGIN block
 
-my $WAIT  = 100;
+my $WAIT = 100;
+my $sTestDir = 't/__perlwizardtest';
 my $files = {
-             'http://www.cpan.org/'      => './cpan_index1.html',
-             'http://www.cpan.org/'      => './cpan_index2.html',
-             'http://www.leegoddard.net' => './lee.html',
+             'http://www.cpan.org/' => "$sTestDir/cpan_index1.html",
+             'http://www.cpan.org/' => "$sTestDir/cpan_index2.html",
+             'http://www.leegoddard.net' => "$sTestDir/lee.html",
             };
 
-if ( ! -e 't/__perlwizardtest' )
+if ( ! -e $sTestDir )
   {
-  $files->{'http://localhost/test.txt'} = 't/__perlwizardtest/test2.txt';
+  $files->{'http://localhost/test.txt'} = "$sTestDir/test2.txt";
   } # if
 
 my $wizard = Tk::Wizard::Installer->new( -title => "Installer Test", );
@@ -84,11 +85,7 @@ ok(
                       return $wizard->blank_frame(
                                                   -wait     => $WAIT,
                                                   -title    => "Finished",
-                                                  -subtitle => "Please press Finish to leave the Wizard.",
-                                                  -text =>
-                                                  "If you saw some error messages, they came from Tk::DirTree, and show "
-                                                  . "that some of your drives are inacessible - perhaps a CD-ROM drive without "
-                                                  . "media.  Such warnings can be turned off - please see the documentation for details."
+                                                  -subtitle => "Please.",
                                                  );
                       }
                    ),
@@ -105,26 +102,19 @@ foreach ( 1 .. 3 )
 ok( $wizard->Show, "Show" );
 Tk::Wizard::Installer::MainLoop();
 pass("Exited MainLoop" );
-unlink 't/__perlwizardtest';
+unlink $sTestDir;
 exit;
 
-sub page_splash {
-    my $wizard = shift;
-    my ( $frame, @pl ) = $wizard->blank_frame(
-        -wait  => $WAIT,
-        -title => "Installer Test",
-        -subtitle =>
-          "Testing Tk::Wizard::Installer $Tk::Wizard::Installer::VERSION",
-        -text => "This Wizard is a simple test of the Wizard, and nothing more.
-
-No software will be installed, but you'll hopefully see a few things.
-
-Latest addition: file download
-
-"
-    );
-    return $frame;
-}
+sub page_splash
+  {
+  my $wizard = shift;
+  my ( $frame, @pl ) = $wizard->blank_frame(
+                                            -wait  => $WAIT,
+                                            -title => "Installer Test",
+                                            -subtitle => "Testing",
+                                           );
+  return $frame;
+  } # page_splash
 
 sub preNextButtonAction { return 1; }
 

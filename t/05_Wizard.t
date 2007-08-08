@@ -1,5 +1,5 @@
 
-# $Id: 05_Wizard.t,v 1.9 2007/07/05 00:13:37 martinthurn Exp $
+# $Id: 05_Wizard.t,v 1.11 2007/08/08 04:19:13 martinthurn Exp $
 
 use strict;
 use warnings;
@@ -18,61 +18,30 @@ BEGIN
     }
   else
     {
-    plan "no_plan"; # TODO Can't count tests atm
+    plan tests => 10;
     }
   $mwTest->destroy if Tk::Exists($mwTest);
-  use_ok('Tk::Wizard');
+  use_ok('Tk::Wizard::Tester');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.11 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
-my $wizard;
-$wizard = new Tk::Wizard(
-                         # -debug => 3,
-                         -title => "Test",
-                         -style => 'top',
-                        );
-isa_ok( $wizard, "Tk::Wizard" );
-ok
-$wizard->addPage(
-    sub {
-        $wizard->blank_frame(
-            -wait     => 100,
-            -title    => "Title One",
-            -subtitle => "It's just a test",
-            -text =>
-"This Wizard is a simple test of the Wizard, and nothing more.\n\nNo software will be installed, but you'll hopefully see a licence agreement page, and a directory listing page.",
-        );
-    }
-);
-ok
-$wizard->addPage(
-    sub {
-        $wizard->blank_frame(
-            -wait     => 100,
-            -title    => "Title Two",
-            -subtitle => "It's just a test",
-            -text =>
-"This Wizard is a simple test of the Wizard, and nothing more.\n\nNo software will be installed, but you'll hopefully see a licence agreement page, and a directory listing page.",
-        );
-    }
-);
-ok
-$wizard->addPage(
-    sub {
-        $wizard->blank_frame(
-            -wait     => 100,
-            -title    => "Title Three",
-            -subtitle => "It's just a test",
-            -text =>
-"This Wizard is a simple test of the Wizard, and nothing more.\n\nNo software will be installed, but you'll hopefully see a licence agreement page, and a directory listing page.",
-        );
-    }
-);
-
-$wizard->Show;
-MainLoop;
-pass('after MainLoop');
-exit;
+foreach my $style ( 'top', '95' )
+  {
+  # diag(" DDD ENV{TEST_INTERACTIVE} is $ENV{TEST_INTERACTIVE}.");
+  my $wizard = new Tk::Wizard::Tester(
+                                      # -debug => 3,
+                                      -style => $style,
+                                      -wait => $ENV{TEST_INTERACTIVE} ? 0 : 444,
+                                     );
+  isa_ok( $wizard, "Tk::Wizard::Tester" );
+  isa_ok( $wizard, "Tk::Wizard" );
+  $wizard->Show;
+  pass('before MainLoop');
+  MainLoop;
+  pass('after MainLoop');
+  } # foreach
+pass('after foreach loop');
+exit 0;
 
 __END__

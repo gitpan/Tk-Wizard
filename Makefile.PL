@@ -1,11 +1,11 @@
 
-# $Id: Makefile.PL,v 2.14 2007/07/18 03:24:18 martinthurn Exp $
+# $Id: Makefile.PL,v 2.15 2007/07/20 22:17:10 martinthurn Exp $
 
 use inc::Module::Install;
 
 name('Tk-Wizard');
 abstract('GUI for step-by-step interactive logical process');
-version(2.012);
+version(2.013);
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');
 
@@ -16,6 +16,10 @@ requires("File::Copy");
 requires("File::Path");
 requires("File::Spec");
 test_requires("FileHandle");
+# This is used by Tk::Wizard::Installer::addDownloadPage:
+recommends('LWP::UserAgent');
+# This is used by Tk::Wizard::Installer::addDownloadPage:
+recommends('HTTP::Request');
 test_requires("Test::More");
 requires('Tk');
 requires("Tk::After");

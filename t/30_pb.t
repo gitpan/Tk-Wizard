@@ -1,9 +1,9 @@
 
-# $Id: 30_pb.t,v 1.9 2007/06/08 00:57:01 martinthurn Exp $
+# $Id: 30_pb.t,v 1.10 2007/08/08 04:22:35 martinthurn Exp $
 
 use strict;
 
-my $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.10 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use Cwd;
 use ExtUtils::testlib;
@@ -20,7 +20,7 @@ BEGIN
     }
   else
     {
-    plan "no_plan"; # TODO Can't count tests atm
+    plan tests => 8;
     }
   $mwTest->destroy if Tk::Exists($mwTest);
   use_ok('Tk::Wizard');
@@ -30,12 +30,15 @@ BEGIN
 our $PB;     # Index number of page
 our $bar;    # Progress bar
 
-my $wizard = new Tk::Wizard( -title => "ProgressBar Test", );
+my $wizard = new Tk::Wizard(
+                            # -debug => 3,
+                            -title => "ProgressBar Test",
+                           );
 isa_ok( $wizard, "Tk::Wizard" );
 $wizard->configure(
     -postNextButtonAction => sub { &postNextButtonAction($wizard); },
     -preNextButtonAction  => sub { &preNextButtonAction($wizard); },
-    -finishButtonAction   => sub { ok(1); $wizard->destroy; 1; },
+                   # -finishButtonAction   => sub { ok(1); $wizard->destroy; 1; },
 );
 isa_ok( $wizard->cget( -preNextButtonAction ), "Tk::Callback" );
 
@@ -121,7 +124,7 @@ sub postNextButtonAction {
         $wizard->update;
 
         # diag('step 1');
-        foreach my $i ( 0 .. $bar->cget( -to ) ) {
+        foreach my $i ( 1 .. $bar->cget( -to ) ) {
             sleep 1;
             $bar->value($i);
 

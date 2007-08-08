@@ -1,5 +1,5 @@
 
-# $Id: 06_AutoDestroy.t,v 1.8 2007/06/08 00:57:01 martinthurn Exp $
+# $Id: 06_AutoDestroy.t,v 1.9 2007/08/08 04:19:48 martinthurn Exp $
 
 use strict;
 use warnings;
@@ -27,13 +27,15 @@ BEGIN
   use_ok('Tk::Wizard');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $WAIT = 1;
 
 ZERO:
 {
-    my $wizard = new Tk::Wizard;
+    my $wizard = new Tk::Wizard(
+                                # -debug => 88,
+                               );
     isa_ok( $wizard, "Tk::Wizard" );
     is( 1, $wizard->addPage( sub { $wizard->blank_frame( -wait => $WAIT ) } ) );
     $wizard->Show;

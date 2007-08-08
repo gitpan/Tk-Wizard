@@ -33,11 +33,14 @@ based upon it.
 The wizard feel is largly based upon the Microsoft(TM,etc) wizard style:
 the default is similar to that found in Microsoft Windows 95; a more
 Windows 2000-like feel is also supported (see the "-style" entry in
-"WIDGET-SPECIFIC OPTIONS". Subclassing the module to provide different
-look-and-feel is highly encourage: please see "NOTES ON SUB-CLASSING
+"WIDGET-SPECIFIC OPTIONS".)  Subclassing the module to provide different
+look-and-feel is highly encouraged: please see "NOTES ON SUB-CLASSING
 Tk::Wizard".
 
 NB: THIS SHOULD BE CONSIDERED ALPHA SOFTWARE.  ALL CONTRIBUTIONS ARE WELCOME!
 
 AUTHOR
-	Lee Goddard (lgoddard@cpan.org) based on work Daniel T Hable.
+        Lee Goddard (lgoddard@cpan.org) based on work Daniel T Hable.
+
+CO-MAINTAINER
+        Martin Thurn (mthurn@cpan.org)

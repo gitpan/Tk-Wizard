@@ -1,5 +1,5 @@
 
-# $Id: Installer.pm,v 2.13 2007/07/18 03:24:01 martinthurn Exp $
+# $Id: Installer.pm,v 2.14 2007/07/20 22:18:05 martinthurn Exp $
 
 package Tk::Wizard::Installer;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-  $VERSION = do { my @r = ( q$Revision: 2.13 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.14 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -42,11 +42,11 @@ use Cwd;
 use File::Path;
 use File::Copy;
 use File::Spec;
-use Tk::Wizard;
-use Tk::ProgressBar;
+use Tk::ErrorDialog;
 use Tk::LabFrame;
-require Tk::ErrorDialog;
-require Exporter;
+use Tk::ProgressBar;
+use Tk::Wizard;
+use Exporter;
 use vars qw/@ISA @EXPORT/;
 @ISA    = "Tk::Wizard";
 @EXPORT = ("MainLoop");

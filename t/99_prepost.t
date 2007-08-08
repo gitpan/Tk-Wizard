@@ -15,16 +15,16 @@ BEGIN
     }
   else
     {
-    plan tests => 33;
+    plan tests => 35;
     }
   $mwTest->destroy if Tk::Exists($mwTest);
   use_ok('Tk::Wizard');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.6 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my @out;
-my $Wait = 1000;
+my $Wait = 100;
 
 
 foreach my $style (qw[ top 95 ]) {
@@ -41,6 +41,7 @@ foreach my $style (qw[ top 95 ]) {
             -finishButtonAction    => sub { &postNextButtonAction($wizard) },
         )
     );
+    isa_ok( $wizard->cget( -preNextButtonAction ), "Tk::Callback" );
     ok(
         $wizard->addPage(
             sub {
