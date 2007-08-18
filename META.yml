@@ -3,7 +3,9 @@ abstract: GUI for step-by-step interactive logical process
 author: cpan-at-lgoddard-dot-net & mthurn@cpan.org
 build_requires: 
   ExtUtils::testlib: 0
+  File::Path: 0
   FileHandle: 0
+  LWP::UserAgent: 0
   Test::More: 0
 distribution_type: module
 generated_by: Module::Install version 0.67
@@ -38,4 +40,4 @@ requires:
   Win32: 0.2
   Win32::Shortcut: 0
   Win32::TieRegistry: 0
-version: 2.013
+version: 2.014

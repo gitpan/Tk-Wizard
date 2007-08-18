@@ -1,12 +1,13 @@
 
-# $Id: 52_Installer.t,v 1.10 2007/06/08 00:57:01 martinthurn Exp $
+# $Id: 52_Installer.t,v 1.11 2007/08/14 23:56:37 martinthurn Exp $
 
 use strict;
 use warnings;
 
-my $VERSION = do { my @r = ( q$Revision: 1.10 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.11 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
+use File::Path;
 use Test::More ;
 use Tk;
 
@@ -107,6 +108,7 @@ ok(
 $iPageCount++;
 ok(
     $wizard->addFileListPage(
+                             -slowdown => $ENV{TEST_INTERACTIVE} ? 2000 : 0,
         -wait => $WAIT,
         -copy => 1,
         -from => [ map { "$testdir/$_" } @asFrom ],
@@ -141,16 +143,7 @@ ok( $wizard->Show, "Show" );
 Tk::Wizard::Installer::MainLoop();
 ok( 1, "Exited MainLoop" );
 
-for (@asFrom) {
-    unlink $testdir . "/$_";
-}    # for
-for (@asDest) {
-    my $sDest = "$testdir/$_";
-    ok( -e ($sDest), qq'File copied to $sDest' );
-    unlink $sDest or diag "Can not remove $sDest: $!";
-}    # for
-
-unlink $testdir;
+rmtree $TEMP_DIR;
 
 sub page_splash {
     my $wizard = shift;

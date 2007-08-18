@@ -1,7 +1,16 @@
+2007-08-17    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard/Tester.pm (new): fixed args to addDirSelectPage()
+	* lib/Tk/Wizard/Installer.pm (_page_licence_agreement): added keyboard shortcuts for the Accept/Decline radio buttons
+	* lib/Tk/Wizard.pm (_repack_buttons): BUGFIX for -nohelpbutton behavior
+	(_page_dirSelect): FIX: initialize DirTree with proper -directory argument
+	(_page_dirSelect): cosmetic changes in DirSelectPage
+	* lib/Tk/Wizard/Tester.pm (new): reordered a couple pages; added the style name to the text of every page
+	* lib/Tk/Wizard.pm: lots of cosmetic fixes
+
 2007-08-07    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard/Tester.pm: new module, for testing
-
 	* lib/Tk/Wizard.pm: cosmetic fixes and navigation improvements
 
 2007-08-06    <Daddy@C-3PO>

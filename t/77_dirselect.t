@@ -1,6 +1,6 @@
 #! perl -w
 
-# $Id: 77_dirselect.t,v 1.6 2007/06/11 00:39:25 martinthurn Exp $
+# $Id: 77_dirselect.t,v 1.7 2007/08/18 00:44:16 martinthurn Exp $
 
 use strict;
 
@@ -26,12 +26,12 @@ BEGIN
   use_ok('Tk::Wizard');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.6 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 autoflush STDOUT 1;
 
 our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 2222;
-my $sDir;
+my $sDir = 't';
 
 my $wizard = Tk::Wizard->new(
                              -title =>

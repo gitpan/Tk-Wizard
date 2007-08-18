@@ -1,5 +1,5 @@
 
-# $Id: Win32.pm,v 2.10 2007/07/18 00:52:08 martinthurn Exp $
+# $Id: Win32.pm,v 2.11 2007/08/10 03:11:46 martinthurn Exp $
 
 package Tk::Wizard::Installer::Win32;
 
@@ -14,7 +14,7 @@ my @EXPORT = ("MainLoop");
 use Cwd;
 
 our
-  $VERSION = do { my @r = ( q$Revision: 2.10 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.11 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 BEGIN {
     use Win32::Shortcut;
@@ -46,9 +46,9 @@ have a look for I<PathTool.exe>, a tiny Windows 32-bit executable
 by Luke Bailey (C<luke@notts.flexeprint.com>). This tool can also be
 used to add new, persistant environment variables to the system.
 
-=head1 METHODS AND CALLBACKS
+=head1 METHODS
 
-=head2 METHOD register_with_windows
+=head2 register_with_windows
 
 Registers an application with Windows so that it can be "uninstalled"
 using the I<Control Panel>'s I<Add/Remove Programs> dialogue.
@@ -148,7 +148,7 @@ should be full URIs.
 
 =back
 
-The routine will also try to add any other paramters to the
+The routine will also try to add any other parameters to the
 registry tree in the current location: YMMV.
 
 =cut
@@ -186,16 +186,16 @@ sub register_with_windows {
     # return $!? undef : 1;
 }
 
-=head2 METHOD page_start_menu
+=head2 addStartMenuPage
 
-Returns a page (a filled C<Tk::Frame> object) that allows
+Adds a page that allows
 users to select a location on the Windows "Start Menu",
 perhaps to add a shortcut there.
 
 This routine does not currently create the directory in the
 I<Start Menu>, nor does it place a link there - see
-L</CALLBACK callback_create_shortcut> for that. Rather, the
-caller supplies a C<-variable> paramter that is a reference
+L<callback_create_shortcut> for that. Rather, the
+caller supplies a C<-variable> parameter that is a reference
 to a scalar which, once the page is 'run', will contain
 either the path to the user's chosen directory, or C<undef>
 if the option to not select was chosen.
@@ -241,10 +241,10 @@ below.
 
 =item -label_nochoice
 
-If the paramter C<-disable_nochoice> has not been set,
+If the parameter C<-disable_nochoice> has not been set,
 C<-label_nochoice> should contains text to use for the label by the
 checkbox which disables choices on
-this page and causes the page to set the C<-variable> paramter to
+this page and causes the page to set the C<-variable> parameter to
 C<undef>. Default text is C<Do not create a shortcut on the Start Menu>
 
 =item -listHeight
@@ -273,11 +273,11 @@ for me - suggestions welcomed for a better idea.
 
 =cut
 
-#sub addStartMenuPage { my ($self,$args) = (shift,{@_});
-#	return $self->addPage( sub { $self->page_start_menu($args)  } );
-#}
+sub addStartMenuPage { my ($self,$args) = (shift,{@_});
+	return $self->addPage( sub { $self->_page_start_menu($args)  } );
+}
 
-sub page_start_menu {
+sub _page_start_menu {
     my ($self) = (shift);
     my $args;
     if ( ref $_[0] eq 'HASH' ) {
@@ -434,7 +434,9 @@ sub page_start_menu {
     return $frame;
 }
 
-=head2 CALLBACK callback_create_shortcut
+=head1 CALLBACKS
+
+=head2 callback_create_shortcut
 
 A convenience interface to C<Win32::Shortcut> method that creates a shortcut
 at the path specified. Parameters are pretty much what you see when
@@ -453,7 +455,7 @@ If the C<-program_group> parameter was passed to
 C<METHOD page_start_menu>, the directory it refers to
 will be included in the save path you supply.To avoid
 this, either C<undef>ine the object field C<-program_group>,
-or supply the paramter C<-no_program_group>.
+or supply the parameter C<-no_program_group>.
 
 =item -no_program_group>
 
@@ -552,7 +554,7 @@ sub callback_create_shortcut {
     return $r;
 }
 
-=head2 CALLBACK callback_create_shortcuts
+=head2 callback_create_shortcuts
 
 Convenience method to create multiple shortcuts at once.
 Supply an array of hashes, each hash being arguments
@@ -561,7 +563,7 @@ to supply to C<callback_create_shortcut>.
 Returns an array or reference to an array that contains
 the reults of the shortcut creation.
 
-See L<CALLBACK callback_create_shortcut>.
+See L<callback_create_shortcut>.
 
 =cut
 

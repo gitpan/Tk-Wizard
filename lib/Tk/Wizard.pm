@@ -1,5 +1,5 @@
 
-# $Id: Wizard.pm,v 2.38 2007/08/08 04:16:58 martinthurn Exp $
+# $Id: Wizard.pm,v 2.42 2007/08/18 00:41:09 martinthurn Exp $
 
 package Tk::Wizard;
 
@@ -12,7 +12,7 @@ if ( $^V and $^V gt v5.8.0 )
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.38 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.42 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
 my $sDir = ucfirst $sdir;
@@ -467,6 +467,11 @@ sub Populate
                     -size   => $iFontSize * 1.4,
                     -weight => 'bold',
                    );
+  $self->fontCreate(
+                    'FIXED',
+                    -family => 'Courier',
+                    -size   => $iFontSize,
+                   );
   # Font used in multiple choices for radio title
   $self->fontCreate(
                     'RADIO_BOLD',
@@ -530,7 +535,7 @@ sub _repack_buttons
   my %hssPackArgs = (
                      -side => "right",
                      -expand => 0,
-                     -pady => 10,
+                     -pady => 5,
                      -padx => 5,
                      -ipadx => 8,
                     );
@@ -566,7 +571,7 @@ sub _repack_buttons
                                        -state => $self->_on_first_page ? 'disabled' : 'normal',
                                       )->pack(%hssPackArgs);
   warn " DDD   created back button" if $self->{-debug};
-  if ( $self->cget( -nohelpbutton ) )
+  if ( ! $self->cget( -nohelpbutton ) )
     {
     $self->{helpButton} = $panel->Button(
                                          -text => $LABELS{HELP},
@@ -743,10 +748,11 @@ sub initial_layout {
         $self->{left_object} =
           $self->Label( -image => "sidebanner" )
           ->pack( -side => "top", -anchor => "n" );
-    }
+    } # if 95 or first page
 
-    # Wizard 2k style - builds the left side of the wizard
-    else {
+    else
+      {
+      # Wizard 2k style - builds the left side of the wizard
         my $im = $self->cget( -topimagepath );
         if ( not ref $im ) {
             $self->Photo( "topbanner", -file => $im );
@@ -951,7 +957,7 @@ sub blank_frame
   if $self->{-debug};
   my $frame = $self->Frame(
                            -width  => $args->{-width},
-                           -height => $args->{-height}
+                           -height => $args->{-height},
                           );
   DEBUG_FRAME && $frame->configure(-background => 'green');
   # For 'top' style pages other than first and last
@@ -984,7 +990,7 @@ sub blank_frame
                                                -side   => 'left',
                                                -anchor => 'w',
                                                -expand => 1,
-                                               -fill   => 'x'
+                                               -fill   => 'x',
                                               );
     # Is it better to call in Text::Wrap to indent, or access font
     # metrics and work out lengths and heights, or just sod it and
@@ -993,10 +999,11 @@ sub blank_frame
       {
       # Padding left of title: -height should come from font metrics of TITLE_FONT_TOP;
       #   but what about if the line wraps? LG: add an ellipsis at the end...
-      $title_frame->Frame(qw/-background white -width 10 -height 30/
-                         )->pack(qw/-fill x -anchor n -side left/);
+      my $f = $title_frame->Frame(qw/-background white -width 10 -height 30/
+                                 )->pack(qw/-fill x -anchor n -side left/);
+      DEBUG_FRAME && $f->configure(-background => 'yellow');
       # The title frame content proper:
-      $title_frame->Label(
+      my $l = $title_frame->Label(
                           -justify    => 'left',
                           -anchor     => 'w',
                           -wraplength => $wrap,
@@ -1008,25 +1015,28 @@ sub blank_frame
                                  -expand => 1,
                                  -fill   => 'x',
                                  -pady   => 5,
-                                 -padx   => 0
+                                 -padx   => 0,
                                 );
+      DEBUG_FRAME && $l->configure(-background => 'light blue');
       } # if -title
     if ( $args->{-subtitle} )
       {
       $args->{-subtitle} =~ s/^[\n\r\f]//;
-      $title_frame->Label(
-                          -font       => 'SUBTITLE_FONT',
-                          -justify    => 'left',
-                          -anchor     => 'w',
-                          -wraplength => $wrap,
-                          -text => '   '. $args->{-subtitle},
-                          -background => $args->{background} || "white",
-                         )->pack(
-                                 -side   => 'top',
-                                 -expand => 0,
-                                 -fill   => 'x',
-                                 -padx   => 5,
-                                );
+      my $l = $title_frame->Label(
+                                  -font       => 'SUBTITLE_FONT',
+                                  -justify    => 'left',
+                                  -anchor     => 'w',
+                                  -wraplength => $wrap,
+                                  -text => '   '. $args->{-subtitle},
+                                  -background => $args->{background} || "white",
+                                 )->pack(
+                                         # -anchor => 'n',
+                                         -side   => 'top',
+                                         -expand => 0,
+                                         -fill   => 'x',
+                                         -padx   => 5,
+                                        );
+      DEBUG_FRAME && $l->configure(-background => 'light blue');
       } # if -subtitle
     else
       {
@@ -1036,34 +1046,41 @@ sub blank_frame
     # This is the line below top:
     if (($self->cget(-style) eq 'top') && ! $self->_on_first_page)
       {
-      $frame->Frame(
-                    -width => $frame->cget( -width ) || $args->{-width},
-                    -background => $frame->cget("-background"),
-                    qw/ -relief groove -bd 1 -height 2/,
-                   )->pack(qw/-side top -fill x/);
+      my $f = $frame->Frame(
+                            -width => $frame->cget( -width ) || $args->{-width},
+                            # -background => $frame->cget("-background") || '',
+                            -relief => 'groove',
+                            -bd => 1,
+                            -height => 2,
+                           )->pack(qw/-side top -fill x/);
+      DEBUG_FRAME && $f->configure(-background => 'red');
       } # if 'top'
     if ( $args->{-text} )
       {
-      $args->{-text} =~ s/^[\n\r\f]//;
-      $args->{-text} = "\n" . $args->{-text};
+      # $args->{-text} =~ s/^[\n\r\f]//;
+      # $args->{-text} = "\n" . $args->{-text};
       my $p = $frame->Label(
                             -font       => $args->{-font},
                             -justify    => 'left',
                             -anchor     => 'w',
                             -wraplength => $wrap + 100,
                             -justify    => "left",
-                            -text       => $args->{-text}
+                            -text       => $args->{-text},
                            )->pack(
                                    -side   => 'top',
+                                   # -anchor => 'n',
+                                   # -expand => 1,
                                    -expand => 0,
                                    -fill   => 'x',
-                                   -padx   => 10
+                                   -padx   => 10,
+                                   -pady   => 10,
                                   );
+      DEBUG_FRAME && $p->configure(-background => 'yellow');
       } # if -text
     } # if 'top' style, but not first or last page
-  # For wizards that are not 'top' style
   else
     {
+    # For wizards that are not 'top' style
     if ( $args->{-title} ) {
       my $p = $frame->Label(
                             -justify    => 'left',
@@ -1074,13 +1091,15 @@ sub blank_frame
                            )->pack(
                                    -anchor => 'n',
                                    -side   => 'top',
+                                   # -expand => 1,
                                    -expand => 0,
-                                   -fill   => 'x'
+                                   -fill   => 'x',
                                   );
+      DEBUG_FRAME && $p->configure(-background => 'yellow');
       }
     if ($args->{-subtitle})
       {
-      $args->{-subtitle} =~ s/^[\n\r\f]//;
+      $args->{-subtitle} =~ s/^[\n\r\f]*//;
       my $p = $frame->Label(
                             -font       => $args->{-font},
                             -justify    => 'left',
@@ -1091,8 +1110,9 @@ sub blank_frame
                                    -anchor => 'n',
                                    -side   => 'top',
                                    -expand => 0,
-                                   -fill   => 'x'
+                                   -fill   => 'x',
                                   );
+      DEBUG_FRAME && $p->configure(-background => 'light green');
       }
     else {
       $frame->Label()
@@ -1100,8 +1120,8 @@ sub blank_frame
       }
     if ( $args->{-text} )
       {
-      $args->{-text} =~ s/^[\n\r\f]//;
-      $args->{-text} = "\n" . $args->{-text};
+      # $args->{-text} =~ s/^[\n\r\f]//;
+      # $args->{-text} = "\n" . $args->{-text};
       my $p = $frame->Label(
                             -font       => $args->{-font},
                             -justify    => 'left',
@@ -1113,8 +1133,10 @@ sub blank_frame
                                    # -anchor => 'n',
                                    -side   => 'top',
                                    -expand => 0,
-                                   -fill   => 'x'
+                                   -fill   => 'x',
+                                   -pady   => 10,
                                   );
+      DEBUG_FRAME && $p->configure(-background => 'light green');
       }
     else
       {
@@ -1183,22 +1205,17 @@ sub _text_frame {
         }
     }
     $$text = "" if not defined $text;
-
-    my $padx = $self->cget( -style ) eq 'top' ? 30 : 5;
-    my $t = $frame->Scrolled(
-        "ROText",
-        -background => ( $args->{"-background"} || 'white' ),
-        -relief => "sunken",
-        -borderwidth => "1",
-        -font        => "SMALL_FONT",
-        -setgrid     => 1,
-        -scrollbars  => "osoe",
-        -wrap        => "word",
-    );
+    my $t = $frame->Scrolled("ROText",
+                             -background => ( $args->{"-background"} || 'white' ),
+                             -relief => "sunken",
+                             -borderwidth => "1",
+                             -font        => "SMALL_FONT",
+                             # -setgrid     => 1,
+                             -scrollbars  => "osoe",
+                             -wrap        => "word",
+                            )->pack(qw/-expand 1 -fill both -padx 10 -pady 10/);
     $t->insert( '0.0', $$text );
     $t->configure( -state => "disabled" );
-    $t->pack(qw/-expand 1 -fill both -padx 10 -pady 10/);
-    $frame->Frame( -height => 10 )->pack();
     return $frame;
 } # _text_frame
 
@@ -1416,10 +1433,10 @@ Supply C<-nowarnings> with a value of C<1> to list only drives which are
 accessible, thus avoiding C<Tk::DirTree> warnings on Win32 where removable
 drives have no media.
 
-Supply C<-nowarnings> a value other than C<1> to avoid listing drives
+Supply in C<-nowarnings> a value other than C<1> to avoid listing drives
 which are both inaccessible and - on Win32 - are
 either fixed drives, network drives, or RAM drives (that is types 3, 4, and
-6, according to C<Win32API::File::GetDriveType>.
+6, according to C<Win32API::File::GetDriveType>).
 
 You may also specify the C<-title>, C<-subtitle> and C<-text> parameters, as
 in L<METHOD blank_frame>.
@@ -1451,7 +1468,6 @@ sub addDirSelectPage
 # -variable => Reference to a variable to set.
 # -nowarnings => 1 : chdir to each drive first and only list if accessible
 #             => !1: as 1, plus on types 3,4 and 6.
-# -directory  => start dir
 sub _page_dirSelect
   {
   my $self = shift;
@@ -1463,6 +1479,10 @@ sub _page_dirSelect
   elsif ( not ref $args->{-variable} ) {
     confess "The -variable parameter must be a reference";
     }
+  ${$args->{-variable}} ||= '';
+  # The DirTree can take a long time to read all the disk drives when
+  # populating itself:
+  $self->Busy;
   my $_drives = sub {
     return '/' if $^O !~ m/MSWin32/i;
     # Yuck: it does work, though. Somehow.
@@ -1476,45 +1496,48 @@ sub _page_dirSelect
                                           -text => $args->{-text}   || "",
                                           -wait => $args->{ -wait } || undef,
                                          );
-  
-  $frame->Frame( -height => 10 )->pack();
+  DEBUG_FRAME && $frame->configure(-background => 'light blue');
   my $entry = $frame->Entry(
                             -justify      => 'left',
-                            -width        => 40,
+                            # -width        => 40,
+                            -font => 'FIXED',
                             -textvariable => $args->{-variable},
                            )->pack(
                                    -side   => 'top',
                                    -anchor => 'w',
                                    -fill   => "x",
-                                   -padx   => 10,
-                                   -pady   => 10,
+                                   -padx   => 15,
+                                   -pady   => 4,
                                   );
   $entry->configure( -background => $self->cget("-background") )
   if $self->cget("-background");
-  
-  my $dirsParent = $frame->Scrolled(
-                                    "DirTree",
-                                    -scrollbars       => 'osoe',
+  my $dirsParent = $frame->Scrolled("DirTree",
+                                    -scrollbars => 'osoe',
                                     -selectbackground => "navy",
                                     -selectforeground => "white",
-                                    -selectmode       => 'browse',
-                                    -width            => 40,
-                                    -height           => 10,
-                                    -browsecmd        => sub { ${ $args->{-variable} } = shift },
-                                   )->pack( -fill => "both", -padx => 10, -pady => 0, -expand => 1 );
+                                    -selectmode => 'browse',
+                                    # -width => 40,
+                                    -height => 7,
+                                    -directory => ${$args->{-variable}},
+                                    -browsecmd => sub { ${$args->{-variable}} = shift },
+                                   )->pack(
+                                           -fill => "both",
+                                           -padx => 5,
+                                           -pady => 4,
+                                           -expand => 1,
+                                          );
   $dirsParent->configure( -background => $self->cget("-background") )
   if $self->cget("-background");
   my $dirs = $dirsParent->Subwidget('scrolled');
-  # Add a little margin at the bottom:
-  $frame->Frame(-height => 5)->pack(-side => 'bottom');
-  $frame->Frame()->pack(-side => 'bottom');
+  # Add a little margin between the tree and the buttons underneath:
+  $frame->Frame(-height => 5)->pack(-side => 'top');
   my $mkdir = $frame->Button(
                              -text    => "New $sDir",
                              -command => sub
                                {
                                my $new_name = $self->prompt(
                                                             -title => "Create New $sDir",
-                                                            -text  => "Please enter the name for the new $sdir"
+                                                            -text  => "Enter name for new $sdir to be created in ${$args->{-variable}}"
                                                            );
                                if ($new_name) {
                                  $new_name =~ s/[\/\\]//g;
@@ -1539,6 +1562,7 @@ sub _page_dirSelect
                                    } # if
                                  else {
                                    ${ $args->{-variable} } = $new_name;
+                                   # print STDERR " DDD   4 DirTree->configure(-directory=>$new_name)\n";
                                    $dirs->configure( -directory => $new_name );
                                    $dirs->chdir($new_name);
                                    } # else
@@ -1554,15 +1578,17 @@ sub _page_dirSelect
                    -text    => "Desktop",
                    -command => sub {
                      ${ $args->{-variable} } = $self->{desktop_dir};
+                     # print STDERR " DDD   5 DirTree->configure(-directory=>$self->{desktop_dir})\n";
                      $dirs->configure( -directory => $self->{desktop_dir} );
                      $dirs->chdir( $self->{desktop_dir} );
                      },
-                  )->pack( -side => 'right', -anchor => 'w', -padx => '10',
+                  )->pack( -side => 'right', -anchor => 'w', -padx => 10,
                            -ipadx => 5,
                          );
     } # if
-  
   foreach my $d (&$_drives) {
+    # Try to prevent GUI freeze:
+    $self->idletasks;
     ($d) =~ /^(\w+:)/;
     if (
         $args->{-nowarnings}
@@ -1571,19 +1597,23 @@ sub _page_dirSelect
        )
       {
       my $cwd = Cwd::getcwd;
+      # print STDERR " DDD   1 DirTree->configure(-directory=>$d)\n";
       $dirs->configure( -directory => $d ) if chdir $d;
       chdir $cwd;
-      }
+      } # if
     elsif ( $args->{-nowarnings} ) {    # Fixed drive only
       my $cwd = Cwd::getcwd;
+      # print STDERR " DDD   2 DirTree->configure(-directory=>$d)\n";
       $dirs->configure( -directory => $d )
       if Win32API::File::GetDriveType($d) == 3 and chdir $d;
       chdir $cwd;
       }
     else {
+      # print STDERR " DDD   3 DirTree->configure(-directory=>$d)\n";
       $dirs->configure( -directory => $d );
       }
     } # foreach
+  $self->Unbusy;
   return $frame;
   } # _page_dirSelect
 
@@ -1950,7 +1980,7 @@ sub _page_multiple_choice
     } # if
   my $content =
       $frame->Frame()
-      ->pack( -side => 'top', -anchor => "n", -padx => 30, -pady => 10, );
+      ->pack( -side => 'top', -anchor => "n", -padx => 10, -pady => 10, );
 
     foreach my $opt ( @{ $args->{-choices} } ) {
         croak "Option in -choices array is not a hash!"
@@ -1966,10 +1996,16 @@ sub _page_multiple_choice
                                       -variable => $opt->{-variable},
                                      )->pack(qw/-side top -anchor w /);
         $b->invoke if $opt->{-checked};
-        $opt->{-subtitle} ||= '';
-        $content->Label(
-                        -text => $opt->{-subtitle},
-                       )->pack(qw/-side top -anchor w -padx 25 -pady 0/);
+        my $s = $opt->{-subtitle} || '';
+        # Seven spaces indentation is perfect with my Windows XP
+        # default font:
+        $s =~ s!(^|\n)!$1       !g;
+        my $l = $content->Label(
+                                -text => $s,
+                                -anchor => 'w',
+                                -justify  => 'left',
+                               )->pack(qw/-side top -anchor w/);
+        DEBUG_FRAME && $l->configure(-background => 'light blue');
         } # foreach
     return $frame;
     } # _page_multiple_choice

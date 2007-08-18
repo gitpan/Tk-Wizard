@@ -1,10 +1,10 @@
 
-# $Id: 50_Installer.t,v 1.8 2007/07/20 22:17:48 martinthurn Exp $
+# $Id: 50_Installer.t,v 1.9 2007/08/10 03:12:37 martinthurn Exp $
 
-my $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
-
-use warnings;
 use strict;
+use warnings;
+
+my $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use LWP::UserAgent;
