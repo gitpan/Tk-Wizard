@@ -1,3 +1,7 @@
+2007-08-19    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (addDirSelectPage): sort folders case-insensitively on Windows
+
 2007-08-17    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard/Tester.pm (new): fixed args to addDirSelectPage()

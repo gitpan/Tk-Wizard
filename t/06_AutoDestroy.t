@@ -1,11 +1,12 @@
 
-# $Id: 06_AutoDestroy.t,v 1.10 2007/08/10 03:12:37 martinthurn Exp $
+# $Id: 06_AutoDestroy.t,v 1.11 2007/08/19 15:04:13 martinthurn Exp $
 
 use strict;
 use warnings;
 
 use Cwd;
 use ExtUtils::testlib;
+use IO::Capture::Stderr;
 use Test::More;
 use Tk;
 
@@ -19,15 +20,17 @@ BEGIN
     }
   else
     {
-    plan tests => 25;
+    plan tests => 26;
     }
   $mwTest->destroy if Tk::Exists($mwTest);
   use_ok('Tk::Wizard');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.10 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.11 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $WAIT = 1;
+
+my $oICS = new IO::Capture::Stderr;
 
 ZERO:
 {
@@ -36,7 +39,12 @@ ZERO:
                                );
     isa_ok( $wizard, "Tk::Wizard" );
     is( 1, $wizard->addPage( sub { $wizard->blank_frame( -wait => $WAIT ) } ) );
+    $^W = 1;
+    $oICS->start;
     $wizard->Show;
+    $oICS->stop;
+    my $sErr = $oICS->read;
+    like($sErr, qr'only one page long');
     MainLoop;
     ok('Pretest');
 }

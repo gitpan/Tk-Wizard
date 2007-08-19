@@ -1,5 +1,5 @@
 
-# $Id: Wizard.pm,v 2.42 2007/08/18 00:41:09 martinthurn Exp $
+# $Id: Wizard.pm,v 2.43 2007/08/19 14:56:10 martinthurn Exp $
 
 package Tk::Wizard;
 
@@ -12,7 +12,7 @@ if ( $^V and $^V gt v5.8.0 )
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.42 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.43 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
 my $sDir = ucfirst $sdir;
@@ -1616,6 +1616,42 @@ sub _page_dirSelect
   $self->Unbusy;
   return $frame;
   } # _page_dirSelect
+
+
+# Tk::DirTree sorts its folder list case-sensitively, but on Windows
+# we want case-INsensitive search.  We roll our own:
+REDEFINE:
+  {
+  no warnings 'redefine';
+
+sub Tk::DirTree::add_to_tree {
+    my( $w, $dir, $name, $parent ) = @_;
+
+    my $iWin32 = ($^O =~ m!win32!i);  # added by Martin Thurn
+    my $dirSortable = $iWin32 ? uc $dir : $dir;  # added by Martin Thurn
+    my $image = $w->cget('-image');
+    if ( !UNIVERSAL::isa($image, 'Tk::Image') ) {
+	$image = $w->Getimage( $image );
+    }
+    my $mode = 'none';
+    $mode = 'open' if $w->has_subdir( $dir );
+
+    my @args = (-image => $image, -text => $name);
+    if( $parent ) {             # Add in alphabetical order.
+        foreach my $sib ($w->infoChildren( $parent )) {
+          my $sibSortable = $iWin32 ? uc $sib : $sib;  # added by Martin Thurn
+          # if( $sib gt $dir ) {  # commented out by Martin Thurn
+          if( $sibSortable gt $dirSortable ) {  # added by Martin Thurn
+                push @args, (-before => $sib);
+                last;
+            }
+        }
+    }
+
+    $w->add( $dir, @args );
+    $w->setmode( $dir, $mode );
+}
+} # end of REDEFINE block
 
 =head2 addFileSelectPage
 
