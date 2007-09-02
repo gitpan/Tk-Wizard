@@ -1,6 +1,15 @@
 Tk::Wizard - Wizard GUI Framework
 =================================
 
+IMPORTANT CHANGE(S) FROM PREVOUS VERSION(S)
+
+As of Tk::Wizard version 2.044 (distribution version 2.111),
+the -width and -height arguments to blank_frame() are applied
+to the CONTENT AREA ONLY, not to the entire Wizard window.
+Use the new Tk::Wizard::Sizer module (included with this distro)
+to semi-automatically recalculate what you should pass in the
+-width and -height arguments.
+
 INSTALLATION
 
 This module can be installed in the normal perl way, such as:

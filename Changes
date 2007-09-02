@@ -1,3 +1,11 @@
+2007-09-02    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (blank_frame): fix pod for -width -height
+	(_NextButtonEventCycle): prevent concurrent invokation
+	(_page_dirSelect): prevent "blank" window while reading filesystem
+
+	* lib/Tk/Wizard/Sizer.pm: new module
+
 2007-08-19    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard.pm (addDirSelectPage): sort folders case-insensitively on Windows

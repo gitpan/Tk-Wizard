@@ -6,6 +6,7 @@ build_requires:
   File::Path: 0
   FileHandle: 0
   IO::Capture::Stderr: 0
+  IO::Capture::Stdout: 0
   LWP::UserAgent: 0
   Test::More: 0
 distribution_type: module
@@ -41,4 +42,4 @@ requires:
   Win32: 0.2
   Win32::Shortcut: 0
   Win32::TieRegistry: 0
-version: 2.015
+version: 2.111
