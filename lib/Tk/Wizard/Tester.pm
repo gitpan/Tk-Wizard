@@ -1,5 +1,5 @@
 
-# $Id: Tester.pm,v 1.4 2007/08/18 00:21:00 martinthurn Exp $
+# $Id: Tester.pm,v 1.5 2007/09/10 03:18:16 martinthurn Exp $
 
 package Tk::Wizard::Tester;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-$VERSION = do { my @r = ( q$Revision: 1.4 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 1.5 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -40,6 +40,8 @@ and it is used by the module authors for manual testing and debugging.
 =head2 new
 
 Create a new Tester wizard.
+Takes the same arguments as Tk::Wizard->new(), plus:
+-wait to set a default wait time for all pages.
 
 =cut
 
@@ -50,25 +52,23 @@ sub new
   return if ref($class);
   # Process our arguments, and set default values:
   my %args = @_;
-  $args{-wait} = 300 if ! defined($args{-wait});
-  my $sStyle = $args{-style} || 'top';
   $args{-debug} ||= 0;
+  $args{-style} ||= 'top';
+  my $sStyle = $args{-style};
+  $args{-title} = qq'Wizard Tester ($sStyle style)';
+  my $iWait = delete($args{-wait}) || 300;
   my $iWin32 = ($^O =~ m!win32|cygwin!i);
   # Create a new Wizard:
-  my $self = $class->SUPER::new(
-                                -debug => $args{-debug},
-                                -title => qq'Wizard Tester ($sStyle style)',
-                                -style => $sStyle,
-                               );
-  $self->{_wait_} = $args{-wait};
+  my $self = $class->SUPER::new(%args);
   $self->{_style_} = $sStyle;
+  $self->{_wait_} = $iWait;
   # Add pages to the Wizard:
   my ($sDirSelect, $sFileSelect, $mc1, $mc2, $mc3);
   $sDirSelect = $iWin32 ? 'C:\\' : '/';
   $self->addPage(sub
                    {
                    $self->blank_frame(
-                                      -wait => $args{-wait},
+                                      -wait => $iWait,
                                       -title => "Intro Page Title ($sStyle style)",
                                       -subtitle => "Intro Page Subtitle ($sStyle style)",
                                       -text => sprintf("This is the Intro Page of %s ($sStyle style)", __PACKAGE__),
@@ -79,29 +79,32 @@ sub new
 It is stored in a string variable,
 and a reference to this string variable is passed to the addTextFramePage() method.";
   $self->addTextFramePage(
-                          -wait => $args{-wait},
+                          -wait => $iWait,
                           -title => "Tester TextFrame Page Title ($sStyle style)",
                           -subtitle => "Tester TextFrame Page Subtitle ($sStyle style)",
                           -text => "This is the text of the Tester TextFrame Page ($sStyle style)",
                           -boxedtext => \$s,
+                          -background => 'yellow',
                          );
   $self->addDirSelectPage(
-                          -wait => $args{-wait},
+                          -wait => $iWait,
                           -title => "Tester DirSelect Page Title ($sStyle style)",
                           -subtitle => "Tester DirSelect Page Subtitle ($sStyle style)",
                           -text => "This is the Text of the Tester DirSelect Page ($sStyle style)",
                           -nowarnings => 88,
                           -variable => \$sDirSelect,
+                          -background => 'yellow',
                          );
   $self->addFileSelectPage(
-                           -wait => $args{-wait},
+                           -wait => $iWait,
                            -title => "Tester FileSelect Page Title ($sStyle style)",
                            -subtitle => "Tester FileSelect Page Subtitle ($sStyle style)",
                            -text => "This is the Text of the Tester FileSelect Page ($sStyle style)",
                            -variable => \$sFileSelect,
+                           -background => 'yellow',
                           );
   $self->addMultipleChoicePage(
-                               -wait => $args{-wait},
+                               -wait => $iWait,
                                -title => "Tester Multiple-Choice Page Title ($sStyle style)",
                                -subtitle => "Tester Multiple-Choice Page Subtitle ($sStyle style)",
                                -text => sprintf("This is the Multiple-Choice Page of %s ($sStyle style)",
@@ -125,9 +128,10 @@ and a reference to this string variable is passed to the addTextFramePage() meth
                                                 -checked  => 0,
                                                },
                                             ], # -choices
+                               -background => 'yellow',
                               );
   $self->addTaskListPage(
-                         -wait => $args{-wait},
+                         -wait => $iWait,
                          -title => "Tester Task List Page Title ($sStyle style)",
                          -subtitle => "Tester Task List Page Subtitle ($sStyle style)",
                          -text => "This is the Text of the Tester Task List Page ($sStyle style)",
@@ -138,6 +142,7 @@ and a reference to this string variable is passed to the addTextFramePage() meth
                                        "This task is not applicable" => \&_task_na,
                                        "Wizard will exit as soon as this one is done" => \&_task_good,
                                       ],
+                         -background => 'yellow',
                         );
   return $self;
   } # new
