@@ -1,6 +1,6 @@
 #! perl -w
 
-# $Id: subtitle.t,v 1.1 2007/09/02 16:35:22 martinthurn Exp $
+# $Id: subtitle.t,v 1.3 2007/09/13 21:08:32 martinthurn Exp $
 
 use strict;
 
@@ -21,15 +21,15 @@ BEGIN
     }
   else
     {
-    plan "no_plan"; # TODO Can't count tests atm
+    plan tests => 9;
     }
   $mwTest->destroy if Tk::Exists($mwTest);
   use_ok('Tk::Wizard::Sizer');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
-our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 3333;
+our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 1111;
 
 my $oICS =  IO::Capture::Stdout->new;
 my $wizard = Tk::Wizard::Sizer->new(
@@ -65,6 +65,28 @@ is($wizard->addPage(
                       }, # sub
                    ), # addPage
    2, 'subtitle page is 2' );
+is($wizard->addPage(
+                    sub
+                      {
+                      $wizard->blank_frame(
+                                           -subtitle => '',
+                                           -title => 'This Page Has No Subtitle',
+                                           -wait => $WAIT,
+                                          ); # blank_frame
+                      }, # sub
+                   ), # addPage
+   3, 'no-subtitle page is 3' );
+is($wizard->addPage(
+                    sub
+                      {
+                      $wizard->blank_frame(
+                                           -title => '',
+                                           -subtitle => 'This Page Has No Title',
+                                           -wait => $WAIT,
+                                          ); # blank_frame
+                      }, # sub
+                   ), # addPage
+   4, 'no-subtitle page is 4' );
 is(
    $wizard->addPage(
                     sub {
@@ -75,8 +97,7 @@ is(
                                           );
                       }
                    ),
-   3,
-   'bye is 3'
+   5, 'bye is 5'
   );
 $oICS->start;
 $wizard->Show;

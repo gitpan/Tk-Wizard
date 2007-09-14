@@ -1,5 +1,5 @@
 
-# $Id: Installer.pm,v 2.18 2007/08/17 23:58:04 martinthurn Exp $
+# $Id: Installer.pm,v 2.21 2007/09/14 03:06:47 martinthurn Exp $
 
 package Tk::Wizard::Installer;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.18 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.21 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -43,8 +43,9 @@ use Tk::LabFrame;
 use Tk::ProgressBar;
 use Tk::Wizard;
 use Exporter;
-use vars qw/@ISA @EXPORT/;
-@ISA    = "Tk::Wizard";
+use vars qw/ @EXPORT /;
+
+use base "Tk::Wizard";
 @EXPORT = ("MainLoop");
 
 # See INTERNATIONALISATION
@@ -208,21 +209,21 @@ moved or copied to the locations specified to the equivalent
 entries in the latter, renaming and path creation occurring as needed:
 
   -copy => 1,
-  -to   => [
-    '/html/index.html',
-    '/html/imgs/index.gif',
-    '/html/oldname.html'
-  ],
   -from => [
     '/docs/',
     '/docs/imgs/',
     '/html/newname_for_oldname.html'
-  ],
+    ],
+  -to   => [
+    '/html/index.html',
+    '/html/imgs/index.gif',
+    '/html/oldname.html'
+    ],
 
 The above example
 copies C<index.html> to C</docs/index.html>, C<index.gif> is copied to
-become C</docs/imgs/index.gif>, and C<oldname.html> is moved to the C<html>
-directory and given the new name, C<newname_for_oldname.html>.
+become C</docs/imgs/index.gif>, and C<oldname.html> is copied to
+C<newname_for_oldname.html> in the same C<html> directory.
 
 Arguments:
 
@@ -510,12 +511,17 @@ sub _install_files {
             $self->{-bar}->update;
 
             # Make the path, if needs be
-            my $d = File::Spec->catdir( $tv, $td );
+            my $d = File::Spec->catpath( $tv, $td );
 
             # $d =~ s/[\\\/]+/\//g;
-            if ( !-d "$d" ) {
-                mkpath $d or croak "Could not make path $d : $!";
-            }    # if
+            if ( !-d $d )
+              {
+              eval { File::Path::mkpath($d) };
+              if ($@)
+                {
+                croak "Could not make path $d : $!";
+                } # if
+              } # if dir not exist
 
             # Do the move/copy
             if ( $args->{-move} ) {
@@ -825,9 +831,14 @@ sub _read_uri {
 
     if ( $self->{response} && $self->{response}->is_success ) {
         my ( $dirs, $file ) = $args->{target} =~ /^(.*?)([^\\\/]+)$/;
-        if ( $dirs and $dirs !~ /^\.{1,2}$/ and !-d $dirs ) {
-            mkpath $dirs or croak "Could not make path $dirs : $!";
-        }
+        if ( $dirs and $dirs !~ /^\.{1,2}$/ and !-d $dirs )
+          {
+          eval { File::Path::mkpath($dirs) };
+          if ($@)
+            {
+            croak "Could not make path $dirs : $!";
+            } # if
+          } # if
         unless ( open OUT, ">$args->{target}" ) {
             warn("_read_uri: Couldn't open $args->{target} for writing")
               if $self->{-debug};

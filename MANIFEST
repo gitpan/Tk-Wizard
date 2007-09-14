@@ -11,6 +11,7 @@ inc/Module/Install/WriteAll.pm
 lib/Tk/Wizard.pm
 lib/Tk/Wizard/Image.pm
 lib/Tk/Wizard/Installer.pm
+lib/Tk/Wizard/Installer/Sizer.pm
 lib/Tk/Wizard/Installer/Win32.pm
 lib/Tk/Wizard/Sizer.pm
 lib/Tk/Wizard/Tester.pm
@@ -37,5 +38,6 @@ t/pod-coverage.t
 t/pod.t
 t/sizer.t
 t/subtitle.t
+t/tkerror.pl
 t/unix.txt
 TODO

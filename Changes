@@ -1,3 +1,13 @@
+2007-09-13    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (Populate): new Wizard options -width and -height
+
+2007-09-10    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard/Installer.pm (_install_files): FIX wrong invocation of mkpath
+
+	* lib/Tk/Wizard.pm (Populate): do not set default background to undef!
+
 2007-09-09    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard.pm: behavior of -background arguments are more sensible

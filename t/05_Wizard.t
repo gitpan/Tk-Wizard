@@ -1,5 +1,5 @@
 
-# $Id: 05_Wizard.t,v 1.12 2007/09/10 03:19:28 martinthurn Exp $
+# $Id: 05_Wizard.t,v 1.13 2007/09/14 03:17:42 martinthurn Exp $
 
 use strict;
 use warnings;
@@ -24,7 +24,7 @@ BEGIN
   use_ok('Tk::Wizard::Tester');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.12 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.13 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 foreach my $style ( 'top', '95' )
   {
@@ -33,7 +33,7 @@ foreach my $style ( 'top', '95' )
                                       # -debug => 3,
                                       -background => 'blue',
                                       -style => $style,
-                                      -wait => $ENV{TEST_INTERACTIVE} ? 0 : 444,
+                                      -wait => $ENV{TEST_INTERACTIVE} ? -1 : 444,
                                      );
   isa_ok( $wizard, "Tk::Wizard::Tester" );
   isa_ok( $wizard, "Tk::Wizard" );

@@ -1,5 +1,5 @@
 
-# $Id: Wizard.pm,v 2.49 2007/09/10 03:18:45 martinthurn Exp $
+# $Id: Wizard.pm,v 2.54 2007/09/14 03:18:59 martinthurn Exp $
 
 package Tk::Wizard;
 
@@ -12,7 +12,7 @@ if ( $^V and $^V gt v5.8.0 )
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.49 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.54 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
 my $sDir = ucfirst $sdir;
@@ -28,6 +28,7 @@ use Config;
 use Cwd;
 use Data::Dumper;
 use File::Path;
+use File::Slurp;
 use Tk;
 use Tk::DialogBox;
 use Tk::DirTree;
@@ -51,7 +52,7 @@ our $DEFAULT_HEIGHT = 300;
 use base qw[Tk::Derived Tk::Toplevel ];
 Tk::Widget->Construct('Wizard');
 
-use vars qw/ %LABELS @asTaglinePackArgs /;
+use vars qw/ %LABELS /;
 
 # See INTERNATIONALISATION
 %LABELS = (
@@ -281,6 +282,18 @@ is to disable that feature to minimise display issues.
 Text to supply in a 'tag line' above the wizard's control buttons.
 Specify empty string to disable the display of the tag text box.
 
+=item -width
+
+Specify the width of the CONTENT AREA of the Wizard, for all pages.
+The default width (if you do not give any -height argument) is 300.
+You can override this measure for a particular page by supplying a -width argument to the addPage() method.
+
+=item -height
+
+Specify the height of the CONTENT AREA of the Wizard, for all pages.
+The default height (if you do not give any -height argument) is 400.
+You can override for a particular page by supplying a -height argument to the addPage() method.
+
 =item -image_dir
 
 Deprecated. Supply C<-imagepath> and/or C<-topimagepath>.
@@ -355,7 +368,7 @@ sub Populate
                      # -foreground => ['PASSIVE', 'foreground','Foreground', 'black'],
                      -background => [
                                      'METHOD', 'background', 'Background',
-                                     $^O =~ /(MSWin32|cygwin)/i ? 'SystemButtonFace' : undef
+                                     $^O =~ /(MSWin32|cygwin)/i ? 'SystemButtonFace' : 'gray90'
                                     ],
                      -style     => [ 'PASSIVE', "style", "Style", "top" ],
                      -imagepath => [
@@ -380,12 +393,14 @@ sub Populate
                      [ 'CALLBACK', undef, undef, sub { $self->withdraw; 1 } ],
                      -kill_parent_on_destroy => [ 'PASSIVE', undef, undef, 0 ],
                      -kill_self_after_finish => [ 'PASSIVE', undef, undef, 0 ],
-                     -debug                  => [ 'PASSIVE', undef, undef, undef ],
+                     -debug                  => [ 'PASSIVE', undef, undef, 0 ],
                      -preCloseWindowAction =>
                      [ 'CALLBACK', undef, undef, sub { $self->DIALOGUE_really_quit } ],
                      -tag_text  => [ 'PASSIVE', "tag_text",  "TagText",  $sTagTextDefault ],
                      -tag_width => [ 'PASSIVE', "tag_width", "TagWidth", 0 ],
                      -wizardFrame => [ 'PASSIVE', undef, undef, 0 ],
+                     -width => [ 'PASSIVE', undef, undef, $DEFAULT_WIDTH ],
+                     -height => [ 'PASSIVE', undef, undef, $DEFAULT_HEIGHT ],
                     );
   if ( exists $args->{-imagepath} and not -e $args->{-imagepath} ) {
     confess "Can't find file at -imagepath: " . $args->{-imagepath};
@@ -421,22 +436,22 @@ sub Populate
     my $tagbox = $self->Frame(
                               -height => 12,
                               -background => $self->{background},
-                             )->pack(qw/-side bottom -fill x -expand 1/);
+                             )->pack(qw/-side bottom -fill x/);
     DEBUG_FRAME && $tagbox->configure(-background => 'magenta');
     # This is a new, simpler, accurate-width Label way of doing it:
-    @asTaglinePackArgs = qw( -side right -expand 1 -fill x );
     $self->{tagtext} = $tagbox->Label(
                                       -border => 2,
                                       -foreground => 'gray50',
                                       -background => $self->{background},
                                      );
+    DEBUG_FRAME && $self->{tagtext}->configure(-background => 'red');
     $self->_maybe_pack_tag_text;
     # This is the line that extends to the right from the tag text:
     $self->{tagline} = $tagbox->Frame(
                                       -relief => 'groove',
                                       -bd => 1,
                                       -height => 2,
-                                     )->pack(@asTaglinePackArgs);
+                                     )->pack(qw( -side right -fill x -expand 1 ));
     DEBUG_FRAME && $self->{tagline}->configure(-background => 'yellow');
     $self->Advertise( tagLine => $self->{tagline} );
     $self->Advertise( tagBox  => $tagbox );
@@ -458,7 +473,7 @@ sub Populate
   $self->fontCreate(
                     'TITLE_FONT',
                     -family => $sFontFamily,
-                    -size   => $iFontSize * 1.4,
+                    -size   => $iFontSize + 4,
                     -weight => 'bold',
                    );
   $self->fontCreate(
@@ -470,26 +485,26 @@ sub Populate
   $self->fontCreate(
                     'RADIO_BOLD',
                     -family => $sFontFamily,
-                    -size   => $iFontSize,
+                    -size   => $iFontSize + 2,
                     -weight => 'demi',
                    );
   # Fonts used if -style=>"top"
   $self->fontCreate(
                     'TITLE_FONT_TOP',
                     -family => $sFontFamily,
-                    -size   => $iFontSize * 1.4,
+                    -size   => $iFontSize + 4,
                     -weight => 'bold',
                    );
   $self->fontCreate(
                     'SUBTITLE_FONT',
                     -family => $sFontFamily,
-                    -size   => $iFontSize * 1.2,
+                    -size   => $iFontSize + 2,
                    );
   # Font used in licence agreement  XXX REMOVE TO CORRECT MODULE
   $self->fontCreate(
                     'SMALL_FONT',
                     -family => $sFontFamily,
-                    -size   => $iFontSize,
+                    -size   => $iFontSize - 1,
                    );
   # Font used in all other places
   $self->fontCreate(
@@ -596,7 +611,7 @@ sub _font_family {
 sub _font_size {
     return 8  if ( $^O =~ m!win32!i );
     return 12 if ( $^O =~ m!solaris!i );
-    return 14;
+    return 14;  # Linux etc.
 }
 
 
@@ -640,7 +655,7 @@ Returns the index of the page added, which is useful as a page UID when
 performing checks as the I<Next> button is pressed (see file F<test.pl>
 supplied with the distribution).
 
-See also L<METHOD blank_frame>.
+See also L<blank_frame>.
 
 =cut
 
@@ -712,7 +727,7 @@ sub forward
 Convenience method to move the Wizard back a page by invoking the
 callback for the C<backButton>.
 
-See also L<METHOD back>.
+See also L<back>.
 
 =cut
 
@@ -861,7 +876,7 @@ sub _resize_window
 
 This returns the index of the page currently being shown to the user.
 Page are indexes start at 1, with the first page that is associated with
-the wizard through the C<addPage> method. See also the L<METHOD addPage> entry.
+the wizard through the C<addPage> method. See also the L<addPage> entry.
 
 =cut
 
@@ -918,7 +933,7 @@ Main body text.
 Experimental, mainly for test scripts.
 The amount of time in milliseconds to wait before moving forward
 regardless of the user.  This actually just calls the C<forward> method (see
-L<METHOD forward>).  Use of this feature will enable the back-button even if
+L<forward>).  Use of this feature will enable the back-button even if
 you have disabled it.  What's more, if the page is supposed to wait for user
 input, this feature will probably not give your users a chance.
 
@@ -958,17 +973,17 @@ sub blank_frame
   if (! defined($args->{-height}))
     {
     # If we didn't get the -height argument, set the default height:
-    $args->{-height} = $DEFAULT_HEIGHT;
+    $args->{-height} = $self->cget(-height);
     } # if
   if (! defined($args->{-width}))
     {
     # If we didn't get the -width argument, set the default width:
-    $args->{-width} = $DEFAULT_WIDTH;
+    $args->{-width} = $self->cget(-width);
     $args->{-width} += $self->{left_object}->width if ! $self->_showing_side_banner;
     } # if
   $self->{frame_sizes}->[ $self->{wizardPagePtr} ] = [ $args->{-width}, $args->{-height} ];
   $self->{frame_titles}->[$self->{wizardPagePtr}] = $args->{-title} || 'no title given';
-  warn "# Blank frame set width/height; $args->{-width}/$args->{-height}" if $self->{-debug};
+  warn " DDD blank_frame setting width/height to $args->{-width}/$args->{-height}" if $self->{-debug};
   # This is the main content frame:
   my $frame = $self->Frame(
                            -width  => $args->{-width},
@@ -976,11 +991,19 @@ sub blank_frame
                            -background => $self->{background},
                           );
   DEBUG_FRAME && $frame->configure(-background => 'green');
-  # Do not let the frame auto-resize when we pack its contents:
+  # Do not let the content (body) frame auto-resize when we pack its
+  # contents:
   $frame->packPropagate(0);
-  # For 'top' style pages other than first and last
+  $args->{-title} ||= '';
+  # We force the title to be one line (sorry):
+  $args->{-title} =~ s/[\n\r\f]/ /g;
+  $args->{-subtitle} ||= '';
+  # We don't let the subtitle get pushed down away from the title:
+  $args->{-subtitle} =~ s/^[\n\r\f]*//;
+  my ($lTitle, $lSub, $lText);
   if (! $self->_showing_side_banner)
     {
+    # For 'top' style pages other than first and last
     my $top_frame = $frame->Frame(
                                   -background => 'white',
                                  )->pack( -fill => 'x',
@@ -1014,19 +1037,16 @@ sub blank_frame
                                                -expand => 1,
                                                -fill   => 'x',
                                               );
-    if ( $args->{-title} )
-      {
-      $args->{-title} =~ s/[\n\r\f]/ /;
-      my $f = $title_frame->Frame(qw/-background white -width 10 -height 30/
-                                 )->pack(qw/-fill x -anchor n -side left/);
-      DEBUG_FRAME && $f->configure(-background => 'yellow');
-      # The title frame content proper:
-      my $l = $title_frame->Label(
+    my $f = $title_frame->Frame(qw/-background white -width 10 -height 30/
+                               )->pack(qw/-fill x -anchor n -side left/);
+    DEBUG_FRAME && $f->configure(-background => 'yellow');
+    # The title frame content proper:
+    $lTitle = $title_frame->Label(
                                   -justify    => 'left',
                                   -anchor     => 'w',
                                   -text       => $args->{-title},
                                   -font       => 'TITLE_FONT_TOP',
-                                  -background => "white",
+                                  -background => $title_frame->cget("-background"),
                                  )->pack(
                                          -side   => 'top',
                                          -expand => 1,
@@ -1034,29 +1054,18 @@ sub blank_frame
                                          -pady   => 5,
                                          -padx   => 0,
                                         );
-      DEBUG_FRAME && $l->configure(-background => 'light blue');
-      } # if -title
-    if ( $args->{-subtitle} )
-      {
-      $args->{-subtitle} =~ s/^[\n\r\f]//;
-      my $l = $title_frame->Label(
-                                  -font       => 'SUBTITLE_FONT',
-                                  -justify    => 'left',
-                                  -anchor     => 'w',
-                                  -text       => '   '. $args->{-subtitle},
-                                  -background => "white",
-                                 )->pack(
-                                         -side   => 'top',
-                                         -expand => 0,
-                                         -fill   => 'x',
-                                         -padx   => 5,
-                                        );
-      DEBUG_FRAME && $l->configure(-background => 'light blue');
-      } # if -subtitle
-    else
-      {
-      $frame->Label();
-      }
+    $lSub = $title_frame->Label(
+                                -font       => 'SUBTITLE_FONT',
+                                -justify    => 'left',
+                                -anchor     => 'w',
+                                -text       => '   '. $args->{-subtitle},
+                                -background => $title_frame->cget("-background"),
+                               )->pack(
+                                       -side   => 'top',
+                                       -expand => 0,
+                                       -fill   => 'x',
+                                       -padx   => 5,
+                                      );
     # This is the line below top:
     if (($self->cget(-style) eq 'top') && ! $self->_on_first_page)
       {
@@ -1069,98 +1078,85 @@ sub blank_frame
       } # if 'top'
     if ( $args->{-text} )
       {
-      my $p = $frame->Label(
-                            -font       => $args->{-font},
-                            -justify    => 'left',
-                            -anchor     => 'w',
-                            -wraplength => $wrap + 100,
-                            -justify    => "left",
-                            -text       => $args->{-text},
-                            -background => $self->{background},
-                           )->pack(
-                                   -side   => 'top',
-                                   # -anchor => 'n',
-                                   # -expand => 1,
-                                   -expand => 0,
-                                   -fill   => 'x',
-                                   -padx   => 10,
-                                   -pady   => 10,
-                                  );
-      DEBUG_FRAME && $p->configure(-background => 'yellow');
+      $lText = $frame->Label(
+                             -font       => $args->{-font},
+                             -justify    => 'left',
+                             -anchor     => 'w',
+                             -wraplength => $wrap + 100,
+                             -justify    => "left",
+                             -text       => $args->{-text},
+                             -background => $self->{background},
+                            )->pack(
+                                    -side   => 'top',
+                                    # -anchor => 'n',
+                                    # -expand => 1,
+                                    -expand => 0,
+                                    -fill   => 'x',
+                                    -padx   => 10,
+                                    -pady   => 10,
+                                   );
       } # if -text
     } # if 'top' style, but not first or last page
   else
     {
     # Whenever page does NOT have the side banner:
-    if ( $args->{-title} )
-      {
-      my $p = $frame->Label(
+    $lTitle = $frame->Label(
                             -justify    => 'left',
                             -anchor     => 'w',
                             -text       => $args->{-title},
                             -font       => 'TITLE_FONT',
                             -background => $frame->cget("-background"),
                            )->pack(
-                                   -anchor => 'n',
                                    -side   => 'top',
+                                   -anchor => 'n',
                                    # -expand => 1,
                                    -expand => 0,
                                    -fill   => 'x',
                                   );
-      DEBUG_FRAME && $p->configure(-background => 'yellow');
-      }
-    if ($args->{-subtitle})
-      {
-      $args->{-subtitle} =~ s/^[\n\r\f]*//;
-      my $p = $frame->Label(
-                            -font       => $args->{-font},
-                            -justify    => 'left',
-                            -anchor     => 'w',
-                            -text => '   '. $args->{-subtitle},
-                            -background => $frame->cget("-background"),
-                           )->pack(
-                                   -anchor => 'n',
-                                   -side   => 'top',
-                                   -expand => 0,
-                                   -fill   => 'x',
-                                  );
-      DEBUG_FRAME && $p->configure(-background => 'light green');
-      }
-    else {
-      $frame->Label();
-      }
+    $lSub = $frame->Label(
+                          -font       => $args->{-font},
+                          -justify    => 'left',
+                          -anchor     => 'w',
+                          -text       => '   '. $args->{-subtitle},
+                          -background => $frame->cget("-background"),
+                         )->pack(
+                                 -anchor => 'n',
+                                 -side   => 'top',
+                                 -expand => 0,
+                                 -fill   => 'x',
+                                );
     if ( $args->{-text} )
       {
-      my $p = $frame->Label(
-                            -font       => $args->{-font},
-                            -justify    => 'left',
-                            -anchor     => 'w',
-                            -wraplength => $wrap,
-                            -justify    => "left",
-                            -text       => $args->{-text},
-                            -background => $frame->cget("-background"),
-                           )->pack(
-                                   # -anchor => 'n',
-                                   -side   => 'top',
-                                   -expand => 0,
-                                   -fill   => 'x',
-                                   -pady   => 10,
-                                  );
-      DEBUG_FRAME && $p->configure(-background => 'light green');
+      $lText = $frame->Label(
+                             -font       => $args->{-font},
+                             -justify    => 'left',
+                             -anchor     => 'w',
+                             -wraplength => $wrap,
+                             -justify    => "left",
+                             -text       => $args->{-text},
+                             -background => $frame->cget("-background"),
+                            )->pack(
+                                    -side   => 'top',
+                                    -expand => 0,
+                                    -fill   => 'x',
+                                    -pady   => 10,
+                                   );
       }
     else
       {
       $frame->Label();
       }
     } # else
-  #  my $p = $frame->Frame->pack(qw/-anchor s -side bottom -fill both -expand 1/);
-  #  $p->configure(-background => $frame->cget("-background") );
-  #  $p->packPropagate(0);
-  # print STDERR " DDD in blank_frame(), -wait is $args->{-wait}.\n";
+  DEBUG_FRAME && $lTitle->configure(-background => 'light blue');
+  DEBUG_FRAME && $lSub->configure(-background => 'light green');
+  DEBUG_FRAME && Tk::Exists($lText) && $lText->configure(-background => 'pink');
+  # print STDERR " DDD in blank_frame(), raw    -wait is $args->{-wait}.\n";
   $args->{-wait} ||= 0;
+  # print STDERR " DDD in blank_frame(), cooked -wait is $args->{-wait}.\n";
   if (0 < $args->{-wait})
     {
     _fix_wait(\$args->{ -wait });
+    # print STDERR " DDD in blank_frame(), fixed  -wait is $args->{-wait}.\n";
     # print STDERR " DDD installing afterIdle, self is =$self=\n";
     $self->after(
                  $args->{ -wait },
@@ -1211,9 +1207,7 @@ sub _text_frame
       }
     elsif ( not ref $args->{-boxedtext} )
       {
-      open IN, $args->{-boxedtext} or croak "Could not read file: $args->{-boxedtext}; $!";
-      read IN, $$text, -s IN or warn;
-      close IN or warn;
+      $$text = read_file($args->{-boxedtext}) or croak "Could not read file: $args->{-boxedtext}; $!";
       }
     }
   $$text = "" if not defined $text;
@@ -1464,7 +1458,7 @@ either fixed drives, network drives, or RAM drives (that is types 3, 4, and
 6, according to C<Win32API::File::GetDriveType>).
 
 You may also specify the C<-title>, C<-subtitle> and C<-text> parameters, as
-in L<METHOD blank_frame>.
+in L<blank_frame>.
 
 An optional C<-background> argument is used as the background of the Entry and DirTree widgets
 (default is white).
@@ -1522,7 +1516,7 @@ sub _page_dirSelect
                                           -subtitle => $args->{-subtitle}
                                           || "After you have made your choice, press Next to continue.",
                                           -text => $args->{-text}   || "",
-                                          -wait => $args->{ -wait } || undef,
+                                          -wait => $args->{ -wait },
                                          );
   DEBUG_FRAME && $frame->configure(-background => 'light blue');
   my $entry = $frame->Entry(
@@ -1656,7 +1650,9 @@ sub _page_dirSelect
 
 
 # Tk::DirTree sorts its folder list case-sensitively, but on Windows
-# we want case-INsensitive search.  We roll our own:
+# we want case-INsensitive search.  We roll our own until/unless the
+# author of Tk::DirTree implements a fix (bug report submitted, see
+# https://rt.cpan.org/Ticket/Display.html?id=28888):
 REDEFINE:
   {
   no warnings 'redefine';
@@ -1705,7 +1701,7 @@ Supply in C<-directory> the full path of an existing folder where the user's sea
 Supply in C<-variable> a reference to a variable to have set with the chosen file name.
 
 You may also specify the C<-title>, C<-subtitle> and C<-text> parameters, as
-in L<METHOD blank_frame>.
+in L<blank_frame>.
 
 An optional C<-background> argument is used as the background of the Entry widget
 (default is white).
@@ -1723,7 +1719,7 @@ sub addFileSelectPage
   } # addFileSelectPage
 
 #
-# PRIVATE METHOD _page_fileSelect
+# PRIVATE _page_fileSelect
 #
 # As blank_frame plus:
 # -variable => Reference to a variable to set.
@@ -1798,7 +1794,7 @@ informed by ticking-off a list as each task is accomplished.
 Whilst the task list is being executed, both the I<Back> and I<Next> buttons
 are disabled.
 
-Parameters are as for C<blank_frame> (see L<METHOD blank_frame>), plus:
+Parameters are as for C<blank_frame> (see L<blank_frame>), plus:
 
 =over 4
 
@@ -1851,15 +1847,15 @@ Optional: array-refernce to pass to the C<pack> method of the C<Frame> containin
 
 =back
 
-=head2 TASK LIST EXAMPLE
+=head3 TASK LIST EXAMPLE
 
   $wizard->addTaskListPage(
-      -title => "Toy example",
-      -tasks => [
-         "Wait five seconds" => sub { sleep 5 },
-       "Wait ten seconds!" => sub { sleep 10 },
-    ],
-  );
+    -title => "Toy example",
+    -tasks => [
+      "Wait five seconds" => sub { sleep 5; 1; },
+      "Wait ten seconds!" => sub { sleep 10; 1; },
+      ],
+    );
 
 =cut
 
@@ -1875,7 +1871,7 @@ sub addTaskListPage
 
 =head2 page_taskList
 
-The same as C<addTaskListPage> (see L<METHOD addTaskListPage>)
+The same as C<addTaskListPage> (see L<addTaskListPage>)
 but does not add the page to the Wizard.
 
 Note that unlike C<addTaskListPage>, arguments are expected in a hash reference.
@@ -1923,7 +1919,7 @@ sub page_taskList
                                  -subtitle => $args->{-subtitle}
                                  || "Please wait whilst the Wizard performs these tasks.",
                                  -text => $args->{-text}   || "",
-                                 -wait => $args->{ -wait } || undef,
+                                 -wait => $args->{ -wait },
                                 );
   if ( $#{ $args->{-tasks} } > -1 ) {
     my $task_frame = $frame->LabFrame(
@@ -2043,6 +2039,26 @@ appear checked.
 
 =back
 
+Here is an example of what the -choices parameter should look like:
+
+  $wizard->addMultipleChoicePage(
+    -title => "Another toy example",
+    -choices =>
+      [
+        {
+         -title => 'choice 1',
+         -variable => \$choice1,
+        },
+        {
+         -title => 'choice 2, default is checked',
+         -variable => \$choice2,
+         -checked => 1,
+        },
+      ],
+    );
+
+=back
+
 =cut
 
 sub addMultipleChoicePage
@@ -2102,8 +2118,6 @@ sub _page_multiple_choice
         } # foreach
     return $frame;
     } # _page_multiple_choice
-
-=back
 
 =head2 setPageSkip
 
@@ -2391,7 +2405,7 @@ button action.
 
 This is a reference to a function that will be dispatched before the Cancel
 button is processed.  Default is to exit on user confirmation - see
-L<METHOD DIALOGUE_really_quit>.
+L<DIALOGUE_really_quit>.
 
 =item -preCloseWindowAction => 
 
@@ -2399,12 +2413,12 @@ This is a reference to a function that will be dispatched before the window
 is issued a close command.
 If this function returns a true value, the Wizard will close.
 If this function returns a false value, the Wizard will stay on the current page.
-Default is to exit on user confirmation - see L<DIALOGUE METHOD DIALOGUE_really_quit>.
+Default is to exit on user confirmation - see L<DIALOGUE_really_quit>.
 
 =back
 
 All active event handlers can be set at construction or using C<configure> -
-see L<WIDGET-SPECIFIC OPTIONS> and L<METHOD configure>.
+see L<WIDGET-SPECIFIC OPTIONS> and L<configure>.
 
 =head1 BUTTONS
 
