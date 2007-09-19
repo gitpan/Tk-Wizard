@@ -1,5 +1,5 @@
 
-# $Id: Wizard.pm,v 2.54 2007/09/14 03:18:59 martinthurn Exp $
+# $Id: Wizard.pm,v 2.56 2007/09/19 20:01:03 martinthurn Exp $
 
 package Tk::Wizard;
 
@@ -12,7 +12,7 @@ if ( $^V and $^V gt v5.8.0 )
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.54 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.56 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
 my $sDir = ucfirst $sdir;
@@ -25,7 +25,6 @@ Tk::Wizard - GUI for step-by-step interactive logical process
 
 use Carp;
 use Config;
-use Cwd;
 use Data::Dumper;
 use File::Path;
 use File::Slurp;
@@ -1463,10 +1462,6 @@ in L<blank_frame>.
 An optional C<-background> argument is used as the background of the Entry and DirTree widgets
 (default is white).
 
-WARNING: The CPAN distribution Tk-Tree-4.7 does not work.  Do not
-install Tk-Tree-4.7.  Just keep the Tk::Tree and Tk::DirTree that come
-with Tk-804.027.
-
 Also see L<CALLBACK callback_dirSelect>.
 
 =cut
@@ -1532,6 +1527,8 @@ sub _page_dirSelect
                                    -pady   => 4,
                                   );
   # $entry->configure( -background => $self->cget("-background") ) if $self->cget("-background");
+  my $s = shift @Tk::DirTree::ISA;
+  unshift @Tk::DirTree::ISA, $s if ($s ne 'Tk::Widget');
   my $dirsParent = $frame->Scrolled("DirTree",
                                     -background => ( $args->{-background} || 'white' ),
                                     -scrollbars => 'osoe',
@@ -1539,7 +1536,6 @@ sub _page_dirSelect
                                     -selectforeground => "white",
                                     -selectmode => 'browse',
                                     -height => 7,
-                                    -directory => ${$args->{-variable}},
                                     -browsecmd => sub { ${$args->{-variable}} = shift },
                                    )->pack(
                                            -fill => "both",
@@ -1611,7 +1607,10 @@ sub _page_dirSelect
                            -ipadx => 5,
                          );
     } # if
-  # The dirtree itself can take a long time to draw:
+  # Add the user's requested directory:
+  $dirs->configure(-directory => ${$args->{-variable}}) if (${$args->{-variable}} ne '');
+
+  # The DirTree itself can take a long time to draw:
   $self->{wizardFrame}->update;
   $self->idletasks;
   $self->update;
@@ -1627,19 +1626,16 @@ sub _page_dirSelect
                or $^O !~ /win/i )
        )
       {
-      my $cwd = Cwd::getcwd;
       # print STDERR " DDD   1 DirTree->configure(-directory=>$d)\n";
-      $dirs->configure( -directory => $d ) if chdir $d;
-      chdir $cwd;
+      $dirs->configure( -directory => $d ) if -d $d;
       } # if
     elsif ( $args->{-nowarnings} ) {    # Fixed drive only
-      my $cwd = Cwd::getcwd;
       # print STDERR " DDD   2 DirTree->configure(-directory=>$d)\n";
-      $dirs->configure( -directory => $d )
-      if Win32API::File::GetDriveType($d) == 3 and chdir $d;
-      chdir $cwd;
+      $dirs->configure( -directory => $d ) if ((Win32API::File::GetDriveType($d) == 3)
+                                               && -d $d);
       }
-    else {
+    else
+      {
       # print STDERR " DDD   3 DirTree->configure(-directory=>$d)\n";
       $dirs->configure( -directory => $d );
       }
@@ -1659,7 +1655,8 @@ REDEFINE:
 
 sub Tk::DirTree::add_to_tree {
     my( $w, $dir, $name, $parent ) = @_;
-
+    # print STDERR " DDD Martin's add_to_tree($dir,$name,$parent)\n";
+    # confess;
     my $iWin32 = ($^O =~ m!win32!i);  # added by Martin Thurn
     my $dirSortable = $iWin32 ? uc $dir : $dir;  # added by Martin Thurn
     my $image = $w->cget('-image');
@@ -1674,6 +1671,7 @@ sub Tk::DirTree::add_to_tree {
         foreach my $sib ($w->infoChildren( $parent )) {
           my $sibSortable = $iWin32 ? uc $sib : $sib;  # added by Martin Thurn
           # if( $sib gt $dir ) {  # commented out by Martin Thurn
+          # print STDERR " DDD in Martin's add_to_tree, $sibSortable gt? $dirSortable\n";
           if( $sibSortable gt $dirSortable ) {  # added by Martin Thurn
                 push @args, (-before => $sib);
                 last;

@@ -1,3 +1,7 @@
+2007-09-19    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (_page_dirSelect): added workaround for the broken Tk::DirTree
+
 2007-09-13    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard.pm (Populate): new Wizard options -width and -height
