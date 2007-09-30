@@ -1,19 +1,59 @@
 #! perl -w
 
 use strict;
+use warnings;
+
 use ExtUtils::testlib;
-use Test::More 'no_plan';
+use Test::More;
 
-BEGIN {
-    use_ok('Tk::Wizard');
-}
+my $sMod;
 
-my $VERSION = do { my @r = ( q$Revision: 1.6 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+BEGIN
+  {
+  $sMod = 'Tk::Wizard::Installer::Win32';
+  if ($^O !~ m!win!i)
+    {
+    plan 'skip_all' => 'This is not Windows';
+    } # if
+  plan 'no_plan';
+  use_ok('Tk::Wizard');
+  use_ok($sMod);
+  } # end of BEGIN block
 
-my $iWIN32 = ( $^O =~ m!win!i ) ? 1 : 0; # Catches Cygwin and MsWin32
-SKIP: {
-    skip 'because this computer is not Cygwin or MSWin32', 1 if !$iWIN32;
-    use_ok("Tk::Wizard::Installer::Win32");
-}
+our
+$VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
+pass('before new');
+my $w = new $sMod(
+                  # -debug => 3,
+                  -height => 400,
+                 );
+isa_ok($w, $sMod);
+is(
+   $w->addSplashPage(
+                     -wait => 444,
+                     -title => "Welcome to the Wizard",
+                    ),
+   1, 'splash is 1'
+  );
+my $s;
+is($w->addStartMenuPage(
+                        -wait => $ENV{TEST_INTERACTIVE} ? -1 : 999,
+                        -variable => \$s,
+                        -program_group => 'My Group',
+                       ),
+   2, 'start menu page is 2');
+is(
+   $w->addSplashPage(
+                     -wait => 444,
+                     -title => "Page Bye!",
+                     -text  => "Thanks for testing!"
+                    ),
+   3, 'bye is 3'
+  );
+$w->Show;
+pass('after Show');
+MainLoop();
+pass('after MainLoop');
 
 __END__

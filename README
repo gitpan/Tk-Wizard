@@ -24,20 +24,21 @@ or, unpack the archive and in the new folder execute the following:
 
 If you are on Windows you might have to use nmake instead of make.
 
-If you set environment variable TEST_INTERACTIVE to any non-zero value,
-some of the tests might pause and you will have to click the "Next" button
-several times to get through them.
+If you set environment variable TEST_INTERACTIVE to any non-zero
+value, most of the tests will pause and you will have to click the
+"Next" button several times to get through them.
 
 DESCRIPTION
 
-In the context of this namespace, a Wizard is defined as a graphic user
-interface (GUI) that presents information, and possibly performs tasks,
-step-by-step via a series of different pages.  Pages (or 'screens', or
-'Wizard frames') may be chosen logically depending upon user input.
+In the context of this namespace, a Wizard is defined as a graphical
+user interface (GUI) that presents information, and possibly performs
+tasks, step-by-step via a series of different pages.  Pages (or
+'screens', or 'Wizard frames') may be chosen logically depending upon
+user input.
 
 The "Tk::Wizard" module automates a large part of the creation of a
-wizard program to collect information and then perform some complex task
-based upon it.
+wizard program to collect information and then perform some complex
+tasks based upon it.
 
 The wizard feel is largly based upon the Microsoft(TM,etc) wizard style:
 the default is similar to that found in Microsoft Windows 95; a more

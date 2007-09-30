@@ -38,6 +38,5 @@ t/pod-coverage.t
 t/pod.t
 t/sizer.t
 t/subtitle.t
-t/tkerror.pl
 t/unix.txt
 TODO

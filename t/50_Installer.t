@@ -1,10 +1,10 @@
 
-# $Id: 50_Installer.t,v 1.9 2007/08/10 03:12:37 martinthurn Exp $
+# $Id: 50_Installer.t,v 1.10 2007/09/30 20:46:59 martinthurn Exp $
 
 use strict;
 use warnings;
 
-my $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.10 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use LWP::UserAgent;
@@ -37,17 +37,12 @@ BEGIN
   } # end of BEGIN block
 
 my $WAIT = 100;
-my $sTestDir = 't/__perlwizardtest';
+my $sTestDir = 't/temp';
 my $files = {
              'http://www.cpan.org/' => "$sTestDir/cpan_index1.html",
              'http://www.cpan.org/' => "$sTestDir/cpan_index2.html",
              'http://www.leegoddard.net' => "$sTestDir/lee.html",
             };
-
-if ( ! -e $sTestDir )
-  {
-  $files->{'http://localhost/test.txt'} = "$sTestDir/test2.txt";
-  } # if
 
 my $wizard = Tk::Wizard::Installer->new( -title => "Installer Test", );
 isa_ok( $wizard, 'Tk::Wizard::Installer' );

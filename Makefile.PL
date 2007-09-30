@@ -1,11 +1,11 @@
 
-# $Id: Makefile.PL,v 2.27 2007/09/17 22:49:16 martinthurn Exp $
+# $Id: Makefile.PL,v 2.28 2007/09/25 01:59:56 martinthurn Exp $
 
 use inc::Module::Install;
 
 name('Tk-Wizard');
 abstract('GUI for step-by-step interactive logical process');
-version(2.114);
+version(2.115);
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');
 
@@ -63,5 +63,15 @@ if ($^O =~ m/win/i)
   } # if MSWin32
 
 WriteAll;
+
+sub MY::postamble
+  {
+  return <<'PART0';
+coverage :
+        - cover -delete
+        $(MAKE) HARNESS_PERL_SWITCHES=-MDevel::Cover test
+        cover
+PART0
+  } # MY::postamble
 
 __END__

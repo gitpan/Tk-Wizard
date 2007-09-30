@@ -1,5 +1,5 @@
 
-# $Id: Wizard.pm,v 2.56 2007/09/19 20:01:03 martinthurn Exp $
+# $Id: Wizard.pm,v 2.57 2007/09/27 02:11:46 martinthurn Exp $
 
 package Tk::Wizard;
 
@@ -12,7 +12,7 @@ if ( $^V and $^V gt v5.8.0 )
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.56 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.57 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
 my $sDir = ucfirst $sdir;
@@ -92,16 +92,16 @@ use vars qw/ %LABELS /;
 
 To avoid 50 lines of SYNOPSIS, please see the files included with the
 distribution in the test directory: F<t/*.t>.  These are just Perl
-files that are run during the C<make test> phase of installation: you
-may rename them without harm once you have installed the module.
+programs that are run during the C<make test> phase of installation: you
+can move/copy/rename them without harm once you have installed the module.
 
 =head1 CHANGES
 
-The widget now works from within a C<MainWindow>, or creates its own as necessary for backwards comparability.
+The widget now works from within a C<MainWindow>, or creates its own as necessary for backwards compatibility.
 
 The option C<-image_dir> has been deprecated, and the once-used binary
 images have been dropped from the distribution in favour of Base64-
-encoded images. More and other details in F<ChangeLog>.
+encoded images. More and other details in F<Changes>.
 
 =head1 DEPENDENCIES
 
@@ -1167,6 +1167,26 @@ sub blank_frame
     } # if
   return $frame->pack(qw/-side top -anchor n -fill both -expand 1/);
   } # end blank_frame
+
+
+=head2 addSplashPage
+
+Add to the wizard a page containing a chunk of text, specified in
+the parameter C<-text>.  Suitable for an introductory "splash" page
+and for a final "all done" page.
+
+Accepts exactly the same arguments as C<blank_frame>.
+
+=cut
+
+sub addSplashPage
+  {
+  my $self = shift;
+  # We have to make a copy of our args in order for them to get
+  # "saved" in this coderef:
+  my $args = {@_};
+  return $self->addPage( sub { $self->blank_frame(%$args) } );
+  } # addSplashPage
 
 
 =head2 addTextFramePage

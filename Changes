@@ -1,3 +1,11 @@
+2007-09-29    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard/Installer/Win32.pm (_page_start_menu): FIXED this method
+
+2007-09-26    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (addSplashPage): new method
+
 2007-09-19    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard.pm (_page_dirSelect): added workaround for the broken Tk::DirTree

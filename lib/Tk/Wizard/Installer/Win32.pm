@@ -1,20 +1,23 @@
 
-# $Id: Win32.pm,v 2.11 2007/08/10 03:11:46 martinthurn Exp $
+# $Id: Win32.pm,v 2.12 2007/09/30 02:21:51 martinthurn Exp $
 
 package Tk::Wizard::Installer::Win32;
 
 use strict;
 
 use Carp;
-use File::Path;
-use Tk::Wizard::Installer;
-require Exporter;
-my @ISA    = "Tk::Wizard::Installer";
-my @EXPORT = ("MainLoop");
 use Cwd;
+use Data::Dumper; # for debugging only
+use File::Path;
+use Exporter;
+use Tk::Wizard::Installer;
+use base 'Tk::Wizard::Installer';
+my @EXPORT = ("MainLoop");
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.11 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.12 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
+use constant DEBUG_FRAME => 0;
 
 BEGIN {
     use Win32::Shortcut;
@@ -74,12 +77,12 @@ The command-line to execute to uninstall the script.
 
 According to L<Microsoft|http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnwue/html/ch11d.asp>:
 
-	You must supply complete names for both the DisplayName and UninstallString
-	values for your uninstall program to appear in the Add/Remove Programs
-	utility. The path you supply to Uninstall-String must be the complete
-	command line used to carry out your uninstall program. The command line you
-	supply should carry out the uninstall program directly rather than from a
-	batch file or subprocess.
+"You must supply complete names for both the DisplayName and UninstallString
+values for your uninstall program to appear in the Add/Remove Programs
+utility. The path you supply to Uninstall-String must be the complete
+command line used to carry out your uninstall program. The command line you
+supply should carry out the uninstall program directly rather than from a
+batch file or subprocess."
 
 The default value is:
 
@@ -94,11 +97,10 @@ checks and reacts to the the command line switch C<-u>:
 	if ($ARGV[0] =~ /^-*u$/i){
 		# ... Have been passed the uninstall switch: uninstall myself now ...
 	}
-	# ...
 
 Or something like that.
 
-=item QuiteUninstallString
+=item QuietUninstallString
 
 As C<UninstallString> above, but for ... quiet uninstalls.
 
@@ -112,7 +114,7 @@ Please see the entry for C<UninstallString>, above.
 
 =item Size
 
-The strings displayed in the application list of the Add/Remove dialogue.
+The strings displayed in the Control Panel's Add/Remove Programs list.
 
 =item ModifyPath
 
@@ -184,7 +186,7 @@ sub register_with_windows {
     return 1;
 
     # return $!? undef : 1;
-}
+} # register_with_windows
 
 =head2 addStartMenuPage
 
@@ -213,11 +215,11 @@ Have a look at the C<$mkdir> C<Button> in C<Tk::Wizard::page_dirSelect>.
 
 =item -user
 
-Set to C<current>, C<all> or C<both> to list the "Start Menu"
-for all users, just the current user, or both. Default is C<both>.
-If there exist entries in both the common and current user's
-I<Start Menu> with the same name, the entry in the common menu
-takes precedence.
+Set to C<all> or C<current> to list the "Start Menu" for all users, or
+just the current user.  Default is C<all>.  Note that in the current
+versions of Windows in common use, if there exist entries with the
+same name in both the common and current user's I<Start Menu>, the
+entry in the common menu takes precedence.
 
 =item -variable
 
@@ -227,25 +229,24 @@ this is I<not> the full path: see above.
 
 =item -program_group
 
-Name of the directory to create on the start menu, if any.
-If defined, this will be appended to any selection the user makes.
-Since this is just the GUI part, no directory will actually be
-created until C<callback_create_shortcut> is called (though this will
-change).
+Name of the directory to create on the start menu, if any.  If
+defined, this will be appended to any selection the user makes.  Note
+that since addStartMenuPage() is just the GUI part, no directory will
+actually be created until C<callback_create_shortcut> is called.
 
 =item -disable_nochoice
 
-Set to prevent the display of the checkbox which
-allows the user not to use this feature. See C<-label_nochoice>,
-below.
+Set to prevent the display of the checkbox which allows the user not
+to use this feature.  See C<-label_nochoice>, below.
 
 =item -label_nochoice
 
 If the parameter C<-disable_nochoice> has not been set,
-C<-label_nochoice> should contains text to use for the label by the
+C<-label_nochoice> should contain text to use for the label by the
 checkbox which disables choices on
 this page and causes the page to set the C<-variable> parameter to
-C<undef>. Default text is C<Do not create a shortcut on the Start Menu>
+C<undef>.
+Default text is C<Do not create a shortcut on the Start Menu>.
 
 =item -listHeight
 
@@ -260,7 +261,7 @@ C<Label> widgets, but does not accept aliases:
 	-relief -highlightthickness -background -borderwidth -cursor
 	-highlightcolor -foreground -font
 
-You can supply the common Wizard page options:
+You can supply the common Tk::Wizard options:
 
 	-title -subtitle -text
 
@@ -287,21 +288,23 @@ sub _page_start_menu {
         $args = {@_};
     }
     local *DIR;
-    my ( @list, $dir );
     my $cwd    = cwd;
     my $do_set = 1;
     croak "You must set -variable parameter"
       unless exists $args->{-variable};
+    $args->{-user} ||= 'common';
     $args->{-background} = 'white'  unless exists $args->{-background};
     $args->{-relief}     = 'sunken' unless exists $args->{-relief};
     $args->{-border}     = 1        unless exists $args->{-border};
     $args->{-listHeight} = 10       unless exists $args->{-listHeight};
-    $args->{-title} = "Create Shortcuts" unless exists $args->{-title};
-    $args->{-subtitle} =
-      "Please select where to place an icon on the start menu"
-      unless exists $args->{-subtitle};
-    $args->{-label_nochoice} = "Do not create a shortcut on the Start Menu"
-      unless exists $args->{-label_nochoice};
+    $args->{-title} ||= "Create Shortcuts";
+    $args->{-subtitle} ||= "Please select where to place an icon on the start menu";
+    $args->{-text} ||= "
+If you want the new Program Group to be installed within an existing
+folder in your Start Menu, select that folder below.
+If you do not want to install the new Program in your Start Folder,
+check the checkbox below.";
+    $args->{-label_nochoice} ||= "Do not create a shortcut on the Start Menu";
     $self->{-program_group} = $args->{-program_group};
 
     my $common_args;    # formatting
@@ -326,6 +329,7 @@ sub _page_start_menu {
     delete $args->{-program_group};
 
     my $frame = $self->blank_frame(%$args);
+    DEBUG_FRAME && $frame->configure(-background => 'blue');
 
     if ( $Win32::VERSION gt 0.1999999 ) {
         $self->{startmenu_dir_current} =
@@ -349,90 +353,128 @@ sub _page_start_menu {
             return undef;
         }
     }
-    if ( $args->{-user} eq 'current' ) {
-        $dir = [ $self->{startmenu_dir_current} ];
-    }
-    elsif ( $args->{-user} eq 'all' ) {
-        $dir = [ $self->{startmenu_dir_common} ];
-    }
-    else {
-        $dir =
-          [ $self->{startmenu_dir_common}, $self->{startmenu_dir_current} ];
-    }
-    $$variable = @$dir[0] . "\\" . $group;
-    foreach my $dodir (@$dir) {
-        chdir $dodir;
-        opendir DIR, $dodir or croak "I couldn't open the start menu ($dodir)";
-        push @list,
-          grep { -d && !/^\.\.?$/ && s/^(.*)$/$dodir\\$1/ } sort readdir DIR;
-        close DIR;
-    }
-    chdir $cwd;
-    my $listbox = $frame->Scrolled(
-        "HList",
-        -scrollbars => "osoe",
-        -selectmode => 'single',
-        -height     => $args->{-listHeight},
-        -itemtype   => 'text',
-        -separator  => '',
-        -browsecmd  => sub {
-            $$variable = shift;
-            $$variable .= "\\" . $group if $group;
-        },
-        %$common_args
-    )->pack(qw/ -expand 1 -fill x -padx 10 -pady 10 /);
-
-    foreach my $i (@list) {
-
-        #my ($t) = $i =~ m/([^\\\/]+)$/;
-        my $t = $i;
-        unless ( $listbox->info( "exists", $t ) ) {
-            $listbox->add(
-                 $t,
-                -text => $t,
-                -data => $i,
-            );
+    # The default is to install for all users:
+    my $sDirParent = $self->{startmenu_dir_common};
+    if ($args->{-user} eq 'current')
+      {
+      $sDirParent = $self->{startmenu_dir_current};
+      } # if
+    # This is the default answer, if the user just clicks "Next":
+    $$variable = "$sDirParent\\$group";
+    # Recursively read the Start Menu folder, building up a list of
+    # all folders in there:
+    my @asTry = ($sDirParent);
+    my @asDir;
+ TRY_DIR:
+    while (@asTry)
+      {
+      # $sTry is the FULL path of this folder:
+      my $sTry = shift @asTry;
+      next TRY_DIR if ! -d $sTry;
+      push @asDir, $sTry;
+      opendir DIR, $sTry or croak " EEE can not open the start menu ($sTry): $!";
+      my @asTryChildren = sort readdir DIR;
+      local $" = ',';
+      # print STDERR " DDD asTryChildren = (@asTryChildren)\n";
+      push @asTry, grep { ! m/^\.\.?$/ && s/^(.*)$/$sTry\\$1/ && -d  } @asTryChildren;
+      closedir DIR or warn;
+      } # while TRY_DIR
+    my $text = $frame->Label(
+                             -justify      => 'left',
+                             -textvariable => $variable,
+                             -anchor       => 'w',
+                             %$common_args,
+                            )->pack(
+                                    -side   => 'top',
+                                    -anchor => 'w',
+                                    -fill   => 'x',
+                                    -padx   => 10,
+                                   );
+    DEBUG_FRAME && $text->configure(-background => 'magenta');
+    my $hlist = $frame->Scrolled('HList',
+                                   -scrollbars => "osoe",
+                                   -selectmode => 'single',
+                                   -height     => $args->{-listHeight},
+                                   -itemtype   => 'text',
+                                   -separator  => '\\',
+                                   -browsecmd  => sub {
+                                     $$variable = shift;
+                                     $$variable .= "\\" . $group if $group;
+                                     },
+                                   %$common_args,
+                                  )->pack(
+                                          -expand => 1,
+                                          -fill => 'both',
+                                          -padx => 10,
+                                          -pady => 5,
+                                         ); # HList
+    DEBUG_FRAME && $hlist->configure(-background => 'yellow');
+    foreach my $i (@asDir)
+      {
+      my $t = $i;
+      $t =~ s!\Q$sDirParent!!;
+      $t =~ s!\A\\!!;
+      if (! $hlist->info( "exists", $t ) )
+        {
+        # print STDERR " DDD trying to add i=$i= t=$t= to hlist...\n";
+        $hlist->add(
+                      $t,
+                      -text => $t,
+                      -data => $i,
+                     );
         }
-    }
-
-    my $text = $frame->Label(    # Entry(
-        -justify      => 'left',
-        -textvariable => $variable,
-        -anchor       => 'w',
-        %$common_args
-      )->pack(
-        -side   => 'top',
-        -anchor => 'w',
-        -expand => 1,
-        -fill   => "x",
-        -padx   => 10,
-      );
-    my $button;
-
-    unless ( $args->{-disable_nochoice} ) {
-        $button = $frame->Checkbutton(
-            -text    => $args->{-label_nochoice},
-            -anchor  => 'w',
-            -command => sub {
-                $do_set = !$do_set;
-                if ( not $do_set ) {    # De-activate
-                    $$variable = '';
-                    $text->configure(
-                        -background => $self->cget( -background ) );
-                    $listbox->configure(
-                        -background => $self->cget( -background ) );
-                }
-                else {
-                    $$variable = $listbox->info('anchor');
-                    $$variable .= "\\" . $group if $group;
-                    $text->configure( -background    => $args->{-background} );
-                    $listbox->configure( -background => $args->{-background} );
-                }
-            },
-        )->pack(qw/-side left -anchor w -padx 2 -pady 2/);
-    }
+      } # foreach
+    $self->{_hlist_active_} = 0;
+    $self->_toggle_hlist($hlist, $variable, $group);
+    if (! $args->{-disable_nochoice} )
+      {
+      my $b = $frame->Checkbutton(
+                                  -text    => $args->{-label_nochoice},
+                                  -anchor  => 'w',
+                                  -command => [\&_toggle_hlist,
+                                               $self, $hlist, $variable, $group],
+                                 )->pack(
+                                         -side => 'left',
+                                         -anchor => 'w',
+                                         -padx => 10,
+                                         -pady => 5,
+                                        ); # Checkbutton
+      DEBUG_FRAME && $b->configure(-background => 'red');
+      } # if
     return $frame;
-}
+    } # _page_start_menu
+
+sub _toggle_hlist
+  {
+  my $self = shift;
+  # Required arg1 = the Scrolled HList widget:
+  my $hlist = shift || return;
+  # Required arg2 = reference to variable that HList is bound to:
+  my $rs = shift || return;
+  # Optional arg3 = the group string being added onto the path:
+  my $group = shift;
+  $self->{_hlist_active_} = ! $self->{_hlist_active_};
+  my $w = $hlist->Subwidget('scrolled');
+  if ( ! $self->{_hlist_active_} )
+    {
+    $$rs = '';
+    # Deactivate the entire HList.  HList does not support the
+    # -state configuration option, therefore we use the bindtags
+    # "hack":
+    $self->{_hlist_bindtags_} = $w->bindtags;
+    $w->bindtags(['Freeze']);
+    }
+  else
+    {
+    $$rs = $hlist->info('anchor');
+    $$rs .= "\\" . $group if $group;
+    if ($self->{_hlist_bindtags_})
+      {
+      $w->bindtags($self->{_hlist_bindtags_});
+      } # if
+    } # else
+  } # toggle_hlist
+
 
 =head1 CALLBACKS
 
@@ -446,14 +488,13 @@ you right-click a shortcut:
 
 =item -save_path
 
-The location at which the shortcut should be saved.
-This should be the full path including filename ending
-in C<.lnk>.
+The location at which the shortcut should be saved.  This should be
+the full path including filename ending in C<.lnk>.
 
 The filename minus extension will be visible in the shortcut.
 If the C<-program_group> parameter was passed to
 C<METHOD page_start_menu>, the directory it refers to
-will be included in the save path you supply.To avoid
+will be included in the save path you supply.  To avoid
 this, either C<undef>ine the object field C<-program_group>,
 or supply the parameter C<-no_program_group>.
 
@@ -463,8 +504,8 @@ See C<-save_path>, above.
 
 =item -target
 
-The shortcut points to this file, directory, or URI -
-see notes for C<-save_path>, above.
+The shortcut points to this file, directory, or URI -- see notes for
+C<-save_path>, above.
 
 =item -workingdir
 
@@ -477,7 +518,7 @@ in more "modern" (Win2k/ME+) Windows.
 
 =item -iconpath
 
-Path to the icon file - an C<.exe>, C<.dll>, C<.ico> or
+Path to the icon file -- an C<.exe>, C<.dll>, C<.ico> or
 other acceptable format.
 
 =item -iconindex
@@ -552,7 +593,7 @@ sub callback_create_shortcut {
     my $r = $s->Save( $args->{-save_path} ) ? $args->{-save_path} : undef;
     $s->Close;
     return $r;
-}
+} # callback_create_shortcut
 
 =head2 callback_create_shortcuts
 
@@ -575,7 +616,14 @@ sub callback_create_shortcuts {
         $self->callback_create_shortcut(%$_);
     }
     return wantarray ? @paths : \@paths;
-}
+} # callback_create_shortcuts
+
+
+sub Tk::Error::RedefineIfNeeded
+  {
+  local $\ = "\n";
+  print STDERR @_;
+  }
 
 1;
 
