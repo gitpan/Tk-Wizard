@@ -10,7 +10,7 @@ my $sMod;
 
 BEGIN
   {
-  $sMod = 'Tk::Wizard::Installer::Win32';
+  $sMod = 'Tk::Wizard::Installer::Win32::Sizer';
   if ($^O !~ m!win!i)
     {
     plan 'skip_all' => 'This is not Windows';
@@ -21,12 +21,12 @@ BEGIN
   } # end of BEGIN block
 
 our
-$VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 pass('before new');
 my $w = new $sMod(
                   # -debug => 3,
-                  -height => 400,
+                  -height => 360,
                  );
 isa_ok($w, $sMod);
 is(

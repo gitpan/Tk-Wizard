@@ -1,10 +1,10 @@
 
-# $Id: 52_Installer.t,v 1.11 2007/08/14 23:56:37 martinthurn Exp $
+# $Id: 52_Installer.t,v 1.13 2007/10/08 02:51:56 martinthurn Exp $
 
 use strict;
 use warnings;
 
-my $VERSION = do { my @r = ( q$Revision: 1.11 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.13 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use File::Path;
@@ -25,6 +25,7 @@ BEGIN
     }
   $mwTest->destroy if Tk::Exists($mwTest);
   use_ok("Tk::Wizard::Installer");
+  use_ok("Tk::Wizard::Installer::Sizer");
   } # end of BEGIN block
 
 my $WAIT   = $ENV{TEST_INTERACTIVE} ? 0 : 111;
@@ -62,24 +63,29 @@ for (@asDest) {
 }    # for 3,4
 
 my $iPageCount = 0;
-my $wizard = Tk::Wizard::Installer->new( -title => "Installer Test", );
+my $wizard = Tk::Wizard::Installer::Sizer->new( -title => "Installer Test", );
 isa_ok( $wizard, 'Tk::Wizard::Installer' );
+isa_ok( $wizard, 'Tk::Wizard::Installer::Sizer' );
+isa_ok( $wizard, 'Tk::Wizard::Sizer' );
 isa_ok( $wizard->parent, "Tk::MainWindow", "Parent" );
 
 ok(
-    $wizard->configure(
-        -preNextButtonAction => sub { &preNextButtonAction($wizard) },
-        -finishButtonAction  => sub { ok( 1, 'Finished' ); 1 },
-    ),
-    'Configured'
-);
-
-isa_ok( $wizard->cget( -preNextButtonAction ), "Tk::Callback" );
+   $wizard->configure(
+                      -finishButtonAction  => sub { ok( 1, 'Finished' ); 1 },
+                     ),
+   'Configured'
+  );
 isa_ok( $wizard->cget( -finishButtonAction ),  "Tk::Callback" );
 
 # Create pages
 #
-my $SPLASH = $wizard->addPage( sub { page_splash($wizard) } );
+my $SPLASH = $wizard->addSplashPage(
+                                    -wait  => $WAIT,
+                                    -title => "Installer Test",
+                                    -subtitle =>
+                                    "Testing Tk::Wizard::Installer $Tk::Wizard::Installer::VERSION",
+                                    -text => "Test Installer's addFileListPage feature for RT #19300."
+                                   );
 is( $SPLASH, 1, 'Splash page is first' );
 $iPageCount++;
 ok(
@@ -118,18 +124,14 @@ ok(
 );
 $iPageCount++;
 ok(
-    $wizard->addPage(
-        sub {
-            return $wizard->blank_frame(
-                -wait     => $WAIT,
-                -title    => "Finished",
-                -subtitle => "Please press Finish to leave the Wizard.",
-                -text     => "Please report bugs via rt.cpan.org - thanks!"
-            );
-        }
-    ),
-    'Add finish page'
-);
+   $wizard->addSplashPage(
+                          -wait     => $WAIT,
+                          -title    => "Finished",
+                          -subtitle => "Click 'Finish' to kill the Wizard.",
+                          -text     => "Please report bugs via rt.cpan.org"
+                         ),
+   'Added finish page'
+  );
 $iPageCount++;
 
 isa_ok( $wizard->{wizardPageList}, 'ARRAY', 'Page list array' );
@@ -140,24 +142,10 @@ foreach my $iPage ( 1 .. $iPageCount ) {
 }    # foreach
 
 ok( $wizard->Show, "Show" );
-Tk::Wizard::Installer::MainLoop();
+MainLoop();
 ok( 1, "Exited MainLoop" );
 
 rmtree $TEMP_DIR;
-
-sub page_splash {
-    my $wizard = shift;
-    my ( $frame, @pl ) = $wizard->blank_frame(
-        -wait  => $WAIT,
-        -title => "Installer Test",
-        -subtitle =>
-          "Testing Tk::Wizard::Installer $Tk::Wizard::Installer::VERSION",
-        -text => "Test Installer's addFileListPage feature for RT #19300."
-    );
-    return $frame;
-}    # page_splash
-
-sub preNextButtonAction { return 1; }
 
 sub bail_out {
     diag @_;

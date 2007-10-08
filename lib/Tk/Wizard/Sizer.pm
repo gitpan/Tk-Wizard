@@ -1,5 +1,5 @@
 
-# $Id: Sizer.pm,v 1.2 2007/09/02 16:11:40 martinthurn Exp $
+# $Id: Sizer.pm,v 1.3 2007/10/01 00:43:27 martinthurn Exp $
 
 package Tk::Wizard::Sizer;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-$VERSION = do { my @r = ( q$Revision: 1.2 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -63,7 +63,7 @@ sub new
   # This is NOT a clone mechanism:
   return if ref($class);
   # Our arguments are exactly the same as Tk::Wizard::new:
-  my $oWiz = new Tk::Wizard(@_);
+  my $oWiz = $class->SUPER::new(@_);
   # Make sure the window is resizable!
   $oWiz->{Configure}{-resizable} = 1;
   # Make sure the window does not auto-forward:
@@ -114,6 +114,3 @@ __END__
 Martin Thurn, C<mthurn@cpan.org>, L<http://tinyurl.com/nn67z>.
 
 =cut
-
-
-

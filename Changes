@@ -1,3 +1,13 @@
+2007-10-01    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard/Installer.pm (addFileListPage): corrected the pod
+	* lib/Tk/Wizard/Installer/Sizer.pm: use inheritance for sizer methods
+	* lib/Tk/Wizard/Installer/Win32/Sizer.pm: use inheritance
+
+2007-09-30    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard/Installer/Win32/Sizer.pm: new module
+
 2007-09-29    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard/Installer/Win32.pm (_page_start_menu): FIXED this method

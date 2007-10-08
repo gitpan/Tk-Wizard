@@ -1,5 +1,5 @@
 
-# $Id: Sizer.pm,v 1.1 2007/09/13 21:32:54 martinthurn Exp $
+# $Id: Sizer.pm,v 1.3 2007/10/02 02:44:16 martinthurn Exp $
 
 package Tk::Wizard::Installer::Sizer;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-$VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -15,7 +15,7 @@ Tk::Wizard::Installer::Sizer - Interactively determine the best size for your Wi
 
   use Tk::Wizard::Installer::Sizer;
   my $wizard = new Tk::Wizard::Installer::Sizer(
-                                                # Same arguments as Tk::Wizard
+                                                # Same arguments as Tk::Wizard::Installer
                                                );
   $wizard->Show;
   MainLoop;
@@ -24,7 +24,9 @@ Tk::Wizard::Installer::Sizer - Interactively determine the best size for your Wi
 
 use Carp;
 use Tk::Wizard::Installer;
-use base 'Tk::Wizard::Installer';
+use Tk::Wizard::Sizer;
+
+our @ISA = qw( Tk::Wizard::Installer Tk::Wizard::Sizer );
 
 =head1 DESCRIPTION
 
@@ -62,48 +64,21 @@ sub new
   my $class = shift;
   # This is NOT a clone mechanism:
   return if ref($class);
-  # Our arguments are exactly the same as Tk::Wizard::new:
-  my $oWiz = new Tk::Wizard(@_);
+  # Our arguments are exactly the same as Tk::Wizard::Installer::new:
+  my $oWiz = $class->SUPER::new(@_);
   # Make sure the window is resizable!
   $oWiz->{Configure}{-resizable} = 1;
   # Make sure the window does not auto-forward:
   $oWiz->{Configure}{-wait} = 0;
   # Add our size adder-upper:
   $oWiz->configure(
-                   -preNextButtonAction  => sub { &_prenext($oWiz) },
-                   -finishButtonAction  => sub { &_finish($oWiz) },
+                   -preNextButtonAction  => sub { $oWiz->_prenext() },
+                   -finishButtonAction  => sub { $oWiz->_finish() },
                   );
   $oWiz->{_max_width_} = -999;
   $oWiz->{_max_height_} = -999;
   return bless $oWiz, __PACKAGE__;
   } # new
-
-sub _prenext
-  {
-  my $self = shift;
-  my $iW = $self->{wizardFrame}->width;
-  my $iH = $self->{wizardFrame}->height;
-  if ($self->{_max_width_} < $iW)
-    {
-    $self->{_max_width_} = $iW;
-    } # if
-  if ($self->{_max_height_} < $iH)
-    {
-    $self->{_max_height_} = $iH;
-    } # if
-  printf STDOUT (qq{For page #%d ("%s"), final dimensions were:\n},
-                 $self->{wizardPagePtr},
-                 $self->{frame_titles}->[$self->{wizardPagePtr}],
-                );
-  print STDOUT "  -width => $iW, -height => $iH,\n";
-  } # _prenext
-
-sub _finish
-  {
-  my $self = shift;
-  printf STDOUT qq{Dimensions of the smallest area that will contain ALL pages are:\n};
-  print STDOUT "  -width => $self->{_max_width_}, -height => $self->{_max_height_},\n";
-  } # _finish
 
 1;
 

@@ -1,30 +1,30 @@
 
-# $Id: Makefile.PL,v 2.28 2007/09/25 01:59:56 martinthurn Exp $
+# $Id: Makefile.PL,v 2.31 2007/10/08 02:50:21 martinthurn Exp $
 
 use inc::Module::Install;
 
 name('Tk-Wizard');
 abstract('GUI for step-by-step interactive logical process');
-version(2.115);
+version(2.116);
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');
 
 requires("Carp");
 requires("Cwd");
-test_requires("ExtUtils::testlib");
+build_requires("ExtUtils::testlib");
 requires("File::Copy");
 requires("File::Path");
-test_requires("File::Path");
+build_requires("File::Path");
 requires("File::Slurp");
 requires("File::Spec");
-test_requires("FileHandle");
-test_requires("IO::Capture" => 0.05);
+build_requires("FileHandle");
+build_requires("IO::Capture" => 0.05);
 # This is used by Tk::Wizard::Installer::addDownloadPage:
 recommends('LWP::UserAgent');
-test_requires('LWP::UserAgent');
+build_requires('LWP::UserAgent');
 # This is used by Tk::Wizard::Installer::addDownloadPage:
 recommends('HTTP::Request');
-test_requires("Test::More");
+build_requires("Test::More");
 requires('Tk');
 requires("Tk::After");
 requires("Tk::DialogBox");
@@ -68,9 +68,9 @@ sub MY::postamble
   {
   return <<'PART0';
 coverage :
-        - cover -delete
-        $(MAKE) HARNESS_PERL_SWITCHES=-MDevel::Cover test
-        cover
+	- cover -delete
+	$(MAKE) HARNESS_PERL_SWITCHES=-MDevel::Cover test
+	cover
 PART0
   } # MY::postamble
 

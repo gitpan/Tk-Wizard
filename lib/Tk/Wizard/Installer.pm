@@ -1,5 +1,5 @@
 
-# $Id: Installer.pm,v 2.21 2007/09/14 03:06:47 martinthurn Exp $
+# $Id: Installer.pm,v 2.22 2007/10/02 03:04:17 martinthurn Exp $
 
 package Tk::Wizard::Installer;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.21 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.22 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -209,21 +209,21 @@ moved or copied to the locations specified to the equivalent
 entries in the latter, renaming and path creation occurring as needed:
 
   -copy => 1,
-  -from => [
-    '/docs/',
-    '/docs/imgs/',
-    '/html/newname_for_oldname.html'
-    ],
-  -to   => [
+  -from   => [
     '/html/index.html',
     '/html/imgs/index.gif',
     '/html/oldname.html'
+    ],
+  -to => [
+    '/docs/',
+    '/docs/imgs/',
+    '/html/newname.html'
     ],
 
 The above example
 copies C<index.html> to C</docs/index.html>, C<index.gif> is copied to
 become C</docs/imgs/index.gif>, and C<oldname.html> is copied to
-C<newname_for_oldname.html> in the same C<html> directory.
+C<newname.html> in the same C<html> directory.
 
 Arguments:
 
@@ -598,6 +598,9 @@ the download process takes place.
 
 A reference to a hash, where keys are URIs and
 values are local locations to place the contents of those URIs.
+
+WARNING: Files that are successfully downloaded will be deleted from
+the hash.
 
 =item -wait
 
