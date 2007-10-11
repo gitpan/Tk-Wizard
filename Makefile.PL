@@ -1,11 +1,11 @@
 
-# $Id: Makefile.PL,v 2.31 2007/10/08 02:50:21 martinthurn Exp $
+# $Id: Makefile.PL,v 2.32 2007/10/08 02:55:30 martinthurn Exp $
 
 use inc::Module::Install;
 
 name('Tk-Wizard');
 abstract('GUI for step-by-step interactive logical process');
-version(2.116);
+version(2.117);
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');
 

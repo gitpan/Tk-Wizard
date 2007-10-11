@@ -1,5 +1,5 @@
 
-# $Id: Wizard.pm,v 2.57 2007/09/27 02:11:46 martinthurn Exp $
+# $Id: Wizard.pm,v 2.58 2007/10/08 23:08:41 martinthurn Exp $
 
 package Tk::Wizard;
 
@@ -12,7 +12,7 @@ if ( $^V and $^V gt v5.8.0 )
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.57 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.58 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
 my $sDir = ucfirst $sdir;
@@ -1781,7 +1781,7 @@ sub _page_fileSelect
                             # For now (i.e. because we're lazy), don't
                             # let the user type in.  They must click
                             # the Browse button:
-                            -state => 'readonly',
+                            -state => 'disabled',
                             -background => ( $args->{-background} || 'white' ),
                            )->pack(
                                    -side   => 'left',

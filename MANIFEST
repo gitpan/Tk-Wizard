@@ -13,6 +13,7 @@ lib/Tk/Wizard/Image.pm
 lib/Tk/Wizard/Installer.pm
 lib/Tk/Wizard/Installer/Sizer.pm
 lib/Tk/Wizard/Installer/Win32.pm
+lib/Tk/Wizard/Installer/Win32/Sizer.pm
 lib/Tk/Wizard/Sizer.pm
 lib/Tk/Wizard/Tester.pm
 Makefile.PL

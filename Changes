@@ -1,3 +1,11 @@
+2007-10-11    <Daddy@C-3PO>
+
+	* MANIFEST: finally added lib/Tk/Wizard/Installer/Win32/Sizer.pm
+
+2007-10-08    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (_page_fileSelect): 'readonly' --> 'disabled'
+
 2007-10-01    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard/Installer.pm (addFileListPage): corrected the pod
