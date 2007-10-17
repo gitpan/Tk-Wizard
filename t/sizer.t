@@ -1,13 +1,13 @@
 
-# $Id: sizer.t,v 1.6 2007/09/14 03:17:42 martinthurn Exp $
+# $Id: sizer.t,v 1.7 2007/10/15 12:14:29 martinthurn Exp $
 
 use strict;
 
-my $VERSION = do { my @r = ( q$Revision: 1.6 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use Cwd;
 use ExtUtils::testlib;
-use IO::Capture::Stdout;
+use IO::Capture::Stdout::Extended;
 use Test::More ;
 use Tk;
 
@@ -27,7 +27,7 @@ BEGIN
   use_ok('Tk::Wizard::Sizer');
   use_ok('Tk::Wizard::Installer::Sizer');
   } # end of BEGIN block
-my $oICS =  IO::Capture::Stdout->new;
+my $oICS =  IO::Capture::Stdout::Extended->new;
 my $sStyle = 'top';
 foreach my $sClass (qw( Tk::Wizard::Sizer Tk::Wizard::Installer::Sizer ))
   {
@@ -101,13 +101,9 @@ height.";
   MainLoop;
   pass('after MainLoop');
   $oICS->stop;
-  my @asOut = $oICS->read;
-  my $sOut = join('', @asOut);
-  # diag($sOut);
-  my $i = 0;
-  $i++ while ($sOut =~ m!final dimensions were!g);
-  is($i, 4, 'reported dimensions for 4 pages');
-  like($sOut, qr/smallest area/, 'reported overall best size');
+  my $iGot = $oICS->matches(qr(final dimensions were));
+  is($iGot, 4, 'reported dimensions for 4 pages');
+  is($oICS->matches(qr/smallest area/), 1, 'reported overall best size');
   if ($ENV{TEST_INTERACTIVE})
     {
     # Show the same Wizard with the sizes we determined empirically:

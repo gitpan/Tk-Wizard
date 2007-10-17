@@ -1,3 +1,11 @@
+2007-10-17    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (new): new option -fontfamily
+
+2007-10-16    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (new): new option -basefontsize
+
 2007-10-11    <Daddy@C-3PO>
 
 	* MANIFEST: finally added lib/Tk/Wizard/Installer/Win32/Sizer.pm

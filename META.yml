@@ -5,7 +5,7 @@ build_requires:
   ExtUtils::testlib: 0
   File::Path: 0
   FileHandle: 0
-  IO::Capture: 0.05
+  IO::Capture::Extended: 0
   LWP::UserAgent: 0
   Test::More: 0
 distribution_type: module
@@ -42,4 +42,4 @@ requires:
   Win32: 0.2
   Win32::Shortcut: 0
   Win32::TieRegistry: 0
-version: 2.117
+version: 2.118

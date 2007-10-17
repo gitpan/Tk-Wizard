@@ -1,5 +1,5 @@
 
-# $Id: Win32.pm,v 2.12 2007/09/30 02:21:51 martinthurn Exp $
+# $Id: Win32.pm,v 2.13 2007/10/16 12:00:27 martinthurn Exp $
 
 package Tk::Wizard::Installer::Win32;
 
@@ -15,7 +15,7 @@ use base 'Tk::Wizard::Installer';
 my @EXPORT = ("MainLoop");
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.12 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.13 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use constant DEBUG_FRAME => 0;
 
@@ -36,9 +36,9 @@ Tk::Wizard::Installer::Win32 - Win32-specific routines for Tk::Wizard::Installer
 
 =head1 DESCRIPTION
 
-All the methods and means of C<Tk::Wizard> and C<Tk::Wizard::Installer>,
-plus the below, which are thought to be specific to the Microsoft Windows
-platform.
+All the methods and means of L<Tk::Wizard|Tk::Wizard> and
+L<Tk::Wizard::Installer|Tk::Wizard::Installer>, plus the below, which
+are thought to be specific to the Microsoft Windows platform.
 
 If you are looking for a freeware software installer that is not
 dependant upon Perl, try Inno Setup - C<http://www.jrsoftware.org/>. It's
@@ -207,9 +207,8 @@ current user's I<Start Menu/Programs> directory into the object
 field C<startmenu_dir_current>, and the path to the common
 I<Start Menu/Programs> in the object field C<startmenu_dir_common>.
 
-The adding of a shortcut is left as an exercise to the reader
-until later this year, when I'll get around to finishing this.
-Have a look at the C<$mkdir> C<Button> in C<Tk::Wizard::page_dirSelect>.
+The physical creation of the shortcut is left as an exercise to the reader.
+Have a look at the C<$mkdir> C<Button> in C<Tk::Wizard/page_dirSelect>.
 
 =over 4
 
@@ -265,12 +264,12 @@ You can supply the common Tk::Wizard options:
 
 	-title -subtitle -text
 
-This method will initially attempt to use F<Win32.pm>; failing
-that, it will attempt to use a Windows Scripting Host object
-created via C<Win32::OLE>. If both fail (WSH only existing by
-default in Win98 and above), the routine will return C<undef>,
-rather than a page frame object. This may not be ideal but works
-for me - suggestions welcomed for a better idea.
+This method will initially attempt to use F<Win32.pm>; failing that,
+it will attempt to use a Windows Scripting Host object created via
+L<Win32::OLE|Win32::OLE>.  If both fail (WSH only existing by default
+in Win98 and above), the routine will return C<undef>, rather than a
+page frame object.  This may not be ideal but works for me --
+suggestions welcomed for a better idea.
 
 =cut
 
@@ -480,9 +479,9 @@ sub _toggle_hlist
 
 =head2 callback_create_shortcut
 
-A convenience interface to C<Win32::Shortcut> method that creates a shortcut
-at the path specified. Parameters are pretty much what you see when
-you right-click a shortcut:
+A convenience interface to L<Win32::Shortcut|Win32::Shortcut> method
+that creates a shortcut at the path specified.  Parameters are pretty
+much what you see when you right-click a shortcut:
 
 =over 4
 
@@ -643,10 +642,10 @@ Lee Goddard (lgoddard@cpan.org).
 
 =head1 SEE ALSO
 
-Tk::Wizard; Tk::Wizard::Installer;
-Win32::GetFolderPath();
-Win32::Shortcut;
-Win32::OLE.
+L<Tk::Wizard>; L<Tk::Wizard::Installer>;
+L<Win32/GetFolderPath>;
+L<Win32::Shortcut>;
+L<Win32::OLE>.
 
 =head1 KEYWORDS
 

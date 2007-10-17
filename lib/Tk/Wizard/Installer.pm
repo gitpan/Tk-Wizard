@@ -1,5 +1,5 @@
 
-# $Id: Installer.pm,v 2.22 2007/10/02 03:04:17 martinthurn Exp $
+# $Id: Installer.pm,v 2.23 2007/10/16 12:00:27 martinthurn Exp $
 
 package Tk::Wizard::Installer;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.22 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.23 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -92,9 +92,9 @@ plus those listed in the remainder of this document.
 
   $wizard->addLicencePage ( -filepath => $path_to_licence_text )
 
-Adds a page (C<Tk::Frame>) that contains a scroll text box of a licence text file
-specified in the C<-filepath> argument.  Presents the user with two
-options: accept, or don't accept.  The user
+Adds a page (a L<Tk::Frame|Tk::Frame>) that contains a scroll text box
+of a licence text file specified in the C<-filepath> argument.
+Presents the user with two options: accept, or don't accept.  The user
 I<cannot> progress until the former option has been chosen.  The
 choice is entered into the object field C<licence_agree>, which you
 can test as the I<Next> button is pressed, either using your own
@@ -116,7 +116,7 @@ sub addLicencePage {
 # option. If the user agrees, the caller's package's global (yuck)
 # C<$LICENCE_AGREE> is set to a Boolean true value.
 #
-# See also L<callback_licence_agreement>.
+# See also L</callback_licence_agreement>.
 
 sub _page_licence_agreement {
     my ( $self, $args ) = ( shift, shift );
@@ -196,9 +196,9 @@ sub _page_licence_agreement {
 
   $wizard->addFileListPage ( name1=>value1 ... nameN=>valueN )
 
-Adds a page (C<Tk::Frame>) that a contains a progress bar
-(C<Tk::ProgressBar>) which is updated as a supplied list of files
-is copied or moved from one location to another.
+Adds a page (a L<Tk::Frame|Tk::Frame>) that a contains a progress bar
+(L<Tk::ProgressBar|Tk::ProgressBar>) which is updated as a supplied
+list of files is copied or moved from one location to another.
 
 The I<Next> and I<Back> buttons of the Wizard are disabled whilst
 the process takes place.
@@ -235,7 +235,7 @@ Arguments:
 
 =item -text
 
-See C<Tk::Wizard/METHOD blank_frame>.
+See L<Tk::Wizard/blank_frame>.
 
 =item -copy
 
@@ -254,7 +254,7 @@ Reference to an array of locations to move/copy to
 
 =item -delay
 
-Delay (in mS) before copying begins (see L<Tk::After>). Default is 1000.
+Delay (in mS) before copying begins (see L<Tk::after>).  Default is 1000.
 
 =item -wait
 
@@ -262,13 +262,13 @@ Prevents display of the next Wizard page once the job is done.
 
 =item -bar
 
-A list of properties to pass to the C<Tk::ProgessBar> object created and used
-in this routine. Assumes reasonable defaults.
+A list of properties to pass to the L<Tk::ProgessBar|Tk::ProgessBar>
+object created and used in this routine.  Assumes reasonable defaults.
 
 =item -label_frame_title
 
-Text for the label frame (C<Tk::LabFrame> object) which contains our moving parts.
-Defaults to C<Copying Files>.
+Text for the label frame (L<Tk::LabFrame|Tk::LabFrame> object) which
+contains our moving parts.  Defaults to C<Copying Files>.
 
 =item -label_preparing
 
@@ -289,7 +289,7 @@ Defaults to C<Copying:>.
 
 A code reference to handle errors, which are detailed in the anonymous hash C<-failed>,
 where names are filenames and values are the error messages.
-If not supplied, calls L<pre_install_files_quit>.
+If not supplied, calls L</pre_install_files_quit>.
 
 =back
 
@@ -610,8 +610,8 @@ once the downloads are completed without errors.
 
 =item -bar
 
-A list of properties to pass to the C<Tk::ProgessBar> object created and used
-in this routine. Assumes reasonable defaults.
+A list of properties to pass to the L<Tk::ProgessBar|Tk::ProgessBar>
+object created and used in this routine.  Assumes reasonable defaults.
 
 =item -no_retry
 

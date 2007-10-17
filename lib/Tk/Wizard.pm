@@ -1,18 +1,15 @@
 
-# $Id: Wizard.pm,v 2.58 2007/10/08 23:08:41 martinthurn Exp $
+# $Id: Wizard.pm,v 2.62 2007/10/17 11:58:57 martinthurn Exp $
 
 package Tk::Wizard;
 
 use strict;
-if ( $^V and $^V gt v5.8.0 )
-  {
-  eval "use warnings";
-  } # if
+use warnings;
 
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.58 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.62 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
 my $sDir = ucfirst $sdir;
@@ -33,6 +30,7 @@ use Tk::DialogBox;
 use Tk::DirTree;
 use Tk::LabFrame;
 use Tk::Frame;
+use Tk::Font;
 use Tk::MainWindow;
 use Tk::ROText;
 use Tk::Wizard::Image;
@@ -45,10 +43,7 @@ BEGIN
   @EXPORT = ("MainLoop");       # having to use Tk
   } # end of BEGIN block
 
-our $DEFAULT_WIDTH  = 400;
-our $DEFAULT_HEIGHT = 300;
-
-use base qw[Tk::Derived Tk::Toplevel ];
+use base qw[ Tk::Derived Tk::Toplevel ];
 Tk::Widget->Construct('Wizard');
 
 use vars qw/ %LABELS /;
@@ -97,7 +92,8 @@ can move/copy/rename them without harm once you have installed the module.
 
 =head1 CHANGES
 
-The widget now works from within a C<MainWindow>, or creates its own as necessary for backwards compatibility.
+The widget now works from within a C<MainWindow>, or creates its own
+as necessary for backwards compatibility.
 
 The option C<-image_dir> has been deprecated, and the once-used binary
 images have been dropped from the distribution in favour of Base64-
@@ -129,15 +125,15 @@ to collect information and then perform some complex task based upon it.
 
 The wizard feel is largely based upon the Microsoft(TM,etc) wizard style: the default is
 similar to that found in Windows 2000, though the more traditional Windows 95-like feel is also
-supported (see the C<-style> entry in L<WIDGET-SPECIFIC OPTIONS>. Sub-classing the
+supported (see the C<-style> entry in L</WIDGET-SPECIFIC OPTIONS>. Sub-classing the
 module to provide different look-and-feel is highly encourage: please see
-L<NOTES ON SUB-CLASSING Tk::Wizard>. If anyone would like to do a I<Darwin> or
+L</NOTES ON SUB-CLASSING Tk::Wizard>. If anyone would like to do a I<Darwin> or
 I<Aqua> version, please let me know how you would like to handle the buttons. I'm not
 hot on advertising widgets.
 
 NB: B<THIS IS STILL AN ALPHA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!>
 
-Please read L<CAVEATS, BUGS, TODO>.
+Please read L</CAVEATS> and L</BUGS>.
 
 =head1 ADVERTISED SUB-WIDGETS
 
@@ -163,15 +159,15 @@ The buttons in the C<buttonPanel>.
 
 =item tagLine
 
-The line above the C<buttonpanel>, a Tk::Frame object.
+The line above the C<buttonpanel>, a L<Tk::Frame|Tk::Frame> object.
 
 =item tagText
 
-The grayed-out text above the C<buttonpanel>, a Tk::Label object.
+The grayed-out text above the C<buttonpanel>, a L<Tk::Label|Tk::Label> object.
 
 =item tagBox
 
-A Tk::Frame holding the tagText and tagLine.
+A L<Tk::Frame|Tk::Frame> holding the tagText and tagLine.
 
 =item imagePane
 
@@ -241,7 +237,7 @@ is made to maintain or restore any initial current working directory.
 =item *
 
 Base64-encoded images to pass in the C<-data> field of the
-L<Tk::Photo|Tk::Photo> object. This is the default form, and a couple
+L<Tk::Photo|Tk::Photo> object.  This is the default form, and a couple
 of unused images are supplied: see L<Tk::Wizard::Image>.
 
 =back
@@ -281,17 +277,31 @@ is to disable that feature to minimise display issues.
 Text to supply in a 'tag line' above the wizard's control buttons.
 Specify empty string to disable the display of the tag text box.
 
+=item -fontfamily
+
+Specify the "family" (i.e. name) of the font you want to use for all Wizard elements.
+The default is your operating system default (or a sans serif), which on my test computers is
+"MS Sans Serif" on Windows, "Helvetica" on Linux, and "Helvetica" on Solaris.
+
+=item -basefontsize
+
+Specify the base size of the font you want to use for all Wizard elements.
+Titles and subtitles will be drawn a little larger than this;
+licenses (the proverbial fine print) will be slightly smaller.
+The default is your operating system default, which on my test computers is
+8 on Windows, 12 on Linux, and 12 on Solaris.
+
 =item -width
 
 Specify the width of the CONTENT AREA of the Wizard, for all pages.
-The default width (if you do not give any -height argument) is 300.
-You can override this measure for a particular page by supplying a -width argument to the addPage() method.
+The default width (if you do not give any -width argument) is 50 * the basefontsize.
+You can override this measure for a particular page by supplying a -width argument to the add*Page() method.
 
 =item -height
 
 Specify the height of the CONTENT AREA of the Wizard, for all pages.
-The default height (if you do not give any -height argument) is 400.
-You can override for a particular page by supplying a -height argument to the addPage() method.
+The default height (if you do not give any -height argument) is 3/4 the default width.
+You can override for a particular page by supplying a -height argument to the add*Page() method.
 
 =item -image_dir
 
@@ -308,22 +318,26 @@ the Wizard will instead be destroyed after the "finish" button is clicked.
 
 =back
 
-Please see also L<ACTION EVENT HANDLERS>.
+Please see also L</ACTION EVENT HANDLERS>.
 
 =head1 METHODS
 
 =head2 new
 
-Create a new Tk::Wizard object.
-You can provide custom values for any or all of the standard widget options or widget-specific options
+Create a new Tk::Wizard object.  You can provide custom values for any
+or all of the standard widget options or widget-specific options
 
 =cut
 
-# The method is overridden to allow us to supply a MainWindow if one is
-# not supplied by the caller. Not supplying one suits me, but Mr Rothenberg requires one.
+# The method is overridden to allow us to supply a MainWindow if one
+# is not supplied by the caller.  Not supplying one suits me, but Mr.
+# Rothenberg requires one.
+
 sub new
   {
   my $inv = ref( $_[0] ) ? ref( $_[0] ) : $_[0];
+  # local $" = ',';
+  # print STDERR " DDD Tk::Wizard::New(@_)\n";
   shift; # Ignore invocant
   my @args = @_;
   unless (
@@ -338,7 +352,65 @@ sub new
     push @args, "-kill_parent_on_destroy" => 1;
     $args[0]->optionAdd( '*BorderWidth' => 1 );
     } # if
-  return $inv->SUPER::new(@args);
+  my $self = $inv->SUPER::new(@args);
+  my $sFontFamily = $self->cget(-fontfamily);
+  my $iFontSize   = $self->cget(-basefontsize);
+  # Font used for &blank_frame titles
+  $self->fontCreate(
+                    'TITLE_FONT',
+                    -family => $sFontFamily,
+                    -size   => $iFontSize + 4,
+                    -weight => 'bold',
+                   );
+  $self->fontCreate(
+                    'FIXED',
+                    -family => 'Courier',
+                    -size   => $iFontSize,
+                   );
+  # Font used in multiple choices for radio title
+  $self->fontCreate(
+                    'RADIO_BOLD',
+                    -family => $sFontFamily,
+                    -size   => $iFontSize + 2,
+                    -weight => 'demi',
+                   );
+  # Fonts used if -style=>"top"
+  $self->fontCreate(
+                    'TITLE_FONT_TOP',
+                    -family => $sFontFamily,
+                    -size   => $iFontSize + 4,
+                    -weight => 'bold',
+                   );
+  $self->fontCreate(
+                    'SUBTITLE_FONT',
+                    -family => $sFontFamily,
+                    -size   => $iFontSize + 2,
+                   );
+  # Font used in licence agreement  XXX REMOVE TO CORRECT MODULE
+  $self->fontCreate(
+                    'SMALL_FONT',
+                    -family => $sFontFamily,
+                    -size   => $iFontSize - 1,
+                   );
+  # Font used in all other places
+  $self->fontCreate(
+                    'DEFAULT_FONT',
+                    -family => $sFontFamily,
+                    -size   => $iFontSize,
+                   );
+  $self->{defaultFont} = 'DEFAULT_FONT';
+  $self->{tagtext}->configure(-font => $self->{defaultFont});
+  if (! $self->cget('-width'))
+    {
+    # Caller apparently did not supply a -width argument to new():
+    $self->configure(-width => $iFontSize * 50);
+    } # if
+  if (! $self->cget('-height'))
+    {
+    # Caller apparently did not supply a -height argument to new():
+    $self->configure(-height => $self->cget(-width) * 0.75);
+    } # if
+  return $self;
   } # new
 
 =head2 Populate
@@ -355,9 +427,8 @@ sub Populate
   warn " FFF enter Populate" if $self->{-debug};
   $self->SUPER::Populate($args);
   $self->withdraw;
-  my $sFontFamily      = &_font_family();
-  my $iFontSize        = &_font_size();
   my $sTagTextDefault  = 'Perl Wizard';
+  my $iFontSize = $self->_font_size;
   # $composite->ConfigSpecs(-attribute => [where,dbName,dbClass,default]);
   $self->ConfigSpecs(
                      -resizable => [ 'SELF', 'resizable', 'Resizable', undef ],
@@ -398,8 +469,10 @@ sub Populate
                      -tag_text  => [ 'PASSIVE', "tag_text",  "TagText",  $sTagTextDefault ],
                      -tag_width => [ 'PASSIVE', "tag_width", "TagWidth", 0 ],
                      -wizardFrame => [ 'PASSIVE', undef, undef, 0 ],
-                     -width => [ 'PASSIVE', undef, undef, $DEFAULT_WIDTH ],
-                     -height => [ 'PASSIVE', undef, undef, $DEFAULT_HEIGHT ],
+                     -width => [ 'PASSIVE', undef, undef, 0 ],
+                     -height => [ 'PASSIVE', undef, undef, 0 ],
+                     -basefontsize => [ 'PASSIVE', undef, undef, $self->_font_size ],
+                     -fontfamily => [ 'PASSIVE', undef, undef, $self->_font_family ],
                     );
   if ( exists $args->{-imagepath} and not -e $args->{-imagepath} ) {
     confess "Can't find file at -imagepath: " . $args->{-imagepath};
@@ -468,50 +541,6 @@ sub Populate
   elsif ( -d "$ENV{HOME}/.gnome-desktop" ) {
     $self->{desktop_dir} = "$ENV{HOME}/.gnome-desktop";
     }
-  # Font used for &blank_frame titles
-  $self->fontCreate(
-                    'TITLE_FONT',
-                    -family => $sFontFamily,
-                    -size   => $iFontSize + 4,
-                    -weight => 'bold',
-                   );
-  $self->fontCreate(
-                    'FIXED',
-                    -family => 'Courier',
-                    -size   => $iFontSize,
-                   );
-  # Font used in multiple choices for radio title
-  $self->fontCreate(
-                    'RADIO_BOLD',
-                    -family => $sFontFamily,
-                    -size   => $iFontSize + 2,
-                    -weight => 'demi',
-                   );
-  # Fonts used if -style=>"top"
-  $self->fontCreate(
-                    'TITLE_FONT_TOP',
-                    -family => $sFontFamily,
-                    -size   => $iFontSize + 4,
-                    -weight => 'bold',
-                   );
-  $self->fontCreate(
-                    'SUBTITLE_FONT',
-                    -family => $sFontFamily,
-                    -size   => $iFontSize + 2,
-                   );
-  # Font used in licence agreement  XXX REMOVE TO CORRECT MODULE
-  $self->fontCreate(
-                    'SMALL_FONT',
-                    -family => $sFontFamily,
-                    -size   => $iFontSize - 1,
-                   );
-  # Font used in all other places
-  $self->fontCreate(
-                    'DEFAULT_FONT',
-                    -family => $sFontFamily,
-                    -size   => $iFontSize,
-                   );
-  $self->{defaultFont} = 'DEFAULT_FONT';
   } # Populate
 
 sub _maybe_pack_tag_text
@@ -556,6 +585,7 @@ sub _repack_buttons
   if (! $self->_on_last_page)
     {
     $self->{cancelButton} = $panel->Button(
+                                           -font => $self->{defaultFont},
                                            -text    => $LABELS{CANCEL},
                                            -command => [ \&_CancelButtonEventCycle, $self, $self ],
                                           )->pack(%hssPackArgs);
@@ -570,11 +600,13 @@ sub _repack_buttons
     $self->Advertise( cancelButton => $self->{cancelButton} );
     } # if
   $self->{nextButton} = $panel->Button(
+                                       -font => $self->{defaultFont},
                                        -text => $self->_on_last_page ? $LABELS{FINISH} : $LABELS{NEXT},
                                        -command => [ \&_NextButtonEventCycle, $self ],
                                       )->pack(%hssPackArgs);
   warn " DDD   created next button" if $self->{-debug};
   $self->{backButton} = $panel->Button(
+                                       -font => $self->{defaultFont},
                                        -text => $LABELS{BACK},
                                        -command => [ \&_BackButtonEventCycle, $self ],
                                        -state => $self->_on_first_page ? 'disabled' : 'normal',
@@ -583,6 +615,7 @@ sub _repack_buttons
   if ( ! $self->cget( -nohelpbutton ) )
     {
     $self->{helpButton} = $panel->Button(
+                                         -font => $self->{defaultFont},
                                          -text => $LABELS{HELP},
                                          -command => [ \&_HelpButtonEventCycle, $self ],
                                         )->pack(
@@ -599,19 +632,36 @@ sub _repack_buttons
   warn " FFF leave _repack_buttons\n" if $self->{-debug};
   } # _repack_buttons
 
-# Private method: returns a font family name suitable for the operating system.
-sub _font_family {
-    return 'verdana'   if ( $^O =~ m!win32!i );
-    return 'helvetica' if ( $^O =~ m!solaris!i );
-    return 'helvetica';
-}
+# Private method: returns a font family name suitable for the
+# operating system.  (The default system font, if we can determine it)
+sub _font_family
+  {
+  my $self = shift;
+  # Find the default font on this platform:
+  my $label = $self->Label;
+  my $sFont = $label->cget(-font);
+  return $1          if ($sFont =~ m!{(.+?)}!);
+  return 'Verdana'   if ( $^O =~ m!win32!i );
+  return 'Helvetica' if ( $^O =~ m!solaris!i );
+  return 'Helvetica';
+  } # _font_family
 
-# Private method: returns a font size suitable for the operating system.
-sub _font_size {
-    return 8  if ( $^O =~ m!win32!i );
-    return 12 if ( $^O =~ m!solaris!i );
-    return 14;  # Linux etc.
-}
+# Private method: returns a font size suitable for the operating
+# system.  (The default system font size, if we can determine it)
+sub _font_size
+  {
+  my $self = shift;
+  # Find the default font on this platform:
+  my $label = $self->Label;
+  my $sFont = $label->cget(-font);
+  # use Tk::Pretty;
+  # print STDERR Tk::Pretty::Pretty($sFont);
+  # printf STDERR (" III default label font as string: font=%s=\n", $sFont);
+  return $1 if ($sFont =~ m!(\d+)!);
+  return  8 if ( $^O =~ m!win32!i );
+  return 12 if ( $^O =~ m!solaris!i );
+  return 12;  # Linux etc.
+  } # _font_size
 
 
 =head2 background
@@ -640,12 +690,13 @@ sub background
   return $self->{background};
   } # background
 
+
 =head2 addPage
 
   $wizard->addPage ($page_code_ref1 ... $page_code_refN)
 
 Adds a page to the wizard. The parameters must be references to code that
-evaluate to C<Tk::Frame> objects, such as those returned by the methods
+evaluate to L<Tk::Frame|Tk::Frame> objects, such as those returned by the methods
 C<blank_frame> and C<addDirSelectPage>.
 
 Pages are (currently) stored and displayed in the order added.
@@ -654,7 +705,7 @@ Returns the index of the page added, which is useful as a page UID when
 performing checks as the I<Next> button is pressed (see file F<test.pl>
 supplied with the distribution).
 
-See also L<blank_frame>.
+See also L</blank_frame>.
 
 =cut
 
@@ -667,6 +718,7 @@ sub addPage
       }
   push @{ $self->{wizardPageList} }, @_;
   } # addPage
+
 
 =head2 Show
 
@@ -681,7 +733,7 @@ sub Show {
     my $self = shift;
     warn " FFF enter Show" if $self->{-debug};
     return if $self->{_showing};
-    if ( $^W && ($self->_last_page == 0 )) {
+    if ($self->_last_page == 0) {
         warn "# Showing a Wizard that is only one page long";
     }
     $self->{wizardPagePtr} = 0;
@@ -700,7 +752,8 @@ sub Show {
     $self->{_showing} = 1;
     warn " FFF leave Show" if $self->{-debug};
     return 1;
-}
+} # Show
+
 
 =head2 forward
 
@@ -726,7 +779,7 @@ sub forward
 Convenience method to move the Wizard back a page by invoking the
 callback for the C<backButton>.
 
-See also L<back>.
+See also L</back>.
 
 =cut
 
@@ -875,7 +928,8 @@ sub _resize_window
 
 This returns the index of the page currently being shown to the user.
 Page are indexes start at 1, with the first page that is associated with
-the wizard through the C<addPage> method. See also the L<addPage> entry.
+the wizard through the C<addPage> method.
+See also the L</addPage> entry.
 
 =cut
 
@@ -907,9 +961,9 @@ sub parent { return $_[0]->{Configure}{ -parent } || shift }
     -wait    => $iMilliseconds
   );
 
-Returns a C<Tk::Frame> object that is a child of the Wizard control, with
-some C<pack>ing parameters applied - for more details, please see C<-style>
-entry elsewhere in this document.
+Returns a L<Tk::Frame|Tk::Frame> object that is a child of the Wizard
+control, with some C<pack>ing parameters applied - for more details,
+please see C<-style> entry elsewhere in this document.
 
 Arguments are name/value pairs:
 
@@ -932,7 +986,7 @@ Main body text.
 Experimental, mainly for test scripts.
 The amount of time in milliseconds to wait before moving forward
 regardless of the user.  This actually just calls the C<forward> method (see
-L<forward>).  Use of this feature will enable the back-button even if
+L</forward>).  Use of this feature will enable the back-button even if
 you have disabled it.  What's more, if the page is supposed to wait for user
 input, this feature will probably not give your users a chance.
 
@@ -953,7 +1007,7 @@ Yes, you can set a different size for each page!
 
 Also:
 
-  -background -font
+  -background
 
 =cut
 
@@ -968,7 +1022,6 @@ sub blank_frame
   warn " FFF enter blank_frame" if $self->{-debug};
   # print STDERR " DDD in blank_frame, self->bg is =$self->{background}=\n";
   my $wrap = $args->{-wraplength} || 375;
-  $args->{-font} = $self->{defaultFont} unless $args->{-font};
   if (! defined($args->{-height}))
     {
     # If we didn't get the -height argument, set the default height:
@@ -1078,7 +1131,7 @@ sub blank_frame
     if ( $args->{-text} )
       {
       $lText = $frame->Label(
-                             -font       => $args->{-font},
+                             -font => $self->{defaultFont},
                              -justify    => 'left',
                              -anchor     => 'w',
                              -wraplength => $wrap + 100,
@@ -1113,7 +1166,7 @@ sub blank_frame
                                    -fill   => 'x',
                                   );
     $lSub = $frame->Label(
-                          -font       => $args->{-font},
+                          -font       => 'SUBTITLE_FONT',
                           -justify    => 'left',
                           -anchor     => 'w',
                           -text       => '   '. $args->{-subtitle},
@@ -1127,7 +1180,7 @@ sub blank_frame
     if ( $args->{-text} )
       {
       $lText = $frame->Label(
-                             -font       => $args->{-font},
+                             -font => $self->{defaultFont},
                              -justify    => 'left',
                              -anchor     => 'w',
                              -wraplength => $wrap,
@@ -1474,15 +1527,15 @@ drives have no media.
 Supply in C<-nowarnings> a value other than C<1> to avoid listing drives
 which are both inaccessible and - on Win32 - are
 either fixed drives, network drives, or RAM drives (that is types 3, 4, and
-6, according to C<Win32API::File::GetDriveType>).
+6, according to L<Win32API::File::GetDriveType>).
 
 You may also specify the C<-title>, C<-subtitle> and C<-text> parameters, as
-in L<blank_frame>.
+in L</blank_frame>.
 
 An optional C<-background> argument is used as the background of the Entry and DirTree widgets
 (default is white).
 
-Also see L<CALLBACK callback_dirSelect>.
+Also see L</callback_dirSelect>.
 
 =cut
 
@@ -1571,6 +1624,7 @@ sub _page_dirSelect
                 -height => 5,
                )->pack(-side => 'top');
   my $mkdir = $frame->Button(
+                             -font => $self->{defaultFont},
                              -text    => "New $sDir",
                              -command => sub
                                {
@@ -1616,6 +1670,7 @@ sub _page_dirSelect
   $self->idletasks;
   if ( $self->{desktop_dir} ) {    # Thanks, Slaven Rezic.
     $frame->Button(
+                   -font => $self->{defaultFont},
                    -text    => "Desktop",
                    -command => sub {
                      ${ $args->{-variable} } = $self->{desktop_dir};
@@ -1711,15 +1766,18 @@ sub Tk::DirTree::add_to_tree {
                              -variable => \$chosen_file,
                             );
 
-Adds a page (C<Tk::Frame>) that contains a "Browse" button which pops up a file-select dialog box.
-The selected file will be displayed in a read-only Entry widget.
+Adds a page (C<Tk::Frame>) that contains a "Browse" button which pops
+up a file-select dialog box.  The selected file will be displayed in a
+read-only Entry widget.
 
-Supply in C<-directory> the full path of an existing folder where the user's search shall begin.
+Supply in C<-directory> the full path of an existing folder where the
+user's search shall begin.
 
-Supply in C<-variable> a reference to a variable to have set with the chosen file name.
+Supply in C<-variable> a reference to a variable to have set with the
+chosen file name.
 
-You may also specify the C<-title>, C<-subtitle> and C<-text> parameters, as
-in L<blank_frame>.
+You may also specify the C<-title>, C<-subtitle> and C<-text>
+parameters, as in L</blank_frame>.
 
 An optional C<-background> argument is used as the background of the Entry widget
 (default is white).
@@ -1791,6 +1849,7 @@ sub _page_fileSelect
                                    -padx   => 3,
                                   );
   my $bBrowse = $frame->Button(
+                               -font => $self->{defaultFont},
                                -text    => 'Browse...',
                                -command => sub {
                                  my $sFname = $frame->getOpenFile(
@@ -1812,7 +1871,7 @@ informed by ticking-off a list as each task is accomplished.
 Whilst the task list is being executed, both the I<Back> and I<Next> buttons
 are disabled.
 
-Parameters are as for C<blank_frame> (see L<blank_frame>), plus:
+Parameters are as for L</blank_frame>, plus:
 
 =over 4
 
@@ -1827,7 +1886,7 @@ string to display, the second a reference to code to execute.
 The length of the delay, in milliseconds, after the page has been
 displayed and before execution the task list is begun.
 Default is 1000 milliseconds (1 second).
-See L<the entry for the 'after' routine in the Tk::After manpage|Tk::After>.
+See L<Tk::after>.
 
 =item -continue
 
@@ -1844,7 +1903,7 @@ callback of the I<Next> button at the end of the task.
 
 =item -na_photo
 
-Optional: all C<Tk::Photo> objects, displayed as appropriate.
+Optional: all L<Tk::Photo|Tk::Photo> objects, displayed as appropriate.
 C<-na_photo> is displayed if the task code reference returns an undef value, otherwise:
 C<-ok_photo> is displayed if the task code reference returns a true value, otherwise:
 C<-error_photo> is displayed.
@@ -1852,8 +1911,8 @@ These have defaults taken from L<Tk::Wizard::Image|Tk::Wizard::Image>.
 
 =item -label_frame_title
 
-The label above the C<Tk::LabFrame> object which
-contains the task list. Default label is the boring C<Performing Tasks:>.
+The label above the L<Tk::LabFrame|Tk::LabFrame> object which
+contains the task list.  Default label is the boring C<Performing Tasks:>.
 
 =item -frame_args
 
@@ -1884,25 +1943,10 @@ sub addTaskListPage
   # "saved" in this coderef:
   my $args = {@_};
   # print STDERR " DDD addTaskListPage args are ", Dumper($args);
-  $self->addPage( sub { $self->page_taskList($args) } );
+  $self->addPage( sub { $self->_page_taskList($args) } );
   } # addTaskListPage
 
-=head2 page_taskList
-
-The same as C<addTaskListPage> (see L<addTaskListPage>)
-but does not add the page to the Wizard.
-
-Note that unlike C<addTaskListPage>, arguments are expected in a hash reference.
-
-Useful for a task list that cannot be filled before the call
-to C<Show()>.
-
-Parameter C<-label_frame_title> is the label above the C<Tk::LabFrame> object which
-contains the task list.  Default label is the boring C<Performing Tasks:>.
-
-=cut
-
-sub page_taskList
+sub _page_taskList
   {
   my $self = shift;
   my $args = shift;
@@ -1920,7 +1964,7 @@ sub page_taskList
     elsif ( ! -r $args->{$sArg}
             || ! $self->Photo($state, -file => $args->{$sArg}))
       {
-      warn "# Could not read $sArg from " . $args->{$sArg} if $^W;
+      warn "# Could not read $sArg from " . $args->{$sArg};
       }
     } # foreach
   $args->{-frame_pack} = [qw/-expand 1 -fill x -padx 30 -pady 10/] unless $args->{-frame_pack};
@@ -1960,6 +2004,7 @@ sub page_taskList
                         )->pack( -side => "left" );
         }
       $p->Label(
+                -font => $self->{defaultFont},
                 -text       => @{ $args->{-tasks} }[$i],
                 -anchor     => "w",
                 -background => $self->{background},
@@ -2013,7 +2058,7 @@ sub page_taskList
                  ); # after
     } # if...else
   return $frame;
-  } # page_taskList
+  } # _page_taskList
 
 
 =head2 addMultipleChoicePage
@@ -2046,9 +2091,9 @@ Text rendered smaller beneath the title
 =item -variable
 
 Reference to a variable that will contain the result of the choice.
-Croaks if none supplied.
-Your -variable will contain the default Tk::Checkbutton values of
-1 for checked and 0 for unchecked.
+Croaks if none supplied.  Your -variable will contain the default
+L<Tk::Checkbutton|Tk::Checkbutton> values of 1 for checked and 0 for
+unchecked.
 
 =item -checked
 
@@ -2127,6 +2172,7 @@ sub _page_multiple_choice
         # default font:
         $s =~ s!(^|\n)!$1       !g;
         my $l = $content->Label(
+                                -font => $self->{defaultFont},
                                 -text => $s,
                                 -anchor => 'w',
                                 -justify  => 'left',
@@ -2423,28 +2469,29 @@ button action.
 
 This is a reference to a function that will be dispatched before the Cancel
 button is processed.  Default is to exit on user confirmation - see
-L<DIALOGUE_really_quit>.
+L</DIALOGUE_really_quit>.
 
-=item -preCloseWindowAction => 
+=item -preCloseWindowAction =>
 
 This is a reference to a function that will be dispatched before the window
 is issued a close command.
 If this function returns a true value, the Wizard will close.
 If this function returns a false value, the Wizard will stay on the current page.
-Default is to exit on user confirmation - see L<DIALOGUE_really_quit>.
+Default is to exit on user confirmation - see L</DIALOGUE_really_quit>.
 
 =back
 
-All active event handlers can be set at construction or using C<configure> -
-see L<WIDGET-SPECIFIC OPTIONS> and L<configure>.
+All active event handlers can be set at construction or using configure --
+see L</WIDGET-SPECIFIC OPTIONS> and L<Tk::option>.
 
 =head1 BUTTONS
 
   backButton nextButton helpButton cancelButton
 
-If you must, you can access the Wizard's button through the object fields listed
-above, each of which represents a C<Tk::Button> object. Yes, this is not a good
-way to do it: patches always welcome ;)
+If you must, you can access the Wizard's button through the object
+fields listed above, each of which represents a
+L<Tk::Button|Tk::Button> object.  This may not be a good way to do it:
+patches always welcome ;)
 
 This is not advised for anything other than disabling or re-enabling the display
 status of the buttons, as the C<-command> switch is used by the Wizard:
@@ -2467,38 +2514,38 @@ C<%LABELS> hash: see the top of the source code for details.
 =head1 IMPLEMENTATION NOTES
 
 This widget is implemented using the Tk 'standard' API as far as possible,
-given my almost three weeks of exposure to Tk. Please, if you have a suggestion,
+given my almost three weeks of exposure to Tk.  Please, if you have a suggestion,
 or patch, send it to me directly: C<LGoddard@CPAN.org>.
 
 The widget is a C<MainWindow> and not a C<TopLevel> window. The reasoning is that
 Wizards are applications in their own right, and not usually parts of other
-applications. Although at the time of writing, I had only three weeks of Tk, I believe
+applications.  Although at the time of writing, I had only three weeks of Tk, I believe
 it should be possible
 to embed a C<Tk::Wizard> into another window using C<-use> and C<-container> -- but
 any info on this practice would be appreciated.
 
 There is one outstanding bug which came about when this Wizard was translated
-from an even more naive implementation to the more-standard manner. That is:
+from an even more naive implementation to the more-standard manner.  That is:
 because C<Wizard> is a sub-class of C<MainWindow>, the C<-background> is inaccessible
-to me. Advice and/or patches suggestions much appreciated.
+to me.  Advice and/or patches suggestions much appreciated.
 
 =head1 THE Tk::Wizard NAMESPACE
 
 In discussion on comp.lang.perl.tk, it was suggested by Dominique Dumont
 (would you mind your address appearing here?) that the following guidelines
-for the use of the C<Tk::Wizard> name-space be followed:
+for the use of the C<Tk::Wizard> namespace be followed:
 
 =over 4
 
 =item 1
 
-That the module C<Tk::Wizard> act as a base module, providing all the basic services and
-components a Wizard might require.
+That the module C<Tk::Wizard> act as a base module, providing all the
+basic services and components a Wizard might require.
 
 =item 2
 
-That modules beneath the base in the hierarchy provide implementations based on
-aesthetics and/or architecture.
+That modules beneath the base in the hierarchy provide implementations
+based on aesthetics and/or architecture.
 
 =back
 

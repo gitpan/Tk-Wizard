@@ -1,13 +1,13 @@
 #! perl -w
 
-# $Id: subtitle.t,v 1.3 2007/09/13 21:08:32 martinthurn Exp $
+# $Id: subtitle.t,v 1.4 2007/10/15 12:14:29 martinthurn Exp $
 
 use strict;
 
 use Cwd;
 use ExtUtils::testlib;
 use FileHandle;
-use IO::Capture::Stdout;
+use IO::Capture::Stdout::Extended;
 use Test::More;
 use Tk;
 
@@ -27,11 +27,11 @@ BEGIN
   use_ok('Tk::Wizard::Sizer');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.4 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 1111;
 
-my $oICS =  IO::Capture::Stdout->new;
+my $oICS =  IO::Capture::Stdout::Extended->new;
 my $wizard = Tk::Wizard::Sizer->new(
                                     -title => "Title Wrap Test",
                                     # -debug => 88,
