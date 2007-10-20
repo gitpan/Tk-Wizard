@@ -35,6 +35,7 @@ t/77_dirselect.t
 t/99_prepost.t
 t/dos.txt
 t/extra.txt
+t/fonts.t
 t/pod-coverage.t
 t/pod.t
 t/sizer.t

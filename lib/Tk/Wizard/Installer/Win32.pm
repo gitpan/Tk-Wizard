@@ -1,5 +1,5 @@
 
-# $Id: Win32.pm,v 2.13 2007/10/16 12:00:27 martinthurn Exp $
+# $Id: Win32.pm,v 2.14 2007/10/18 12:04:06 martinthurn Exp $
 
 package Tk::Wizard::Installer::Win32;
 
@@ -15,7 +15,7 @@ use base 'Tk::Wizard::Installer';
 my @EXPORT = ("MainLoop");
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.13 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.14 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use constant DEBUG_FRAME => 0;
 
@@ -75,7 +75,7 @@ end-user, but should be unique for all applications.
 
 The command-line to execute to uninstall the script.
 
-According to L<Microsoft|http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnwue/html/ch11d.asp>:
+According to Microsoft at L<http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnwue/html/ch11d.asp>:
 
 "You must supply complete names for both the DisplayName and UninstallString
 values for your uninstall program to appear in the Add/Remove Programs
@@ -196,7 +196,7 @@ perhaps to add a shortcut there.
 
 This routine does not currently create the directory in the
 I<Start Menu>, nor does it place a link there - see
-L<callback_create_shortcut> for that. Rather, the
+L</callback_create_shortcut> for that. Rather, the
 caller supplies a C<-variable> parameter that is a reference
 to a scalar which, once the page is 'run', will contain
 either the path to the user's chosen directory, or C<undef>
@@ -231,7 +231,7 @@ this is I<not> the full path: see above.
 Name of the directory to create on the start menu, if any.  If
 defined, this will be appended to any selection the user makes.  Note
 that since addStartMenuPage() is just the GUI part, no directory will
-actually be created until C<callback_create_shortcut> is called.
+actually be created until C</callback_create_shortcut> is called.
 
 =item -disable_nochoice
 

@@ -1,5 +1,5 @@
 
-# $Id: Wizard.pm,v 2.62 2007/10/17 11:58:57 martinthurn Exp $
+# $Id: Wizard.pm,v 2.66 2007/10/20 03:34:31 martinthurn Exp $
 
 package Tk::Wizard;
 
@@ -9,7 +9,7 @@ use warnings;
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.62 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.66 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
 my $sDir = ucfirst $sdir;
@@ -25,6 +25,7 @@ use Config;
 use Data::Dumper;
 use File::Path;
 use File::Slurp;
+use File::Spec::Functions qw( rootdir );
 use Tk;
 use Tk::DialogBox;
 use Tk::DirTree;
@@ -543,6 +544,17 @@ sub Populate
     }
   } # Populate
 
+=head2 parent
+
+  my $apps_main_window = $wizard->parent;
+
+This returns a reference to the parent Tk widget that was used to create the wizard.
+
+=cut
+
+sub parent { return $_[0]->{Configure}{ -parent } || shift }
+
+
 sub _maybe_pack_tag_text
   {
   my $self = shift;
@@ -691,113 +703,6 @@ sub background
   } # background
 
 
-=head2 addPage
-
-  $wizard->addPage ($page_code_ref1 ... $page_code_refN)
-
-Adds a page to the wizard. The parameters must be references to code that
-evaluate to L<Tk::Frame|Tk::Frame> objects, such as those returned by the methods
-C<blank_frame> and C<addDirSelectPage>.
-
-Pages are (currently) stored and displayed in the order added.
-
-Returns the index of the page added, which is useful as a page UID when
-performing checks as the I<Next> button is pressed (see file F<test.pl>
-supplied with the distribution).
-
-See also L</blank_frame>.
-
-=cut
-
-sub addPage
-  {
-  my $self = shift;
-  warn " FFF enter addPage" if $self->{-debug};
-  if ( grep { ref $_ ne 'CODE' } @_ ) {
-      confess "addPage requires one or more CODE references as arguments";
-      }
-  push @{ $self->{wizardPageList} }, @_;
-  } # addPage
-
-
-=head2 Show
-
-  $wizard->Show()
-
-This method must be called before the Wizard will be displayed,
-and must precede the C<MainLoop> call.
-
-=cut
-
-sub Show {
-    my $self = shift;
-    warn " FFF enter Show" if $self->{-debug};
-    return if $self->{_showing};
-    if ($self->_last_page == 0) {
-        warn "# Showing a Wizard that is only one page long";
-    }
-    $self->{wizardPagePtr} = 0;
-    $self->initial_layout;
-    $self->resizable( 0, 0 )
-      unless $self->{Configure}{-resizable}
-      and $self->{Configure}{-resizable} =~ /^(1|yes|true)$/i;
-    $self->parent->withdraw;
-    $self->Popup;
-    $self->transient;    # forbid minimize
-    $self->protocol(
-        WM_DELETE_WINDOW => [ \&_CloseWindowEventCycle, $self, $self ] );
-    # $self->packPropagate(0);
-    $self->configure( -background => $self->cget("-background") );
-    $self->render_current_page;
-    $self->{_showing} = 1;
-    warn " FFF leave Show" if $self->{-debug};
-    return 1;
-} # Show
-
-
-=head2 forward
-
-Convenience method to move the Wizard on a page by invoking the
-callback for the C<nextButton>.
-
-You can automatically move forward after C<$x> tenths of a second
-by doing something like this:
-
-  $frame->after($x,sub{$wizard->forward});
-
-=cut
-
-sub forward
-  {
-  my $self = shift;
-  return $self->_NextButtonEventCycle;
-  } # forward
-
-
-=head2 backward
-
-Convenience method to move the Wizard back a page by invoking the
-callback for the C<backButton>.
-
-See also L</back>.
-
-=cut
-
-sub backward {
-    my $self = shift;
-    return $self->{backButton}->invoke;
-}
-
-
-sub _showing_side_banner
-  {
-  my $self = shift;
-  return 1 if ($self->cget(-style) eq '95');
-  return 1 if $self->_on_first_page;
-  return 1 if $self->_on_last_page;
-  return 0;
-  } # _showing_side_banner
-
 #
 # Sub-class me!
 # Called by Show().
@@ -920,36 +825,6 @@ sub _resize_window
       } # if
     } # if
   } # _resize_window
-
-
-=head2 currentPage
-
-  my $current_page = $wizard->currentPage()
-
-This returns the index of the page currently being shown to the user.
-Page are indexes start at 1, with the first page that is associated with
-the wizard through the C<addPage> method.
-See also the L</addPage> entry.
-
-=cut
-
-sub currentPage
-  {
-  my $self = shift;
-  # Throughout this module, wizardPagePtr is zero-based.  But we
-  # "publish" it as one-based:
-  return $self->{wizardPagePtr} + 1;
-  } # currentPage
-
-=head2 parent
-
-  my $apps_main_window = $wizard->parent;
-
-This returns a reference to the parent Tk widget that was used to create the wizard.
-
-=cut
-
-sub parent { return $_[0]->{Configure}{ -parent } || shift }
 
 
 =head2 blank_frame
@@ -1222,6 +1097,35 @@ sub blank_frame
   } # end blank_frame
 
 
+=head2 addPage
+
+  $wizard->addPage ($page_code_ref1 ... $page_code_refN)
+
+Adds a page to the wizard. The parameters must be references to code that
+evaluate to L<Tk::Frame|Tk::Frame> objects, such as those returned by the methods
+C<blank_frame> and C<addDirSelectPage>.
+
+Pages are (currently) stored and displayed in the order added.
+
+Returns the index of the page added, which is useful as a page UID when
+performing checks as the I<Next> button is pressed (see file F<test.pl>
+supplied with the distribution).
+
+See also L</blank_frame>.
+
+=cut
+
+sub addPage
+  {
+  my $self = shift;
+  warn " FFF enter addPage" if $self->{-debug};
+  if ( grep { ref $_ ne 'CODE' } @_ ) {
+      confess "addPage requires one or more CODE references as arguments";
+      }
+  push @{ $self->{wizardPageList} }, @_;
+  } # addPage
+
+
 =head2 addSplashPage
 
 Add to the wizard a page containing a chunk of text, specified in
@@ -1356,34 +1260,6 @@ sub _on_first_page
   return (0 == $self->{wizardPagePtr});
   } # _on_last_page
 
-
-# Increments the page pointer forward to the next logical page,
-# honouring the Skip flags:
-sub _page_forward {
-    my $self  = shift;
-    my $iPage = $self->{wizardPagePtr};
-
-    # print STDERR " DDD _page_forward($iPage -->";
-    do {
-        $iPage++;
-    } until ( !$self->{hiiSkip}{$iPage} || ( $self->_last_page <= $iPage ) );
-    $iPage = $self->_last_page if ( $self->_last_page < $iPage );
-
-    # print STDERR " $iPage)\n";
-    $self->{wizardPagePtr} = $iPage;
-}    # _page_forward
-
-# Decrements the page pointer backward to the previous logical page,
-# honouring the Skip flags:
-sub _page_backward {
-    my $self  = shift;
-    my $iPage = $self->{wizardPagePtr};
-    do {
-        $iPage--;
-    } until ( !$self->{hiiSkip}{$iPage} || ( $iPage <= 0 ) );
-    $iPage = 0 if ( $iPage < 0 );
-    $self->{wizardPagePtr} = $iPage;
-}    # _page_backward
 
 # Method:      _NextButtonEventCycle
 # Description: Runs the complete view of the action handler cycle for the "Next>" button on the
@@ -1527,7 +1403,7 @@ drives have no media.
 Supply in C<-nowarnings> a value other than C<1> to avoid listing drives
 which are both inaccessible and - on Win32 - are
 either fixed drives, network drives, or RAM drives (that is types 3, 4, and
-6, according to L<Win32API::File::GetDriveType>).
+6, according to L<Win32API::File/GetDriveType>).
 
 You may also specify the C<-title>, C<-subtitle> and C<-text> parameters, as
 in L</blank_frame>.
@@ -1852,8 +1728,16 @@ sub _page_fileSelect
                                -font => $self->{defaultFont},
                                -text    => 'Browse...',
                                -command => sub {
+                                 # getOpenFile will croak if the
+                                 # -initialdir we give it does not
+                                 # exist:
+                                 my $sDir = $args->{-directory};
+                                 if (! -d $sDir)
+                                   {
+                                   $sDir = &File::Spec::rootdir;
+                                   } # if
                                  my $sFname = $frame->getOpenFile(
-                                                                  -initialdir => $args->{-directory},
+                                                                  -initialdir => $sDir,
                                                                   -title      => $args->{-title},
                                                                  );
                                  ${ $args->{-variable} } = $sFname if $sFname;
@@ -2183,6 +2067,104 @@ sub _page_multiple_choice
     return $frame;
     } # _page_multiple_choice
 
+
+=head2 Show
+
+  $wizard->Show();
+
+Draw and display the Wizard on the screen.
+Normally you would call C<MainLoop> right after this.
+
+=cut
+
+sub Show {
+    my $self = shift;
+    warn " FFF enter Show" if $self->{-debug};
+    return if $self->{_showing};
+    if ($self->_last_page == 0) {
+        warn "# Showing a Wizard that is only one page long";
+    }
+    $self->{wizardPagePtr} = 0;
+    $self->initial_layout;
+    $self->resizable( 0, 0 )
+      unless $self->{Configure}{-resizable}
+      and $self->{Configure}{-resizable} =~ /^(1|yes|true)$/i;
+    $self->parent->withdraw;
+    $self->Popup;
+    $self->transient;    # forbid minimize
+    $self->protocol(
+        WM_DELETE_WINDOW => [ \&_CloseWindowEventCycle, $self, $self ] );
+    # $self->packPropagate(0);
+    $self->configure( -background => $self->cget("-background") );
+    $self->render_current_page;
+    $self->{_showing} = 1;
+    warn " FFF leave Show" if $self->{-debug};
+    return 1;
+} # Show
+
+
+=head2 forward
+
+Convenience method to move the Wizard on a page by invoking the
+callback for the C<nextButton>.
+
+You can automatically move forward after C<$x> tenths of a second
+by doing something like this:
+
+  $frame->after($x,sub{$wizard->forward});
+
+=cut
+
+sub forward
+  {
+  my $self = shift;
+  return $self->_NextButtonEventCycle;
+  } # forward
+
+
+=head2 backward
+
+Convenience method to move the Wizard back a page by invoking the
+callback for the C<backButton>.
+
+=cut
+
+sub backward {
+    my $self = shift;
+    return $self->{backButton}->invoke;
+}
+
+
+sub _showing_side_banner
+  {
+  my $self = shift;
+  return 1 if ($self->cget(-style) eq '95');
+  return 1 if $self->_on_first_page;
+  return 1 if $self->_on_last_page;
+  return 0;
+  } # _showing_side_banner
+
+
+=head2 currentPage
+
+  my $current_page = $wizard->currentPage()
+
+This returns the index of the page currently being shown to the user.
+Page are indexes start at 1, with the first page that is associated with
+the wizard through the C<addPage> method.
+See also the L</addPage> entry.
+
+=cut
+
+sub currentPage
+  {
+  my $self = shift;
+  # Throughout this module, wizardPagePtr is zero-based.  But we
+  # "publish" it as one-based:
+  return $self->{wizardPagePtr} + 1;
+  } # currentPage
+
+
 =head2 setPageSkip
 
 Mark one or more pages to be skipped at runtime.
@@ -2222,6 +2204,63 @@ sub setPageUnskip {
         $self->{hiiSkip}{ $i - 1 } = 0;
     }    # foreach
 }    # setPageUnskip
+
+
+=head2 next_page_number
+
+Returns the number (i.e. the integer returned by add*Page) of the page
+the Wizard will land on if the Next button is clicked.
+
+=cut
+
+sub next_page_number
+  {
+  my $self  = shift;
+  my $iPage = $self->{wizardPagePtr};
+  # print STDERR " DDD _page_forward($iPage -->";
+  do {
+    $iPage++;
+    } until ( !$self->{hiiSkip}{$iPage} || ( $self->_last_page <= $iPage ) );
+  $iPage = $self->_last_page if ( $self->_last_page < $iPage );
+  # print STDERR " $iPage)\n";
+  return $iPage;
+  } # next_page_number
+
+
+# Increments the page pointer forward to the next logical page,
+# honouring the Skip flags:
+sub _page_forward
+  {
+  my $self  = shift;
+  $self->{wizardPagePtr} = $self->next_page_number;
+  } # _page_forward
+
+=head2 back_page_number
+
+Returns the number (i.e. the integer returned by add*Page) of the page
+the Wizard will land on if the Back button is clicked.
+
+=cut
+
+sub back_page_number
+  {
+  my $self  = shift;
+  my $iPage = $self->{wizardPagePtr};
+  do {
+    $iPage--;
+    } until ( !$self->{hiiSkip}{$iPage} || ( $iPage <= 0 ) );
+  $iPage = 0 if ( $iPage < 0 );
+  return $iPage;
+  } # back_page_number
+
+# Decrements the page pointer backward to the previous logical page,
+# honouring the Skip flags:
+sub _page_backward
+  {
+  my $self  = shift;
+  $self->{wizardPagePtr} = $self->back_page_number;
+  } # _page_backward
+
 
 =head2 prompt
 
@@ -2482,7 +2521,7 @@ Default is to exit on user confirmation - see L</DIALOGUE_really_quit>.
 =back
 
 All active event handlers can be set at construction or using configure --
-see L</WIDGET-SPECIFIC OPTIONS> and L<Tk::option>.
+see L</WIDGET-SPECIFIC OPTIONS> and L<Tk::options>.
 
 =head1 BUTTONS
 

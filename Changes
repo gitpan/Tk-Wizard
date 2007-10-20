@@ -1,3 +1,13 @@
+2007-10-20    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard/Installer.pm (_install_files): fixed undef warning
+
+2007-10-19    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (back_page_number): new method
+	(next_page_number): new method
+	(_page_fileSelect): don't send non-existent -initialdir to getOpenFile
+
 2007-10-17    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard.pm (new): new option -fontfamily

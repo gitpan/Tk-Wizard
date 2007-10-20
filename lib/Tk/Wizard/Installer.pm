@@ -1,5 +1,5 @@
 
-# $Id: Installer.pm,v 2.23 2007/10/16 12:00:27 martinthurn Exp $
+# $Id: Installer.pm,v 2.25 2007/10/20 17:17:43 martinthurn Exp $
 
 package Tk::Wizard::Installer;
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.23 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.25 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -511,10 +511,10 @@ sub _install_files {
             $self->{-bar}->update;
 
             # Make the path, if needs be
-            my $d = File::Spec->catpath( $tv, $td );
+            my $d = File::Spec->catpath( $tv, $td, '' );
 
             # $d =~ s/[\\\/]+/\//g;
-            if ( !-d $d )
+            if ( ! -d $d )
               {
               eval { File::Path::mkpath($d) };
               if ($@)
@@ -620,18 +620,18 @@ If set to a true value, will prevent the I<Try again?> dialogue.
 =item -on_error
 
 If a file cannot be downloaded and the user chooses not to keep trying,
-then this parameter comes into operation. If it is a reference, then it
+then this parameter comes into operation.  If it is a reference, then it
 is assumed to be a code reference to execute; otherwise a dialogue box
-asks the user if they really wish to quit. If they do, then the
-C<CloseWindowEventCycle> (see L<Tk::Wizard/CloseWindowEventCycle>) - the
-default result of which is yet another confirmation of closure....
+asks the user if they really wish to quit.  If they do, then the
+Tk::Wizard CloseWindow event cycle is triggered -- the
+default result of which is probably yet another confirmation of closure....
 
 If no C<-on_error> parameter is provided, the Wizard will continue even
 if it cannot download the requested data.
 
 =item -done_text
 
-Text to display when complete. Default: I<complete>.
+Text to display when complete.  Default: I<complete>.
 
 =back
 
@@ -921,7 +921,7 @@ sub callback_licence_agreement {
     return 1;
 } # callback_licence_agreement
 
-=head2 CALLBACK confirm_download_again
+=head2 confirm_download_again
 
 This callback is triggered when a file download fails
 during a DownloadPage.
@@ -945,7 +945,7 @@ sub confirm_download_again {
 } # confirm_download_again
 
 
-=head2 CALLBACK confirm_download_quit
+=head2 confirm_download_quit
 
 This callback is triggered when the -on_error condition happens
 at the end of a DownloadPage.
