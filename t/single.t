@@ -1,0 +1,126 @@
+#! perl -w
+
+# $Id: subtitle.t,v 1.4 2007/10/15 12:14:29 martinthurn Exp $
+
+use strict;
+
+use Cwd;
+use ExtUtils::testlib;
+use FileHandle;
+use IO::Capture::Stdout::Extended;
+use Test::More;
+use Tk;
+
+BEGIN
+  {
+  my $mwTest;
+  eval { $mwTest = Tk::MainWindow->new };
+  if ($@)
+    {
+    plan skip_all => 'Test irrelevant without a display';
+    }
+  else
+    {
+    plan tests => 11;
+    }
+  $mwTest->destroy if Tk::Exists($mwTest);
+  use_ok('Tk::Wizard');
+  } # end of BEGIN block
+
+my $VERSION = do { my @r = ( q$Revision: 1.4 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
+our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 555;
+
+my $oICS =  IO::Capture::Stdout::Extended->new;
+my $wizard = Tk::Wizard->new(
+                             -title => "Title Wrap Test",
+                             # -debug => 88,
+                            );
+isa_ok( $wizard, "Tk::Wizard" );
+$wizard->configure(-preNextButtonAction => sub { &preNext($wizard) });
+is(
+   $wizard->addSplashPage(
+                          -wait  => 100,
+                          -title => "Welcome to the Wizard",
+                         ),
+   1,
+   'splash is 1'
+  );
+my $the_chosen_one;
+is($wizard->addSingleChoicePage(
+                                -wait => $WAIT,
+                                -variable => \$the_chosen_one,
+                                -choices => [
+                                               {
+                                                -title => 'This is the only choice',
+                                                -subtitle => 'My subtitle',
+                                                -value => 20,
+                                               },
+                                            ],
+                               ),
+   2, 'page is 2' );
+is($wizard->addSingleChoicePage(
+                                -wait => $WAIT,
+                                -variable => \$the_chosen_one,
+                                -choices => [
+                                               {
+                                                -title => 'This is choice 1',
+                                                -value => 30,
+                                                -subtitle => 'My subtitle is longer than my title',
+                                                -selected => 1,
+                                               },
+                                               {
+                                                -title => 'This is choice 2',
+                                                -subtitle => 'My subtitle is longer than my title',
+                                                -value => 99,
+                                               },
+                                            ],
+                               ),
+   3, 'page is 3' );
+is($wizard->addSingleChoicePage(
+                                -wait => $WAIT,
+                                -variable => \$the_chosen_one,
+                                -choices => [
+                                               {
+                                                -title => 'This is wrong choice 1',
+                                                -subtitle => 'lil sub',
+                                                -value => 99,
+                                               },
+                                               {
+                                                -title => 'This is correct choice',
+                                                -value => 40,
+                                                -selected => 1,
+                                               },
+                                               {
+                                                -title => 'This is wrong choice 2',
+                                                -subtitle => 'lil sub',
+                                                -value => 98,
+                                               },
+                                            ],
+                               ),
+   4, 'page is 4' );
+$wizard->addSplashPage(
+                       -wait  => 100,
+                       -title => "Page Bye!",
+                       -text  => "Thanks for testing!"
+                      );
+$oICS->start;
+$wizard->Show;
+$oICS->stop;
+pass('after Show');
+MainLoop();
+pass('after MainLoop');
+
+sub preNext
+  {
+  my $wiz = shift;
+  my $iPage = $wiz->currentPage;
+  if ((1 < $iPage) && ($iPage < 5))
+    {
+    is($the_chosen_one, $iPage * 10, qq{page $iPage correct chosen value});
+    } # if
+  return 1;
+  } # preNext
+
+__END__
+

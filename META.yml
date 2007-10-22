@@ -29,6 +29,7 @@ requires:
   File::Path: 0
   File::Slurp: 0
   File::Spec: 0
+  Scalar::Util: 0
   Tk: 0
   Tk::After: 0
   Tk::DialogBox: 0
@@ -42,4 +43,4 @@ requires:
   Win32: 0.2
   Win32::Shortcut: 0
   Win32::TieRegistry: 0
-version: 2.119
+version: 2.121

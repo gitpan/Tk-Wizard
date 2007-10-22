@@ -1,3 +1,7 @@
+2007-10-21    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (addSingleChoicePage): new method
+
 2007-10-20    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard/Installer.pm (_install_files): fixed undef warning

@@ -38,6 +38,7 @@ t/extra.txt
 t/fonts.t
 t/pod-coverage.t
 t/pod.t
+t/single.t
 t/sizer.t
 t/subtitle.t
 t/unix.txt

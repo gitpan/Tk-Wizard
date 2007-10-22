@@ -1,5 +1,5 @@
 
-# $Id: Wizard.pm,v 2.66 2007/10/20 03:34:31 martinthurn Exp $
+# $Id: Wizard.pm,v 2.67 2007/10/21 16:20:54 martinthurn Exp $
 
 package Tk::Wizard;
 
@@ -9,7 +9,7 @@ use warnings;
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.66 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.67 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
 my $sDir = ucfirst $sdir;
@@ -26,6 +26,7 @@ use Data::Dumper;
 use File::Path;
 use File::Slurp;
 use File::Spec::Functions qw( rootdir );
+use Scalar::Util qw( reftype );
 use Tk;
 use Tk::DialogBox;
 use Tk::DirTree;
@@ -2066,6 +2067,152 @@ sub _page_multiple_choice
         } # foreach
     return $frame;
     } # _page_multiple_choice
+
+
+=head2 addSingleChoicePage
+
+Allow the user to make one choice from among several options
+(i.e. a group of radio buttons).
+Each choice sets a variable passed as reference to this method.
+
+Accepts the usual parameters plus:
+
+=over 4
+
+=item -relief
+
+For the radio buttons - see L<Tk::options>.
+
+=item -variable
+
+Reference to a variable that will contain the result of the choice.
+Croaks if none supplied.  Your -variable will contain the -value of the
+radio button that is selected when the user clicks "Next".
+
+=item -choices
+
+A reference to an array of hashes with the following fields:
+
+=over 4
+
+=item -title
+
+Title of the option, will be rendered in bold
+
+=item -subtitle
+
+Text rendered smaller beneath the title
+
+=item -value
+
+This value will be placed in your -variable variable if this button is
+selected
+
+=item -selected
+
+Pass a true value to specify that this radio should initially appear
+selected.  If none of the choices have -selected, then the first
+choice will be selected by default.
+
+=back
+
+Here is an example of what the -choices parameter should look like:
+
+  $wizard->addSingleChoicePage(
+    -title => 'Another toy example',
+    -text => 'Choose one of the following:',
+    -variable => \$choice,
+    -choices =>
+      [
+        {
+         -title => 'choice 1',
+         -value => 1,
+        },
+        {
+         -title => 'choice two, default this one selected',
+         -value => 'two',
+         -selected => 1,
+        },
+      ],
+    );
+
+=back
+
+=cut
+
+sub addSingleChoicePage
+  {
+  my $self = shift;
+  # We have to make a copy of our args in order for them to get
+  # "saved" in this coderef:
+  my $args = {@_};
+  # print STDERR " DDD addSingleChoicePage args are ", Dumper($args);
+  return $self->addPage( sub { $self->_page_single_choice($args) } );
+  } # addSingleChoicePage
+
+sub _page_single_choice
+  {
+  my $self = shift;
+  my $args = shift;
+  if (! defined($args->{-choices}))
+    {
+    croak "-choices argument missing";
+    }
+  if (! ref($args->{-choices}) || (ref($args->{-choices}) ne 'ARRAY'))
+    {
+    croak "-choices must be a ref to an array!";
+    } # if
+  croak "-variable argument missing" if ! defined($args->{-variable});
+  croak "-variable must be a reference!" if ! ref $args->{-variable};
+  # Take care of the -title, -text, etc.:
+  my $frame = $self->blank_frame(%$args);
+  my $content = $frame->Frame(
+                              -background => $self->{background},
+                             )->pack(
+                                     -side => 'top',
+                                     -anchor => "n",
+                                     -padx => 10,
+                                     -pady => 10,
+                                    );
+  my $iNotFirst = 0;
+  foreach my $opt ( @{ $args->{-choices} } )
+    {
+    if (reftype($opt) ne 'HASH')
+      {
+      croak "Option in -choices array must be a hash"
+      } # if
+    $opt->{-title} ||= '';
+    my $sValue = $opt->{-value} || $opt->{-title};
+    my $b = $content->Radiobutton(
+                                  -text     => $opt->{-title},
+                                  -justify  => 'left',
+                                  -relief   => $args->{-relief} || 'flat',
+                                  -font     => "RADIO_BOLD",
+                                  -variable => $args->{-variable},
+                                  -value    => $sValue,
+                                  -background => $self->{background},
+                                  -activebackground => $self->{background},
+                                 )->pack(qw/-side top -anchor w /);
+    ${$args->{-variable}} = $sValue if ! $iNotFirst++;
+    ${$args->{-variable}} = $sValue if $opt->{-selected};
+    my $s = $opt->{-subtitle} || '';
+    if ($s ne '')
+      {
+      # Seven spaces indentation is perfect with my Windows XP default
+      # font:
+      $s =~ s!(^|\n)!$1       !g;
+      my $l = $content->Label(
+                              -font => $self->{defaultFont},
+                              -text => $s,
+                              -anchor => 'w',
+                              -justify  => 'left',
+                              -background => $self->{background},
+                             )->pack(qw/-side top -anchor w/);
+      DEBUG_FRAME && $l->configure(-background => 'light blue');
+      } # if
+    } # foreach
+  return $frame;
+  } # _page_single_choice
 
 
 =head2 Show
