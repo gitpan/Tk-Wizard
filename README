@@ -10,6 +10,16 @@ Use the new Tk::Wizard::Sizer module (included with this distro)
 to semi-automatically recalculate what you should pass in the
 -width and -height arguments.
 
+WARNING
+
+There is a bug in some versions of Tk::DirTree (part of the Tk-Tree
+distribution) that will cause Tk::Wizard's dirSelect page to spit out
+large warning messages, and cause the Wizard to get stuck, on MSWin32
+systems.  See RT bug #30781
+<https://rt.cpan.org/Ticket/Display.html?id=30781>.  To work around
+this, look at your Tk/DirTree.pm line 98.  Delete the '/', which
+appears as the first argument to catfile().
+
 INSTALLATION
 
 This module can be installed in the normal perl way, such as:

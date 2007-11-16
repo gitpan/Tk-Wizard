@@ -1,5 +1,5 @@
 
-# $Id: Wizard.pm,v 2.67 2007/10/21 16:20:54 martinthurn Exp $
+# $Id: Wizard.pm,v 2.71 2007/11/16 21:28:58 martinthurn Exp $
 
 package Tk::Wizard;
 
@@ -9,9 +9,9 @@ use warnings;
 use constant DEBUG_FRAME => 0;
 
 our
-$VERSION = do { my @r = ( q$Revision: 2.67 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.71 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
-my $sdir = ($^O =~ m/MSWin32/i) ? 'Folder' : 'Directory';
+my $sdir = ($^O =~ m/MSWin32/i) ? 'folder' : 'directory';
 my $sDir = ucfirst $sdir;
 
 =head1 NAME
@@ -725,12 +725,18 @@ sub initial_layout
       {
       $self->Photo( "sidebanner", -data => $$im );
       }
+    my $sBG = $self->_on_first_page ? 'white'
+            : $self->_on_last_page ? 'white'
+            : $self->{background};
     $self->{left_object} = $self->Label(
                                         -image => "sidebanner",
+                                        -anchor => "n",
+                                        -background => $sBG,
                                        )->pack(
-                                               -side => "top",
                                                -anchor => "n",
+                                               -fill => 'y',
                                               );
+    DEBUG_FRAME && $self->{left_object}->configure(-background => 'blue');
     } # if 95 or first page
   else
     {
@@ -765,7 +771,7 @@ sub render_current_page
     } # if
   if ($self->_on_first_page || $self->_on_last_page)
     {
-    $self->{left_object}->pack( -side => "left", -anchor => "w" );
+    $self->{left_object}->pack( -side => "left", -anchor => "n", -fill => 'y' );
     if ( $self->{-style} ne '95' )
       {
       $frame_pack{-expand} = 1;
@@ -1275,7 +1281,11 @@ sub _NextButtonEventCycle
   # warn " DDD start, NBEC counter is now $self->{_inside_nextButtonEventCycle_}\n";
   # If there is more than one pending invocation, we will reinvoke
   # ourself when we're done:
-  return if (1 < $self->{_inside_nextButtonEventCycle_});
+  if (1 < $self->{_inside_nextButtonEventCycle_})
+    {
+    warn "   called recursively, bail out\n" if $self->{-debug};
+    return;
+    } # if
   if ( _dispatch( $self->cget( -preNextButtonAction ) ) )
     {
     warn " DDD preNextButtonAction says we should not go ahead\n" if $self->{-debug};
@@ -1301,6 +1311,7 @@ sub _NextButtonEventCycle
     } # if last page
   # Advance the wizard page pointer and then adjust the navigation buttons.
   # Redraw the frame when finished to get changes to take effect.
+  warn " DDD   advance to next page\n" if $self->{-debug};
   $self->_page_forward;
   $self->render_current_page;
   # print STDERR " DDD this is before _dispatch postNextButtonAction\n";
@@ -1310,7 +1321,7 @@ sub _NextButtonEventCycle
     goto ALL_DONE_NBEC;
     } # if
  ALL_DONE_NBEC:
-  # warn " DDD all done, NBEC counter is now $self->{_inside_nextButtonEventCycle_}\n";
+  warn " DDD all done, NBEC counter is now $self->{_inside_nextButtonEventCycle_}\n" if $self->{-debug};
   $self->{_inside_nextButtonEventCycle_}--;
   $self->_NextButtonEventCycle('no increment') if $self->{_inside_nextButtonEventCycle_};
   } # _NextButtonEventCycle
@@ -1512,30 +1523,12 @@ sub _page_dirSelect
                                if ($new_name) {
                                  $new_name =~ s/[\/\\]//g;
                                  $new_name = ${ $args->{-variable} } . "/$new_name";
-                                 if ( !mkdir $new_name, 0777 ) {
-                                   my $msg;
-                                   if ( $! =~ /Invalid argument/i ) {
-                                     $msg = "The $sdir name you supplied is not valid.";
-                                     }
-                                   elsif ( $! =~ /File Exists/i ) {
-                                     $msg = "A $sdir with that name already exists.";
-                                     }
-                                   else {
-                                     $msg = "The $sdir could not be created:\n\n\t'$!'";
-                                     }
-                                   $self->messageBox(
-                                                     '-icon'  => 'error',
-                                                     -type    => 'ok',
-                                                     -title   => 'Could Not Create $sDir',
-                                                     -message => $msg,
-                                                    );
-                                   } # if
-                                 else {
+                                 if ($self->_cb_try_create_dir($new_name))
+                                   {
                                    ${ $args->{-variable} } = $new_name;
-                                   # print STDERR " DDD   4 DirTree->configure(-directory=>$new_name)\n";
                                    $dirs->configure( -directory => $new_name );
                                    $dirs->chdir($new_name);
-                                   } # else
+                                   } # if
                                  } # if new_name
                                }, # end of -command sub
                             )->pack( -side => 'right',
@@ -1559,18 +1552,12 @@ sub _page_dirSelect
                            -ipadx => 5,
                          );
     } # if
-  # Add the user's requested directory:
-  $dirs->configure(-directory => ${$args->{-variable}}) if (${$args->{-variable}} ne '');
-
-  # The DirTree itself can take a long time to draw:
-  $self->{wizardFrame}->update;
-  $self->idletasks;
-  $self->update;
-  foreach my $d (&$_drives) {
+  foreach my $d (&$_drives)
+    {
     # Try to prevent GUI freeze:
     $self->idletasks;
     $self->{wizardFrame}->update;
-    # $self->update;
+    $self->update;
     ($d) =~ /^(\w+:)/;
     if (
         $args->{-nowarnings}
@@ -1592,6 +1579,8 @@ sub _page_dirSelect
       $dirs->configure( -directory => $d );
       }
     } # foreach
+  # Make the user's requested directory appear as the default (?):
+  $dirs->chdir(${$args->{-variable}}) if (${$args->{-variable}} ne '');
   $self->Unbusy;
   return $frame;
   } # _page_dirSelect
@@ -1732,13 +1721,13 @@ sub _page_fileSelect
                                  # getOpenFile will croak if the
                                  # -initialdir we give it does not
                                  # exist:
-                                 my $sDir = $args->{-directory};
-                                 if (! -d $sDir)
+                                 my $sDirInit = $args->{-directory};
+                                 if (! -d $sDirInit)
                                    {
-                                   $sDir = &File::Spec::rootdir;
+                                   $sDirInit = &File::Spec::rootdir;
                                    } # if
                                  my $sFname = $frame->getOpenFile(
-                                                                  -initialdir => $sDir,
+                                                                  -initialdir => $sDirInit,
                                                                   -title      => $args->{-title},
                                                                  );
                                  ${ $args->{-variable} } = $sFname if $sFname;
@@ -2559,19 +2548,7 @@ sub callback_dirSelect
                                   );
     if ( lc $button eq 'yes' )
       {
-      eval { File::Path::mkpath($$var) };
-      if ($@)
-        {
-        $self->messageBox(
-                          -icon  => 'warning',
-                          -type  => 'ok',
-                          -title => qq'$sDir Could Not Be Created',
-                          -message => "The $sdir you entered could not be created ($@)
-Please choose a different $sdir and press Next to continue."
-                         );
-        return 0;
-        } # if error during mkpath
-      return 1;
+      return $self->_cb_try_create_dir($$var);
       } # if user clicked "Yes"
     $self->messageBox(
                       -icon  => 'info',
@@ -2584,6 +2561,33 @@ Please choose a different $sdir and press Next to continue."
     } # if dir not exist
   return 1;
   } # callback_dirSelect
+
+
+sub _cb_try_create_dir
+  {
+  my $self = shift;
+  my $sDirToCreate = shift;
+  my $rasError;
+  File::Path::mkpath($sDirToCreate, {error => \$rasError});
+  # print STDERR Dumper($rasError);
+  if (@$rasError)
+    {
+    my $rh = shift @$rasError;
+    # Only report the first error encountered:
+    my ($sDirEntered) = keys %$rh;
+    my ($sError) = values %$rh;
+    my $sMsg = "The $sdir you entered ($sDirEntered) could not be created ($sError)\nPlease choose a different $sdir.";
+    $self->messageBox(
+                      -icon  => 'warning',
+                      -type  => 'ok',
+                      -title => qq'$sDir Could Not Be Created',
+                      -message => $sMsg,
+                     );
+    return 0;
+    } # if error during mkpath
+  return 1;
+  } # _cb_try_create_dir
+
 
 =head1 ACTION EVENT HANDLERS
 

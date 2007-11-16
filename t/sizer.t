@@ -1,9 +1,9 @@
 
-# $Id: sizer.t,v 1.7 2007/10/15 12:14:29 martinthurn Exp $
+# $Id: sizer.t,v 1.8 2007/11/16 21:36:20 martinthurn Exp $
 
 use strict;
 
-my $VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use Cwd;
 use ExtUtils::testlib;
@@ -21,7 +21,7 @@ BEGIN
     }
   else
     {
-    plan 'no_plan';
+    plan tests => 18;
     }
   $mwTest->destroy if Tk::Exists($mwTest);
   use_ok('Tk::Wizard::Sizer');
@@ -36,7 +36,8 @@ foreach my $sClass (qw( Tk::Wizard::Sizer Tk::Wizard::Installer::Sizer ))
                          -title => "Sizer Test",
                          -style => $sStyle,
                         );
-  isa_ok($self, "Tk::Wizard");
+  isa_ok($self, 'Tk::Wizard::Sizer');
+  isa_ok($self, 'Tk::Wizard');
   isa_ok($self, $sClass);
   our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 222;
   my $s1 = "This is the long horizontal text for the Sizer TextFrame Page.  It is wider than the default Wizard width.";

@@ -1,6 +1,6 @@
 #! perl -w
 
-# $Id: subtitle.t,v 1.4 2007/10/15 12:14:29 martinthurn Exp $
+# $Id: single.t,v 1.1 2007/11/16 21:28:33 martinthurn Exp $
 
 use strict;
 
@@ -27,7 +27,7 @@ BEGIN
   use_ok('Tk::Wizard');
   } # end of BEGIN block
 
-my $VERSION = do { my @r = ( q$Revision: 1.4 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 555;
 

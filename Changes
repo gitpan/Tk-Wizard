@@ -1,3 +1,11 @@
+2007-11-16    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard/Installer.pm (pre_install_files_quit): now user can get error details
+
+2007-11-07    <Daddy@C-3PO>
+
+	* lib/Tk/Wizard.pm (initial_layout): fixed position & bg of side image
+
 2007-10-21    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard.pm (addSingleChoicePage): new method
