@@ -1,4 +1,6 @@
 Changes
+scripts/tidy.pl
+scripts/perltidyrc
 examples/application.pl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm

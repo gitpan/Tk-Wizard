@@ -6,8 +6,7 @@ package Tk::Wizard::Installer;
 use strict;
 use warnings;
 
-our
-$VERSION = do { my @r = ( q$Revision: 2.28 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.28 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -114,7 +113,6 @@ sub addLicencePage {
     $self->addPage( sub { $self->_page_licence_agreement($args) } );
 }    # addLicencePage
 
-
 # PRIVATE METHOD _page_licence_agreement
 #
 # Returns a C<Tk::Wizard> page entitled "End-user Licence Agreement",
@@ -130,7 +128,9 @@ sub _page_licence_agreement {
     my $padx = $self->cget( -style ) eq 'top' ? 30 : 5;
     $self->{licence_agree} = undef;
     my $sFname = $args->{-filepath};
-    my $text = read_file($sFname) or croak "Could not read licence from $sFname: $!";
+    my $text   = read_file($sFname)
+      or croak "Could not read licence from $sFname: $!";
+
     # Clean up line endings because Tk::ROText on *NIX displays them:
     $text =~ s![\r\n]+!\n!g;
     my ( $frame, @pl ) = $self->blank_frame(
@@ -159,11 +159,12 @@ sub _page_licence_agreement {
         -value    => 1,
         -anchor   => 'w',
     );
+
     # Setting -background to undef causes core dump deep inside Tk!
     $opts1{-background} = $self->cget("-background")
       if $self->cget("-background");
-    $opts1{-underline} = 2;  # Third character is the "A" of "Accept"
-    $self->bind('<Alt-a>' => sub{ ${$self->{licence_agree}} = 1 });
+    $opts1{-underline} = 2;    # Third character is the "A" of "Accept"
+    $self->bind( '<Alt-a>' => sub { ${ $self->{licence_agree} } = 1 } );
     my $buttonAccept = $frame->Radiobutton(%opts1)->pack( -padx => $padx, -anchor => 'w', );
     my %opts2 = (
         -font     => $self->{defaultFont},
@@ -173,10 +174,12 @@ sub _page_licence_agreement {
         -value    => 0,
         -anchor   => 'w',
     );
+
     # Setting -background to undef causes core dump deep inside Tk!
-    $opts2{-background} = $self->cget("-background") if $self->cget("-background");
-    $opts2{-underline} = 5; # 6th character = 'N' of 'Not'
-    $self->bind('<Alt-n>' => sub{ ${$self->{licence_agree}} = 0 });
+    $opts2{-background} = $self->cget("-background")
+      if $self->cget("-background");
+    $opts2{-underline} = 5;    # 6th character = 'N' of 'Not'
+    $self->bind( '<Alt-n>' => sub { ${ $self->{licence_agree} } = 0 } );
     $frame->Radiobutton(%opts2)->pack( -padx => $padx, -anchor => 'w', );
     if ( $args->{ -wait } ) {
         Tk::Wizard::_fix_wait( \$args->{ -wait } );
@@ -191,8 +194,7 @@ sub _page_licence_agreement {
         );
     }    # if WAIT
     return $frame;
-} # _page_licence_agreement
-
+}    # _page_licence_agreement
 
 =head2 addFileListPage
 
@@ -316,25 +318,23 @@ sub addFileListPage {
     $self->addPage( sub { $self->_page_filelist($args) } );
 }
 
-
 sub _page_filelist {
     my ( $self, $args ) = ( shift, shift );
     croak "Arguments should be supplied as a hash ref"
       if not ref $args
-      or ref $args ne "HASH";
+          or ref $args ne "HASH";
     croak "-from and -to are required"
       if not $args->{-from}
-      or not $args->{-to};
+          or not $args->{-to};
     croak "-from and -to are different lengths"
       if $#{ $args->{-from} } != $#{ $args->{-to} };
     croak "Nothing to do! -from and -to empty"
       if $#{ $args->{-from} } == -1
-      or $#{ $args->{-to} } == -1;
+          or $#{ $args->{-to} } == -1;
     my $frame = $self->blank_frame(
-        -title => $args->{-title} || "Copying Files",
-        -subtitle => $args->{-subtitle}
-          || "Please wait whilst Setup copies files to your computer.",
-        -text => $args->{-text} || "\n"
+        -title    => $args->{-title}    || "Copying Files",
+        -subtitle => $args->{-subtitle} || "Please wait whilst Setup copies files to your computer.",
+        -text     => $args->{-text}     || "\n"
     );
 
     my %bar;    # progress bar args
@@ -355,14 +355,9 @@ sub _page_filelist {
         -label => $args->{-label_frame_title} || "Copying files",
         -labelside => "acrosstop"
     );
-    $args->{-labelFrom} =
-      $f->Label(qw//)->pack(qw/-padx 16 -side top -anchor w/);
-    $args->{-labelTo} =
-      $f->Label(qw//)->pack(qw/-padx 16 -side top -anchor w/);
-    $self->{-bar} =
-      $f->ProgressBar(%bar)
-      ->pack(
-        qw/ -padx 20 -pady 10 -side top -anchor w -fill both -expand 1 / );
+    $args->{-labelFrom} = $f->Label(qw//)->pack(qw/-padx 16 -side top -anchor w/);
+    $args->{-labelTo}   = $f->Label(qw//)->pack(qw/-padx 16 -side top -anchor w/);
+    $self->{-bar}       = $f->ProgressBar(%bar)->pack(qw/ -padx 20 -pady 10 -side top -anchor w -fill both -expand 1 /);
     $f->pack(qw/-fill x -padx 30/);
 
     $self->{nextButton}->configure( -state => "disable" );
@@ -389,114 +384,109 @@ sub _page_filelist {
                     sub {
                         $self->{nextButton}->configure( -state => 'normal' );
                         $self->{nextButton}->invoke;
-                    } # sub
-                ); # after
-            } # if WAIT
-        } # sub
-    ); # after
+                      }    # sub
+                );         # after
+            }    # if WAIT
+          }    # sub
+    );         # after
     return $frame;
-} # _page_filelist
-
+}    # _page_filelist
 
 # Pre-parse, counting files and expanding directories if necessary
 # Return total number of files to process
 # Puts any failures into %{$self->{-failed}}
-sub _pre_install_files
-  {
-  my ( $self, $args ) = ( shift, shift );
-  croak "Arguments should be supplied as a hash ref"
-  if not ref $args
-  or ref $args ne "HASH";
-  croak "-from and -to are different lengths" if $#{ $args->{-from} } != $#{ $args->{-from} };
-  my $total = 0;
-  my $i     = -1;
-  $args->{-labelFrom}->configure( -text => $args->{-label_preparing} || "Preparing..." );
-  $args->{-labelFrom}->update;
-  $args->{-labelTo}->configure( -text => "" );
-  $args->{-labelFrom}->update;
-  $self->{-failed} = {};
-  # Make a local copy of our args:
-  my @asToOrig = @{ $args->{-to} };
-  my @asFromOrig = @{ $args->{-from} };
-  my (@asFrom, @asTo);
-  # Process parallel lists:
- FILELIST_ELEMENT:
-  foreach my $sTo (@asToOrig)
-    {
-    my $sFrom = shift @asFromOrig;
-    $i++;
-    if (-d $sFrom)
-      {
-      # Sanity check:
-      if (! -d $sTo)
-        {
-        $self->{-failed}->{$sTo} = qq{Can not copy directory $sFrom to file};
-        next FILELIST_ELEMENT;
-        } # if
-      if (! opendir DIR, $sFrom)
-        {
-        $self->{-failed}->{$sFrom} = qq{Can not read directory};
-        next FILELIST_ELEMENT;
-        } # if
-      foreach ( grep { !/^\.{1,2}$/ } readdir DIR )
-        {
-        push @asFrom, "$sFrom/$_";
-        push @asTo,     "$sTo/$_";
-        $total++;
-        } # foreach
-      closedir DIR or warn;
-      next FILELIST_ELEMENT;
-      } # if from dir
-    # Files:
-    elsif (-f $sFrom)
-      {
-      if (-d $sTo)
-        {
-        # Copy from file to directory:
-        my ($sJunkVol, $sJunkPath, $sFname) = splitpath($sFrom);
-        $sTo = "$sTo/$sFname";
-        } # if
-      push @asFrom, $sFrom;
-      push @asTo, $sTo;
-      $total++;
-      } # if from file
-    else
-      {
-      $self->{-failed}->{$sFrom} = qq{No such file or directory};
-      }
-    } # foreach FILELIST_ELEMENT
-  if ( scalar keys %{ $self->{-failed} } > 0 )
-    {
-    warn "# Failed " . ( scalar keys %{ $self->{-failed} } ) if $self->{-debug};
-    if ( ref $args->{-on_error} eq 'CODE' ) {
-      warn "# Calling -on_error handler." if $self->{-debug};
-      &{ $args->{-on_error} };
-      }
-    else
-      {    # if ($args->{-on_error}) {
-      warn "# Calling self/pre_install_files_quit." if $self->{-debug};
-      $self->pre_install_files_quit( scalar keys %{ $self->{-failed} } );
-      }
-    } # if
-  @{$args->{-from}} = @asFrom;
-  @{$args->{-to}}   = @asTo;
-  return $total;    # why was it total+1?
-  } # _pre_install_files
+sub _pre_install_files {
+    my ( $self, $args ) = ( shift, shift );
+    croak "Arguments should be supplied as a hash ref"
+      if not ref $args
+          or ref $args ne "HASH";
+    croak "-from and -to are different lengths"
+      if $#{ $args->{-from} } != $#{ $args->{-from} };
+    my $total = 0;
+    my $i     = -1;
+    $args->{-labelFrom}->configure( -text => $args->{-label_preparing} || "Preparing..." );
+    $args->{-labelFrom}->update;
+    $args->{-labelTo}->configure( -text => "" );
+    $args->{-labelFrom}->update;
+    $self->{-failed} = {};
 
+    # Make a local copy of our args:
+    my @asToOrig   = @{ $args->{-to} };
+    my @asFromOrig = @{ $args->{-from} };
+    my ( @asFrom, @asTo );
+
+    # Process parallel lists:
+  FILELIST_ELEMENT:
+    foreach my $sTo (@asToOrig) {
+        my $sFrom = shift @asFromOrig;
+        $i++;
+        if ( -d $sFrom ) {
+
+            # Sanity check:
+            if ( !-d $sTo ) {
+                $self->{-failed}->{$sTo} = qq{Can not copy directory $sFrom to file};
+                next FILELIST_ELEMENT;
+            }    # if
+            if ( !opendir DIR, $sFrom ) {
+                $self->{-failed}->{$sFrom} = qq{Can not read directory};
+                next FILELIST_ELEMENT;
+            }    # if
+            foreach ( grep { !/^\.{1,2}$/ } readdir DIR ) {
+                push @asFrom, "$sFrom/$_";
+                push @asTo,   "$sTo/$_";
+                $total++;
+            }    # foreach
+            closedir DIR or warn;
+            next FILELIST_ELEMENT;
+        }    # if from dir
+             # Files:
+        elsif ( -f $sFrom ) {
+            if ( -d $sTo ) {
+
+                # Copy from file to directory:
+                my ( $sJunkVol, $sJunkPath, $sFname ) = splitpath($sFrom);
+                $sTo = "$sTo/$sFname";
+            }    # if
+            push @asFrom, $sFrom;
+            push @asTo,   $sTo;
+            $total++;
+        }    # if from file
+        else {
+            $self->{-failed}->{$sFrom} = qq{No such file or directory};
+        }
+    }    # foreach FILELIST_ELEMENT
+    if ( scalar keys %{ $self->{-failed} } > 0 ) {
+        warn "# Failed " . ( scalar keys %{ $self->{-failed} } )
+          if $self->{-debug};
+        if ( ref $args->{-on_error} eq 'CODE' ) {
+            warn "# Calling -on_error handler." if $self->{-debug};
+            &{ $args->{-on_error} };
+        }
+        else {    # if ($args->{-on_error}) {
+            warn "# Calling self/pre_install_files_quit." if $self->{-debug};
+            $self->pre_install_files_quit( scalar keys %{ $self->{-failed} } );
+        }
+    }    # if
+    @{ $args->{-from} } = @asFrom;
+    @{ $args->{-to} }   = @asTo;
+    return $total;    # why was it total+1?
+}    # _pre_install_files
 
 # See page_filelist
 sub _install_files {
     my ( $self, $args ) = ( shift, shift );
     croak "Arguments should be supplied as a hash ref"
       if not ref $args
-      or ref $args ne "HASH";
+          or ref $args ne "HASH";
     croak "-from and -to are different lengths"
       if $#{ $args->{-from} } != $#{ $args->{-from} };
-    $args->{-label_from} = $args->{-move} ? 'Moving: ' : "Copying: " if not $args->{-label_from};
+    $args->{-label_from} = $args->{-move} ? 'Moving: ' : "Copying: "
+      if not $args->{-label_from};
     $args->{-label_file} = "To: " if not $args->{-label_file};
     $args->{-slowdown} ||= 0;
     my $total = 0;
     my $i     = -1;
+
     foreach ( @{ $args->{-to} } ) {
         $i++;
 
@@ -519,13 +509,11 @@ sub _install_files {
         elsif ( -r @{ $args->{-from} }[$i] ) {
 
             # update the display
-            my ( $fv, $fd, $ff ) =
-              File::Spec->splitpath( @{ $args->{-from} }[$i] );
-            my ( $tv, $td, $tf ) =
-              File::Spec->splitpath( @{ $args->{-to} }[$i] );
-            $args->{-labelFrom}->configure( -text => $args->{-label_from} . @{$args->{-from}}[$i]);
+            my ( $fv, $fd, $ff ) = File::Spec->splitpath( @{ $args->{-from} }[$i] );
+            my ( $tv, $td, $tf ) = File::Spec->splitpath( @{ $args->{-to} }[$i] );
+            $args->{-labelFrom}->configure( -text => $args->{-label_from} . @{ $args->{-from} }[$i] );
             $args->{-labelFrom}->update;
-            $args->{-labelTo}->configure( -text => $args->{-label_file} . @{$args->{-to}}[$i]);
+            $args->{-labelTo}->configure( -text => $args->{-label_file} . @{ $args->{-to} }[$i] );
             $args->{-labelTo}->update;
             $self->{-bar}->value( $self->{-bar}->value + 1 );
             warn "# Updating bar to " . $self->{-bar}->value . "\n"
@@ -536,44 +524,35 @@ sub _install_files {
             my $d = File::Spec->catpath( $tv, $td, '' );
 
             # $d =~ s/[\\\/]+/\//g;
-            if ( ! -d $d )
-              {
-              eval { File::Path::mkpath($d) };
-              if ($@)
-                {
-                croak "Could not make path $d : $!";
-                } # if
-              } # if dir not exist
+            if ( !-d $d ) {
+                eval { File::Path::mkpath($d) };
+                if ($@) {
+                    croak "Could not make path $d : $!";
+                }    # if
+            }    # if dir not exist
 
             # Do the move/copy
             if ( $args->{-move} ) {
-                if (
-                    not move( @{ $args->{-from} }[$i], @{ $args->{-to} }[$i] ) )
-                {
-                    $self->{-failed}->{ @{ $args->{-to} }[$i] } =
-                      "Could not write file";
+                if ( not move( @{ $args->{-from} }[$i], @{ $args->{-to} }[$i] ) ) {
+                    $self->{-failed}->{ @{ $args->{-to} }[$i] } = "Could not write file";
                     @{ $args->{-from} }[$i] = undef;
                 }
-            } # if -move
+            }    # if -move
             else {
-                if (
-                    not copy( @{ $args->{-from} }[$i], @{ $args->{-to} }[$i] ) )
-                {
-                    $self->{-failed}->{ @{ $args->{-to} }[$i] } =
-                      "Could not write file";
+                if ( not copy( @{ $args->{-from} }[$i], @{ $args->{-to} }[$i] ) ) {
+                    $self->{-failed}->{ @{ $args->{-to} }[$i] } = "Could not write file";
                     @{ $args->{-from} }[$i] = undef;
                 }
-            } # else -copy
-        } # if file readable
+            }    # else -copy
+        }    # if file readable
 
         else {
-            $self->{-failed}->{ @{ $args->{-from} }[$i] } =
-              "Could not read file";
+            $self->{-failed}->{ @{ $args->{-from} }[$i] } = "Could not read file";
             @{ $args->{-from} }[$i] = undef;
-        } # else file not readable
-        # print STDERR " DDD slowdown is =$args->{-slowdown}=\n";
-        sleep($args->{-slowdown} / 1000);
-    } # foreach
+        }    # else file not readable
+             # print STDERR " DDD slowdown is =$args->{-slowdown}=\n";
+        sleep( $args->{-slowdown} / 1000 );
+    }    # foreach
 
     if ( scalar keys %{ $self->{-failed} } > 0 ) {
         warn "# Failed " . ( scalar keys %{ $self->{-failed} } )
@@ -586,15 +565,13 @@ sub _install_files {
             warn "# Calling pre_install_files_quit." if $self->{-debug};
             $self->pre_install_files_quit( scalar keys %{ $self->{-failed} } );
         }
-    } # if any failed
-    else
-      {
-      $args->{-labelFrom}->configure( -text => 'All done.' );
-      $args->{-labelTo}->configure( -text => '');
-      } # else none failed
+    }    # if any failed
+    else {
+        $args->{-labelFrom}->configure( -text => 'All done.' );
+        $args->{-labelTo}->configure( -text   => '' );
+    }                 # else none failed
     return $total;    # why was it total + 1?
-} # _install_files
-
+}    # _install_files
 
 =head2 addDownloadPage
 
@@ -665,229 +642,205 @@ sub addDownloadPage {
     my ( $self, $args ) = ( shift, {@_} );
     DEBUG_FUNC && print STDERR " FFF addDownloadPage\n";
     $self->addPage( sub { $self->_page_download($args) } );
-} # addDownloadPage
+}    # addDownloadPage
 
+sub _page_download {
+    my ( $self, $args ) = ( shift, shift );
+    DEBUG_FUNC && print STDERR " FFF _page_download\n";
+    croak "Arguments should be supplied as a hash ref"
+      if not ref $args
+          or ref $args ne "HASH";
+    croak "-files is required" if not $args->{-files};
+    croak "-files should be a hash of uri => filepath pairs"
+      if ref $args->{-files} ne 'HASH';
+    my @failed;
+    my $frame = $self->blank_frame(
+        -title    => $args->{-title}    || "Downloading Files",
+        -subtitle => $args->{-subtitle} || "Please wait whilst Setup downloads files to your computer.",
+        -text     => $args->{-text}     || "\n"
+    );
+    my %bar;    # progress bar args
 
-sub _page_download
-  {
-  my ( $self, $args ) = ( shift, shift );
-  DEBUG_FUNC && print STDERR " FFF _page_download\n";
-  croak "Arguments should be supplied as a hash ref"
-  if not ref $args
-  or ref $args ne "HASH";
-  croak "-files is required" if not $args->{-files};
-  croak "-files should be a hash of uri => filepath pairs"
-  if ref $args->{-files} ne 'HASH';
-  my @failed;
-  my $frame = $self->blank_frame(
-                                 -title => $args->{-title} || "Downloading Files",
-                                 -subtitle => $args->{-subtitle}
-                                 || "Please wait whilst Setup downloads files to your computer.",
-                                 -text => $args->{-text} || "\n"
-                                );
-  my %bar;    # progress bar args
-  if ( defined $args->{-bar} ) {
-    %bar = @{ $args->{-bar} };
-    # insert error checking here...
+    if ( defined $args->{-bar} ) {
+        %bar = @{ $args->{-bar} };
+
+        # insert error checking here...
     }
-  $bar{-gap}    = 0 unless defined $bar{-gap};
-  $bar{-blocks} = 0 unless defined $bar{-blocks};
-  $bar{-colors}      = [ 0 => 'blue' ] unless $bar{-colors};
-  $bar{-borderwidth} = 2               unless $bar{-borderwidth};
-  $bar{-relief}      = 'sunken'        unless $bar{-relief};
-  $bar{-from}        = 0               unless $bar{-from};
-  $bar{-to}          = 100             unless $bar{-to};
+    $bar{-gap}    = 0 unless defined $bar{-gap};
+    $bar{-blocks} = 0 unless defined $bar{-blocks};
+    $bar{-colors}      = [ 0 => 'blue' ] unless $bar{-colors};
+    $bar{-borderwidth} = 2               unless $bar{-borderwidth};
+    $bar{-relief}      = 'sunken'        unless $bar{-relief};
+    $bar{-from}        = 0               unless $bar{-from};
+    $bar{-to}          = 100             unless $bar{-to};
 
-  my $all = $frame->LabFrame(
-                             -label => $args->{-label_all_files} || "Over-all Progress",
-                             -labelside => "acrosstop"
-                            );
-  $self->{-bar} =
-  $all->ProgressBar(%bar)
-  ->pack(
-         qw/ -padx 20 -pady 10 -side top -anchor w -fill both -expand 1 / );
-  $all->pack(qw/-fill x -padx 30/);
-  
-  $args->{file_label} = $frame->LabFrame(
-                                         -label => $args->{-label_this_file} || "This FIle",
-                                         -labelside => "acrosstop"
-                                        );
-  $args->{-file_bar} =
-  $args->{file_label}->ProgressBar(%bar)
-  ->pack(
-         qw/ -padx 20 -pady 10 -side top -anchor w -fill both -expand 1 / );
-  $args->{file_label}->pack(qw/-fill x -padx 30/);
-  $self->{nextButton}->configure( -state => "disable" );
-  $self->{backButton}->configure( -state => "disable" );
-  $self->{-bar}->after($args->{-delay} || 10, sub
-                         {
-                         require LWP::UserAgent;
-                         require HTTP::Request;
-                         while ( scalar keys %{ $args->{-files} } > 0 )
-                           {
-                           $args->{file_label}->configure( -label => 'Preparing to download...' );
-                           $args->{file_label}->update;
-                           $self->{-bar}->value(0);
-                           $self->{-bar}->configure( -to => scalar keys %{ $args->{-files} } );
-                           foreach my $uri ( keys %{ $args->{-files} } )
-                             {
-                             warn "# Try $args->{-files}->{$uri}\n" if $self->{-debug};
-                             my ($uri_msg) = $uri =~ m!^\w+:/+[^/]+(.*?)/?$!;
-                             $args->{file_label}->configure(-label => $uri_msg || "Current File" );
-                             $args->{file_label}->update;
-                             if ($self->_read_uri(
-                                                  bar    => $args->{-file_bar},
-                                                  uri    => $uri,
-                                                  target => $args->{-files}->{$uri},
-                                                 )
-                                )
-                               {
-                               delete $args->{-files}->{$uri};
-                               }
-                             $self->{-bar}->value( $self->{-bar}->value + 1 );
-                             $self->{-bar}->update;
-                             $args->{-file_bar}->configure( -to => 0 );
-                             $args->{-file_bar}->value(0);
-                             $args->{-file_bar}->update;
-                             } # foreach
-                           if ( scalar keys %{ $args->{-files} } > 0 )
-                             {
-                             warn "# Files left: ", (scalar keys %{$args->{-files}}), "\n" if $self->{-debug};
-                             if ($args->{-no_retry}
-                                 || ! $self->confirm_download_again(
-                                                                    scalar keys %{ $args->{-files} }
-                                                                   )
-                                )
-                               {
-                               warn "# Not trying again.\n" if $self->{-debug};
-                               $self->{-failed} = $args->{-files};
-                               $args->{-files}  = {};
-                               } # if
-                             } # if
-                           } # while
-                         if ( scalar keys %{ $self->{-failed} } > 0 and $args->{-on_error} )
-                           {
-                           warn "# Failed." if $self->{-debug};
-                           if ( ref $args->{-on_error} eq 'CODE' ) {
-                             warn "# Calling -on_error handler." if $self->{-debug};
-                             &{ $args->{-on_error} };
-                             } # if
-                           elsif ( $args->{-on_error} ) {
-                             warn "# Calling self/download_quit." if $self->{-debug};
-                             $self->download_quit( scalar keys %{ $self->{-failed} } );
-                             } # else
-                           } # if
-                         else {
-                           warn "# Failures: ", scalar keys %{ $self->{-failed} }, "\n"
-                           if $self->{-debug};
-                           foreach ( keys %{ $self->{-failed} } ) {
-                             warn "# \t$_\n" if $self->{-debug};
-                             } # foreach
-                           $self->{-failed} = 0;
-                           } # else
-                         $self->{-bar}->packForget;
-                         $args->{-file_bar}->packForget;
-                         $args->{file_label}->packForget;
-                         $all->packForget;
-                         $frame->Label( -text => $args->{-done_text} || "Finished", )
-                         ->pack( -fill => "both", -expand => 1 );
-                         # $self->{backButton}->configure(-state=>"normal");
-                         $self->{nextButton}->configure( -state => "normal" );
-                         if ( $args->{ -wait } ) {
-                           Tk::Wizard::_fix_wait( \$args->{ -wait } );
-                           # $frame->after($args->{-wait},sub{$self->forward});
-                           $frame->after(
-                                         $args->{ -wait },
-                                         sub {
-                                           $self->{nextButton}->configure( -state => 'normal' );
-                                           $self->{nextButton}->invoke;
-                                           } # sub
-                                        ); # after
-                           } # if
-                         } # sub
-                      ); # after
-  return $frame;
-  } # _page_download
+    my $all = $frame->LabFrame(
+        -label => $args->{-label_all_files} || "Over-all Progress",
+        -labelside => "acrosstop"
+    );
+    $self->{-bar} = $all->ProgressBar(%bar)->pack(qw/ -padx 20 -pady 10 -side top -anchor w -fill both -expand 1 /);
+    $all->pack(qw/-fill x -padx 30/);
+
+    $args->{file_label} = $frame->LabFrame(
+        -label => $args->{-label_this_file} || "This FIle",
+        -labelside => "acrosstop"
+    );
+    $args->{-file_bar} =
+      $args->{file_label}->ProgressBar(%bar)->pack(qw/ -padx 20 -pady 10 -side top -anchor w -fill both -expand 1 /);
+    $args->{file_label}->pack(qw/-fill x -padx 30/);
+    $self->{nextButton}->configure( -state => "disable" );
+    $self->{backButton}->configure( -state => "disable" );
+    $self->{-bar}->after(
+        $args->{-delay} || 10,
+        sub {
+            require LWP::UserAgent;
+            require HTTP::Request;
+            while ( scalar keys %{ $args->{-files} } > 0 ) {
+                $args->{file_label}->configure( -label => 'Preparing to download...' );
+                $args->{file_label}->update;
+                $self->{-bar}->value(0);
+                $self->{-bar}->configure( -to => scalar keys %{ $args->{-files} } );
+                foreach my $uri ( keys %{ $args->{-files} } ) {
+                    warn "# Try $args->{-files}->{$uri}\n" if $self->{-debug};
+                    my ($uri_msg) = $uri =~ m!^\w+:/+[^/]+(.*?)/?$!;
+                    $args->{file_label}->configure( -label => $uri_msg || "Current File" );
+                    $args->{file_label}->update;
+                    if (
+                        $self->_read_uri(
+                            bar    => $args->{-file_bar},
+                            uri    => $uri,
+                            target => $args->{-files}->{$uri},
+                        )
+                      )
+                    {
+                        delete $args->{-files}->{$uri};
+                    }
+                    $self->{-bar}->value( $self->{-bar}->value + 1 );
+                    $self->{-bar}->update;
+                    $args->{-file_bar}->configure( -to => 0 );
+                    $args->{-file_bar}->value(0);
+                    $args->{-file_bar}->update;
+                }    # foreach
+                if ( scalar keys %{ $args->{-files} } > 0 ) {
+                    warn "# Files left: ", ( scalar keys %{ $args->{-files} } ), "\n"
+                      if $self->{-debug};
+                    if ( $args->{-no_retry}
+                        || !$self->confirm_download_again( scalar keys %{ $args->{-files} } ) )
+                    {
+                        warn "# Not trying again.\n" if $self->{-debug};
+                        $self->{-failed} = $args->{-files};
+                        $args->{-files}  = {};
+                    }    # if
+                }    # if
+            }    # while
+            if ( scalar keys %{ $self->{-failed} } > 0 and $args->{-on_error} ) {
+                warn "# Failed." if $self->{-debug};
+                if ( ref $args->{-on_error} eq 'CODE' ) {
+                    warn "# Calling -on_error handler." if $self->{-debug};
+                    &{ $args->{-on_error} };
+                }    # if
+                elsif ( $args->{-on_error} ) {
+                    warn "# Calling self/download_quit." if $self->{-debug};
+                    $self->download_quit( scalar keys %{ $self->{-failed} } );
+                }    # else
+            }    # if
+            else {
+                warn "# Failures: ", scalar keys %{ $self->{-failed} }, "\n"
+                  if $self->{-debug};
+                foreach ( keys %{ $self->{-failed} } ) {
+                    warn "# \t$_\n" if $self->{-debug};
+                }    # foreach
+                $self->{-failed} = 0;
+            }    # else
+            $self->{-bar}->packForget;
+            $args->{-file_bar}->packForget;
+            $args->{file_label}->packForget;
+            $all->packForget;
+            $frame->Label( -text => $args->{-done_text} || "Finished", )->pack( -fill => "both", -expand => 1 );
+
+            # $self->{backButton}->configure(-state=>"normal");
+            $self->{nextButton}->configure( -state => "normal" );
+            if ( $args->{ -wait } ) {
+                Tk::Wizard::_fix_wait( \$args->{ -wait } );
+
+                # $frame->after($args->{-wait},sub{$self->forward});
+                $frame->after(
+                    $args->{ -wait },
+                    sub {
+                        $self->{nextButton}->configure( -state => 'normal' );
+                        $self->{nextButton}->invoke;
+                      }    # sub
+                );         # after
+            }    # if
+          }    # sub
+    );         # after
+    return $frame;
+}    # _page_download
 
 # c/o PPM.pm
-sub _read_uri
-  {
-  my ( $self, $args ) = ( shift, {@_} );
-  DEBUG_FUNC && print STDERR " FFF _read_uri\n";
-  carp "Require uri param"    unless defined $args->{uri};
-  carp "Require target param" unless defined $args->{target};
-  my ( $proxy_user, $proxy_pass );
-  ( $self->{response}, $self->{bytes_transferred}, $self->{errstr} ) =
-  ( undef, 0, undef );
-  my $ua = LWP::UserAgent->new;
-  $ua->timeout( $args->{timeout} || 10 );
-  $ua->agent( $ENV{HTTP_PROXY_AGENT}
-              || ( "$0/$Tk::Wizard::Installer::VERSION " . $ua->agent ) );
+sub _read_uri {
+    my ( $self, $args ) = ( shift, {@_} );
+    DEBUG_FUNC && print STDERR " FFF _read_uri\n";
+    carp "Require uri param"    unless defined $args->{uri};
+    carp "Require target param" unless defined $args->{target};
+    my ( $proxy_user, $proxy_pass );
+    ( $self->{response}, $self->{bytes_transferred}, $self->{errstr} ) = ( undef, 0, undef );
+    my $ua = LWP::UserAgent->new;
+    $ua->timeout( $args->{timeout}     || 10 );
+    $ua->agent( $ENV{HTTP_PROXY_AGENT} || ( "$0/$Tk::Wizard::Installer::VERSION " . $ua->agent ) );
 
-  if ( defined $args->{proxy} )
-    {
-    $proxy_user = $args->{HTTP_PROXY_USER};
-    $proxy_pass = $args->{HTTP_PROXY_PASS};
-    warn("_read_uri: calling env_proxy: $args->{http_proxy}")
-    if $self->{-debug};
-    $ua->env_proxy;
+    if ( defined $args->{proxy} ) {
+        $proxy_user = $args->{HTTP_PROXY_USER};
+        $proxy_pass = $args->{HTTP_PROXY_PASS};
+        warn("_read_uri: calling env_proxy: $args->{http_proxy}")
+          if $self->{-debug};
+        $ua->env_proxy;
     }
-  elsif ( defined $ENV{HTTP_PROXY} )
-    {
-    $proxy_user = $ENV{HTTP_PROXY_USER};
-    $proxy_pass = $ENV{HTTP_PROXY_PASS};
-    warn("_read_uri: calling env_proxy: $ENV{HTTP_proxy}") if $self->{-debug};
-    $ua->env_proxy;
+    elsif ( defined $ENV{HTTP_PROXY} ) {
+        $proxy_user = $ENV{HTTP_PROXY_USER};
+        $proxy_pass = $ENV{HTTP_PROXY_PASS};
+        warn("_read_uri: calling env_proxy: $ENV{HTTP_proxy}")
+          if $self->{-debug};
+        $ua->env_proxy;
     }
-  my $req = HTTP::Request->new( GET => $args->{uri} );
-  if ( defined $proxy_user and defined $proxy_pass )
-    {
-    warn(
-         "_read_uri: calling proxy_authorization_basic($proxy_user, $proxy_pass)"
-        ) if $self->{-debug};
-    $req->proxy_authorization_basic( $proxy_user, $proxy_pass );
-    } # if
-  # update the progress bar
-  ( $self->{response}, $self->{bytes_transferred} ) = ( undef, 0 );
-  $self->{response} = $ua->request( $req,
-                                    sub { &_lwp_callback( $self, $args->{bar}, @_ ) },
-                                    , 4096 );
-  if ( $self->{response} && $self->{response}->is_success )
-    {
-    my ( $dirs, $file ) = $args->{target} =~ /^(.*?)([^\\\/]+)$/;
-    if ( $dirs and $dirs !~ /^\.{1,2}$/ and !-d $dirs )
-      {
-      eval { File::Path::mkpath($dirs) };
-      if ($@)
-        {
-        croak "Could not make path $dirs : $!";
-        } # if
-      } # if
-    my $TARGET;
-    if (! open $TARGET, '>', $args->{target} )
-      {
-      warn("_read_uri: Couldn't open $args->{target} for writing")
-      if $self->{-debug};
-      $self->{errstr} = "Couldn't open $args->{target} for writing: $!\n";
-      return;
-      }
-    warn "# Writing to $args->{target}...\n" if $self->{-debug};
-    $TARGET->binmode;
-    $TARGET->print($self->{response}->content) or warn;
-    $TARGET->close or warn;
-    return 1;
-    } # if success
-  my $sMsg = "Error(2) reading $args->{uri}\n";
-  if ( $self->{response} )
-    {
-    $sMsg = join(' ', qq{Error(1) reading $args->{uri}:},
-                 $self->{response}->code,
-                 $self->{response}->message, "\n");
-    } # if
-  warn("_read_uri: $sMsg") if $self->{-debug};
-  $self->{errstr} = $sMsg;
-  return 0;
-  } # _read_uri
+    my $req = HTTP::Request->new( GET => $args->{uri} );
+    if ( defined $proxy_user and defined $proxy_pass ) {
+        warn("_read_uri: calling proxy_authorization_basic($proxy_user, $proxy_pass)") if $self->{-debug};
+        $req->proxy_authorization_basic( $proxy_user, $proxy_pass );
+    }    # if
+         # update the progress bar
+    ( $self->{response}, $self->{bytes_transferred} ) = ( undef, 0 );
+    $self->{response} = $ua->request( $req, sub { &_lwp_callback( $self, $args->{bar}, @_ ) },, 4096 );
+    if ( $self->{response} && $self->{response}->is_success ) {
+        my ( $dirs, $file ) = $args->{target} =~ /^(.*?)([^\\\/]+)$/;
+        if ( $dirs and $dirs !~ /^\.{1,2}$/ and !-d $dirs ) {
+            eval { File::Path::mkpath($dirs) };
+            if ($@) {
+                croak "Could not make path $dirs : $!";
+            }    # if
+        }    # if
+        my $TARGET;
+        if ( !open $TARGET, '>', $args->{target} ) {
+            warn("_read_uri: Couldn't open $args->{target} for writing")
+              if $self->{-debug};
+            $self->{errstr} = "Couldn't open $args->{target} for writing: $!\n";
+            return;
+        }
+        warn "# Writing to $args->{target}...\n" if $self->{-debug};
+        $TARGET->binmode;
+        $TARGET->print( $self->{response}->content ) or warn;
+        $TARGET->close                               or warn;
+        return 1;
+    }    # if success
+    my $sMsg = "Error(2) reading $args->{uri}\n";
+    if ( $self->{response} ) {
+        $sMsg =
+          join( ' ', qq{Error(1) reading $args->{uri}:}, $self->{response}->code, $self->{response}->message, "\n" );
+    }    # if
+    warn("_read_uri: $sMsg") if $self->{-debug};
+    $self->{errstr} = $sMsg;
+    return 0;
+}    # _read_uri
 
 # c/o PPM.pm
 sub _lwp_callback {
@@ -901,7 +854,7 @@ sub _lwp_callback {
     $self->{response} = $res;
     $self->{response}->add_content($data);
     $self->{bytes_transferred} += length $data;
-} # _lwp_callback
+}    # _lwp_callback
 
 =head1 CALLBACKS
 
@@ -937,7 +890,7 @@ sub callback_licence_agreement {
         exit;
     }
     return 1;
-} # callback_licence_agreement
+}    # callback_licence_agreement
 
 =head2 confirm_download_again
 
@@ -960,8 +913,7 @@ sub confirm_download_again {
           . " were not downloaded.\n\nWould you like to try again?",
     );
     return lc $button eq 'yes' ? 1 : 0;
-} # confirm_download_again
-
+}    # confirm_download_again
 
 =head2 confirm_download_quit
 
@@ -985,8 +937,7 @@ sub confirm_download_quit {
           . "Should the Installation process be aborted?",
     );
     $self->CloseWindowEventCycle if lc $button eq 'yes';
-} # confirm_download_quit
-
+}    # confirm_download_quit
 
 =head1 DIALOGUES
 
@@ -1002,9 +953,8 @@ sub DIALOGUE_really_quit {
     my $self = shift;
     return 0 if $self->{nextButton}->cget( -text ) eq $LABELS{FINISH};
     warn "# Installer DIALOGUE_really_quit  ...\n" if $self->{-debug};
-    unless ( $self->{really_quit} )
-      {
-      my $button = $self->parent->messageBox(
+    unless ( $self->{really_quit} ) {
+        my $button = $self->parent->messageBox(
             -icon    => 'question',
             -type    => 'yesno',
             -default => 'no',
@@ -1031,45 +981,45 @@ Asks if the user wishes to continue after file copy errors.
 
 =cut
 
-sub pre_install_files_quit
-  {
-  my ( $self, $failed ) = ( shift, shift );
-  warn "# pre_install_files_quit ...\n" if $self->{-debug};
- SHOW:
-  my $d = $self->Dialog(
-                        -bitmap  => 'error',
-                        -buttons => ['Yes', 'No', 'Details'],
-                        -default_button => 'no',
-                        -title   => 'Abort Installation?',
-                        -text    => "Failed to copy $failed file"
-                        . ( $failed != 1 ? "s" : "" ) . ".\n\n"
-                        . "Do you wish to continue anyway?",
-                       );
-  my $button = $d->Show;
-  if (lc $button eq 'details')
-    {
-    $self->messageBox(
-                      -title => 'File error details',
-                      -type => 'Ok',
-                      -icon => 'info',
-                      -message => join("\n", map { join(' ', $self->{-failed}->{$_}, $_) } keys %{$self->{-failed}}),
-                     );
-    goto SHOW;
+sub pre_install_files_quit {
+    my ( $self, $failed ) = ( shift, shift );
+    warn "# pre_install_files_quit ...\n" if $self->{-debug};
+  SHOW:
+    my $d = $self->Dialog(
+        -bitmap         => 'error',
+        -buttons        => [ 'Yes', 'No', 'Details' ],
+        -default_button => 'no',
+        -title          => 'Abort Installation?',
+        -text           => "Failed to copy $failed file"
+          . ( $failed != 1 ? "s" : "" ) . ".\n\n"
+          . "Do you wish to continue anyway?",
+    );
+    my $button = $d->Show;
+    if ( lc $button eq 'details' ) {
+        $self->messageBox(
+            -title   => 'File error details',
+            -type    => 'Ok',
+            -icon    => 'info',
+            -message => join(
+                "\n", map { join( ' ', $self->{-failed}->{$_}, $_ ) }
+                  keys %{ $self->{-failed} }
+            ),
+        );
+        goto SHOW;
     }
-  if ( lc $button eq 'no' )
-    {
-    warn "Won't continue....\n" if $self->{-debug};
-    $self->{cancelButton}->configure( -state => 'normal' );
-    $self->{cancelButton}->invoke;
+    if ( lc $button eq 'no' ) {
+        warn "Won't continue....\n" if $self->{-debug};
+        $self->{cancelButton}->configure( -state => 'normal' );
+        $self->{cancelButton}->invoke;
     }
-  else
-    {
-    warn "Will continue.\n" if $self->{-debug};
+    else {
+        warn "Will continue.\n" if $self->{-debug};
     }
-  # Clear out the error list so we don't inform the user twice about
-  # the same problem:
-  $self->{-failed} = undef;
-  } # pre_install_files_quit
+
+    # Clear out the error list so we don't inform the user twice about
+    # the same problem:
+    $self->{-failed} = undef;
+}    # pre_install_files_quit
 
 1;
 

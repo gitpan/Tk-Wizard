@@ -1,3 +1,10 @@
+2007-12-19	Lee
+
+	* Tweaks for clarity in preperation for use at GSK
+	* t/77_dirselect.t: removed warnings
+	* t/*: Various used the non-prerequisite IO::Capture::Stderr::Extended 
+	* */*: Perl tidy. Polite Dictat: Please maintain perldoc perlstyle; please avoid Hungarian notation.
+	
 2007-11-16    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard/Installer.pm (pre_install_files_quit): now user can get error details

@@ -5,34 +5,30 @@ use ExtUtils::testlib;
 use Test::More;
 use Tk;
 
-BEGIN
-  {
-  my $mwTest;
-  eval { $mwTest = Tk::MainWindow->new };
-  if ($@)
-    {
-    plan skip_all => 'Test irrelevant without a display';
+BEGIN {
+    my $mwTest;
+    eval { $mwTest = Tk::MainWindow->new };
+    if ($@) {
+        plan skip_all => 'Test irrelevant without a display';
     }
-  else
-    {
-    plan tests => 35;
+    else {
+        plan tests => 35;
     }
-  $mwTest->destroy if Tk::Exists($mwTest);
-  use_ok('Tk::Wizard');
-  } # end of BEGIN block
+    $mwTest->destroy if Tk::Exists($mwTest);
+    use_ok('Tk::Wizard');
+}    # end of BEGIN block
 
 my $VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my @out;
 my $Wait = 100;
 
-
 foreach my $style (qw[ top 95 ]) {
     my $wizard = Tk::Wizard->new(
         -debug => undef,
         -style => $style,
     );
-    isa_ok( $wizard, 'Tk::Wizard');
+    isa_ok( $wizard, 'Tk::Wizard' );
     ok(
         $wizard->configure(
             -preNextButtonAction   => sub { &preNextButtonAction($wizard) },

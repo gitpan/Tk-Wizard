@@ -8,24 +8,21 @@ my $VERSION = do { my @r = ( q$Revision: 1.15 $ =~ /\d+/g ); sprintf "%d." . "%0
 
 use ExtUtils::testlib;
 use File::Path;
-use Test::More ;
+use Test::More;
 use Tk;
 
-BEGIN
-  {
-  my $mwTest;
-  eval { $mwTest = Tk::MainWindow->new };
-  if ($@)
-    {
-    plan skip_all => 'Test irrelevant without a display';
+BEGIN {
+    my $mwTest;
+    eval { $mwTest = Tk::MainWindow->new };
+    if ($@) {
+        plan skip_all => 'Test irrelevant without a display';
     }
-  else
-    {
-    plan "no_plan"; # TODO Can't count tests atm
+    else {
+        plan "no_plan";    # TODO Can't count tests atm
     }
-  $mwTest->destroy if Tk::Exists($mwTest);
-  use_ok("Tk::Wizard::Installer");
-  } # end of BEGIN block
+    $mwTest->destroy if Tk::Exists($mwTest);
+    use_ok("Tk::Wizard::Installer");
+}    # end of BEGIN block
 
 my $WAIT   = $ENV{TEST_INTERACTIVE} ? 0 : 111;
 my @asFrom = qw( 1 2 );
@@ -45,8 +42,7 @@ for (@asFrom) {
     local *OUT;
     ok( open( OUT, '>', $sFrom ), qq'opened $sFrom for write' ) or bail_out($!);
     ok(
-        print( OUT
-"Tk::Wizard::Installer Test. Please ignore or delete.\n\nThis is file $_\n\n"
+        print( OUT "Tk::Wizard::Installer Test. Please ignore or delete.\n\nThis is file $_\n\n"
               . scalar(localtime) . "\n\n"
         ),
         qq'wrote contents to $sFrom'
@@ -60,35 +56,29 @@ for (@asDest) {
     # Make sure destination files to NOT exist:
     ok( !-e $sDest, qq'destination file $sDest does not exist before test' );
 }    # for 3,4
-if ($ENV{TEST_INTERACTIVE})
-  {
-  # Add some stuff that will fail, so we can see what exactly happens:
-  unshift @asFrom, 'no_such_file';
-  unshift @asDest, 'no_such_dir';
-  } # if
+if ( $ENV{TEST_INTERACTIVE} ) {
+
+    # Add some stuff that will fail, so we can see what exactly happens:
+    unshift @asFrom, 'no_such_file';
+    unshift @asDest, 'no_such_dir';
+}    # if
 
 my $iPageCount = 0;
 my $wizard = Tk::Wizard::Installer->new( -title => "Installer Test", );
 isa_ok( $wizard, 'Tk::Wizard::Installer' );
 isa_ok( $wizard->parent, "Tk::MainWindow", "Parent" );
 
-ok(
-   $wizard->configure(
-                      -finishButtonAction  => sub { ok( 1, 'Finished' ); 1 },
-                     ),
-   'Configured'
-  );
-isa_ok( $wizard->cget( -finishButtonAction ),  "Tk::Callback" );
+ok( $wizard->configure( -finishButtonAction => sub { ok( 1, 'Finished' ); 1 }, ), 'Configured' );
+isa_ok( $wizard->cget( -finishButtonAction ), "Tk::Callback" );
 
 # Create pages
 #
 my $SPLASH = $wizard->addSplashPage(
-                                    -wait  => $WAIT,
-                                    -title => "Installer Test",
-                                    -subtitle =>
-                                    "Testing Tk::Wizard::Installer $Tk::Wizard::Installer::VERSION",
-                                    -text => "Test Installer's addFileListPage feature for RT #19300."
-                                   );
+    -wait     => $WAIT,
+    -title    => "Installer Test",
+    -subtitle => "Testing Tk::Wizard::Installer $Tk::Wizard::Installer::VERSION",
+    -text     => "Test Installer's addFileListPage feature for RT #19300."
+);
 is( $SPLASH, 1, 'Splash page is first' );
 $iPageCount++;
 ok(
@@ -117,9 +107,9 @@ ok(
 $iPageCount++;
 ok(
     $wizard->addFileListPage(
-                             -slowdown => $ENV{TEST_INTERACTIVE} ? 2000 : 0,
-        -wait => $WAIT,
-        -copy => 1,
+        -slowdown => $ENV{TEST_INTERACTIVE} ? 2000 : 0,
+        -wait     => $WAIT,
+        -copy     => 1,
         -from => [ map { "$testdir/$_" } @asFrom ],
         -to   => [ map { "$testdir/$_" } @asDest ],
     ),
@@ -127,21 +117,20 @@ ok(
 );
 $iPageCount++;
 ok(
-   $wizard->addSplashPage(
-                          -wait     => $WAIT,
-                          -title    => "Finished",
-                          -subtitle => "Click 'Finish' to kill the Wizard.",
-                          -text     => "Please report bugs via rt.cpan.org"
-                         ),
-   'Added finish page'
-  );
+    $wizard->addSplashPage(
+        -wait     => $WAIT,
+        -title    => "Finished",
+        -subtitle => "Click 'Finish' to kill the Wizard.",
+        -text     => "Please report bugs via rt.cpan.org"
+    ),
+    'Added finish page'
+);
 $iPageCount++;
 
 isa_ok( $wizard->{wizardPageList}, 'ARRAY', 'Page list array' );
 is( scalar( @{ $wizard->{wizardPageList} } ), $iPageCount, 'Number of pages' );
 foreach my $iPage ( 1 .. $iPageCount ) {
-    isa_ok( $wizard->{wizardPageList}->[ $iPage - 1 ],
-        'CODE', qq'Page $iPage in list' );
+    isa_ok( $wizard->{wizardPageList}->[ $iPage - 1 ], 'CODE', qq'Page $iPage in list' );
 }    # foreach
 
 ok( $wizard->Show, "Show" );

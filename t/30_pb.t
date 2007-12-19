@@ -7,38 +7,37 @@ my $VERSION = do { my @r = ( q$Revision: 1.10 $ =~ /\d+/g ); sprintf "%d." . "%0
 
 use Cwd;
 use ExtUtils::testlib;
-use Test::More ;
+use Test::More;
 use Tk;
 
-BEGIN
-  {
-  my $mwTest;
-  eval { $mwTest = Tk::MainWindow->new };
-  if ($@)
-    {
-    plan skip_all => 'Test irrelevant without a display';
+BEGIN {
+    my $mwTest;
+    eval { $mwTest = Tk::MainWindow->new };
+    if ($@) {
+        plan skip_all => 'Test irrelevant without a display';
     }
-  else
-    {
-    plan tests => 8;
+    else {
+        plan tests => 8;
     }
-  $mwTest->destroy if Tk::Exists($mwTest);
-  use_ok('Tk::Wizard');
-  use_ok('Tk::ProgressBar');
-  } # end of BEGIN block
+    $mwTest->destroy if Tk::Exists($mwTest);
+    use_ok('Tk::Wizard');
+    use_ok('Tk::ProgressBar');
+}    # end of BEGIN block
 
 our $PB;     # Index number of page
 our $bar;    # Progress bar
 
 my $wizard = new Tk::Wizard(
-                            # -debug => 3,
-                            -title => "ProgressBar Test",
-                           );
+
+    # -debug => 3,
+    -title => "ProgressBar Test",
+);
 isa_ok( $wizard, "Tk::Wizard" );
 $wizard->configure(
     -postNextButtonAction => sub { &postNextButtonAction($wizard); },
     -preNextButtonAction  => sub { &preNextButtonAction($wizard); },
-                   # -finishButtonAction   => sub { ok(1); $wizard->destroy; 1; },
+
+    # -finishButtonAction   => sub { ok(1); $wizard->destroy; 1; },
 );
 isa_ok( $wizard->cget( -preNextButtonAction ), "Tk::Callback" );
 
@@ -56,8 +55,7 @@ sub page_splash {
     my $frame  = $wizard->blank_frame(
         -wait  => 1,
         -title => "Welcome to the Wizard Test 'pb'",
-        -text =>
-"This script tests and hopefully demonstrates the 'postNextButtonAction' feature.\n\n"
+        -text  => "This script tests and hopefully demonstrates the 'postNextButtonAction' feature.\n\n"
           . "When you click Next, a Tk::ProgressBar widget should slowly be udpated."
           . "\n\nHowever in the test, the -wait flag means you don't have to..."
     );
@@ -78,11 +76,10 @@ sub pb {
     my $wizard = shift;
     my $frame  = $wizard->blank_frame(
 
-      # -wait => 1, ### Using this with a progress bar really messes things up!,
+        # -wait => 1, ### Using this with a progress bar really messes things up!,
         -title    => "postNextButtonAction Test",
         -subtitle => "Updating a progress bar in real-time",
-        -text =>
-"The bar should fill, thanks to calling the 'update' method upon the Wizard, "
+        -text     => "The bar should fill, thanks to calling the 'update' method upon the Wizard, "
           . "and the Next button should only become available when the job is done."
     );
     $frame->configure( -bg => 'magenta' );    # for debugging

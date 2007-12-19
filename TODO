@@ -1,7 +1,8 @@
 Tk::Wizard TODO
 
+* Default sizes are now off: see the test suite
+
 * Fit text to pages, with scrollbars?
 
 * TaskList background when coloured
 
-$Id: TODO,v 1.3 2007/09/11 03:05:38 martinthurn Exp $

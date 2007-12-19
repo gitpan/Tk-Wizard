@@ -6,8 +6,7 @@ package Tk::Wizard::Installer::Sizer;
 use strict;
 use warnings;
 
-our
-$VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -59,26 +58,30 @@ Create a new Sizer wizard.
 
 =cut
 
-sub new
-  {
-  my $class = shift;
-  # This is NOT a clone mechanism:
-  return if ref($class);
-  # Our arguments are exactly the same as Tk::Wizard::Installer::new:
-  my $oWiz = $class->SUPER::new(@_);
-  # Make sure the window is resizable!
-  $oWiz->{Configure}{-resizable} = 1;
-  # Make sure the window does not auto-forward:
-  $oWiz->{Configure}{-wait} = 0;
-  # Add our size adder-upper:
-  $oWiz->configure(
-                   -preNextButtonAction  => sub { $oWiz->_prenext() },
-                   -finishButtonAction  => sub { $oWiz->_finish() },
-                  );
-  $oWiz->{_max_width_} = -999;
-  $oWiz->{_max_height_} = -999;
-  return bless $oWiz, __PACKAGE__;
-  } # new
+sub new {
+    my $class = shift;
+
+    # This is NOT a clone mechanism:
+    return if ref($class);
+
+    # Our arguments are exactly the same as Tk::Wizard::Installer::new:
+    my $oWiz = $class->SUPER::new(@_);
+
+    # Make sure the window is resizable!
+    $oWiz->{Configure}{-resizable} = 1;
+
+    # Make sure the window does not auto-forward:
+    $oWiz->{Configure}{ -wait } = 0;
+
+    # Add our size adder-upper:
+    $oWiz->configure(
+        -preNextButtonAction => sub { $oWiz->_prenext() },
+        -finishButtonAction  => sub { $oWiz->_finish() },
+    );
+    $oWiz->{_max_width_}  = -999;
+    $oWiz->{_max_height_} = -999;
+    return bless $oWiz, __PACKAGE__;
+}    # new
 
 1;
 

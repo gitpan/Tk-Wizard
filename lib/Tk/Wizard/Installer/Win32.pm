@@ -7,15 +7,14 @@ use strict;
 
 use Carp;
 use Cwd;
-use Data::Dumper; # for debugging only
+use Data::Dumper;    # for debugging only
 use File::Path;
 use Exporter;
 use Tk::Wizard::Installer;
 use base 'Tk::Wizard::Installer';
 my @EXPORT = ("MainLoop");
 
-our
-$VERSION = do { my @r = ( q$Revision: 2.14 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.14 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use constant DEBUG_FRAME => 0;
 
@@ -167,15 +166,13 @@ sub register_with_windows {
     }
 
     if ( not $args->{UninstallString} and not $args->{app_path} ) {
-        die __PACKAGE__
-          . "::register_with_windows requires either argument 'app_path' or 'UninstallString' be set.";
+        die __PACKAGE__ . "::register_with_windows requires either argument 'app_path' or 'UninstallString' be set.";
     }
     if ( $args->{app_path} ) {
         $args->{app_path} = "perl -e '$args->{app_path} -u'";
     }
     my $uninst_key_ref =
-      $Registry->{
-        'LMachine/SOFTWARE/Microsoft/Windows/CurrentVersion/Uninstall/'}
+      $Registry->{'LMachine/SOFTWARE/Microsoft/Windows/CurrentVersion/Uninstall/'}
       ->CreateKey( $args->{uninstall_key_name} );
     die "Perl Win32::TieRegistry error" if !$uninst_key_ref;
 
@@ -186,7 +183,7 @@ sub register_with_windows {
     return 1;
 
     # return $!? undef : 1;
-} # register_with_windows
+}    # register_with_windows
 
 =head2 addStartMenuPage
 
@@ -273,8 +270,9 @@ suggestions welcomed for a better idea.
 
 =cut
 
-sub addStartMenuPage { my ($self,$args) = (shift,{@_});
-	return $self->addPage( sub { $self->_page_start_menu($args)  } );
+sub addStartMenuPage {
+    my ( $self, $args ) = ( shift, {@_} );
+    return $self->addPage( sub { $self->_page_start_menu($args) } );
 }
 
 sub _page_start_menu {
@@ -296,9 +294,9 @@ sub _page_start_menu {
     $args->{-relief}     = 'sunken' unless exists $args->{-relief};
     $args->{-border}     = 1        unless exists $args->{-border};
     $args->{-listHeight} = 10       unless exists $args->{-listHeight};
-    $args->{-title} ||= "Create Shortcuts";
+    $args->{-title}    ||= "Create Shortcuts";
     $args->{-subtitle} ||= "Please select where to place an icon on the start menu";
-    $args->{-text} ||= "
+    $args->{-text}     ||= "
 If you want the new Program Group to be installed within an existing
 folder in your Start Menu, select that folder below.
 If you do not want to install the new Program in your Start Folder,
@@ -328,14 +326,11 @@ check the checkbox below.";
     delete $args->{-program_group};
 
     my $frame = $self->blank_frame(%$args);
-    DEBUG_FRAME && $frame->configure(-background => 'blue');
+    DEBUG_FRAME && $frame->configure( -background => 'blue' );
 
     if ( $Win32::VERSION gt 0.1999999 ) {
-        $self->{startmenu_dir_current} =
-          eval('Win32::GetFolderPath(Win32::CSIDL_STARTMENU)') . '\Programs';
-        $self->{startmenu_dir_common} =
-          eval('Win32::GetFolderPath(Win32::CSIDL_COMMON_STARTMENU)')
-          . '\Programs';
+        $self->{startmenu_dir_current} = eval('Win32::GetFolderPath(Win32::CSIDL_STARTMENU)') . '\Programs';
+        $self->{startmenu_dir_common}  = eval('Win32::GetFolderPath(Win32::CSIDL_COMMON_STARTMENU)') . '\Programs';
     }
 
     # The above may not work if non-standard/non-English setup, so:
@@ -352,128 +347,128 @@ check the checkbox below.";
             return undef;
         }
     }
+
     # The default is to install for all users:
     my $sDirParent = $self->{startmenu_dir_common};
-    if ($args->{-user} eq 'current')
-      {
-      $sDirParent = $self->{startmenu_dir_current};
-      } # if
-    # This is the default answer, if the user just clicks "Next":
+    if ( $args->{-user} eq 'current' ) {
+        $sDirParent = $self->{startmenu_dir_current};
+    }    # if
+         # This is the default answer, if the user just clicks "Next":
     $$variable = "$sDirParent\\$group";
+
     # Recursively read the Start Menu folder, building up a list of
     # all folders in there:
     my @asTry = ($sDirParent);
     my @asDir;
- TRY_DIR:
-    while (@asTry)
-      {
-      # $sTry is the FULL path of this folder:
-      my $sTry = shift @asTry;
-      next TRY_DIR if ! -d $sTry;
-      push @asDir, $sTry;
-      opendir DIR, $sTry or croak " EEE can not open the start menu ($sTry): $!";
-      my @asTryChildren = sort readdir DIR;
-      local $" = ',';
-      # print STDERR " DDD asTryChildren = (@asTryChildren)\n";
-      push @asTry, grep { ! m/^\.\.?$/ && s/^(.*)$/$sTry\\$1/ && -d  } @asTryChildren;
-      closedir DIR or warn;
-      } # while TRY_DIR
+  TRY_DIR:
+    while (@asTry) {
+
+        # $sTry is the FULL path of this folder:
+        my $sTry = shift @asTry;
+        next TRY_DIR if !-d $sTry;
+        push @asDir, $sTry;
+        opendir DIR, $sTry
+          or croak " EEE can not open the start menu ($sTry): $!";
+        my @asTryChildren = sort readdir DIR;
+        local $" = ',';
+
+        # print STDERR " DDD asTryChildren = (@asTryChildren)\n";
+        push @asTry, grep { !m/^\.\.?$/ && s/^(.*)$/$sTry\\$1/ && -d } @asTryChildren;
+        closedir DIR or warn;
+    }    # while TRY_DIR
     my $text = $frame->Label(
-                             -justify      => 'left',
-                             -textvariable => $variable,
-                             -anchor       => 'w',
-                             %$common_args,
-                            )->pack(
-                                    -side   => 'top',
-                                    -anchor => 'w',
-                                    -fill   => 'x',
-                                    -padx   => 10,
-                                   );
-    DEBUG_FRAME && $text->configure(-background => 'magenta');
-    my $hlist = $frame->Scrolled('HList',
-                                   -scrollbars => "osoe",
-                                   -selectmode => 'single',
-                                   -height     => $args->{-listHeight},
-                                   -itemtype   => 'text',
-                                   -separator  => '\\',
-                                   -browsecmd  => sub {
-                                     $$variable = shift;
-                                     $$variable .= "\\" . $group if $group;
-                                     },
-                                   %$common_args,
-                                  )->pack(
-                                          -expand => 1,
-                                          -fill => 'both',
-                                          -padx => 10,
-                                          -pady => 5,
-                                         ); # HList
-    DEBUG_FRAME && $hlist->configure(-background => 'yellow');
-    foreach my $i (@asDir)
-      {
-      my $t = $i;
-      $t =~ s!\Q$sDirParent!!;
-      $t =~ s!\A\\!!;
-      if (! $hlist->info( "exists", $t ) )
-        {
-        # print STDERR " DDD trying to add i=$i= t=$t= to hlist...\n";
-        $hlist->add(
-                      $t,
-                      -text => $t,
-                      -data => $i,
-                     );
+        -justify      => 'left',
+        -textvariable => $variable,
+        -anchor       => 'w',
+        %$common_args,
+      )->pack(
+        -side   => 'top',
+        -anchor => 'w',
+        -fill   => 'x',
+        -padx   => 10,
+      );
+    DEBUG_FRAME && $text->configure( -background => 'magenta' );
+    my $hlist = $frame->Scrolled(
+        'HList',
+        -scrollbars => "osoe",
+        -selectmode => 'single',
+        -height     => $args->{-listHeight},
+        -itemtype   => 'text',
+        -separator  => '\\',
+        -browsecmd  => sub {
+            $$variable = shift;
+            $$variable .= "\\" . $group if $group;
+        },
+        %$common_args,
+      )->pack(
+        -expand => 1,
+        -fill   => 'both',
+        -padx   => 10,
+        -pady   => 5,
+      );    # HList
+    DEBUG_FRAME && $hlist->configure( -background => 'yellow' );
+    foreach my $i (@asDir) {
+        my $t = $i;
+        $t =~ s!\Q$sDirParent!!;
+        $t =~ s!\A\\!!;
+        if ( !$hlist->info( "exists", $t ) ) {
+
+            # print STDERR " DDD trying to add i=$i= t=$t= to hlist...\n";
+            $hlist->add(
+                 $t,
+                -text => $t,
+                -data => $i,
+            );
         }
-      } # foreach
+    }    # foreach
     $self->{_hlist_active_} = 0;
-    $self->_toggle_hlist($hlist, $variable, $group);
-    if (! $args->{-disable_nochoice} )
-      {
-      my $b = $frame->Checkbutton(
-                                  -text    => $args->{-label_nochoice},
-                                  -anchor  => 'w',
-                                  -command => [\&_toggle_hlist,
-                                               $self, $hlist, $variable, $group],
-                                 )->pack(
-                                         -side => 'left',
-                                         -anchor => 'w',
-                                         -padx => 10,
-                                         -pady => 5,
-                                        ); # Checkbutton
-      DEBUG_FRAME && $b->configure(-background => 'red');
-      } # if
+    $self->_toggle_hlist( $hlist, $variable, $group );
+    if ( !$args->{-disable_nochoice} ) {
+        my $b = $frame->Checkbutton(
+            -text    => $args->{-label_nochoice},
+            -anchor  => 'w',
+            -command => [ \&_toggle_hlist, $self, $hlist, $variable, $group ],
+          )->pack(
+            -side   => 'left',
+            -anchor => 'w',
+            -padx   => 10,
+            -pady   => 5,
+          );    # Checkbutton
+        DEBUG_FRAME && $b->configure( -background => 'red' );
+    }    # if
     return $frame;
-    } # _page_start_menu
+}    # _page_start_menu
 
-sub _toggle_hlist
-  {
-  my $self = shift;
-  # Required arg1 = the Scrolled HList widget:
-  my $hlist = shift || return;
-  # Required arg2 = reference to variable that HList is bound to:
-  my $rs = shift || return;
-  # Optional arg3 = the group string being added onto the path:
-  my $group = shift;
-  $self->{_hlist_active_} = ! $self->{_hlist_active_};
-  my $w = $hlist->Subwidget('scrolled');
-  if ( ! $self->{_hlist_active_} )
-    {
-    $$rs = '';
-    # Deactivate the entire HList.  HList does not support the
-    # -state configuration option, therefore we use the bindtags
-    # "hack":
-    $self->{_hlist_bindtags_} = $w->bindtags;
-    $w->bindtags(['Freeze']);
+sub _toggle_hlist {
+    my $self = shift;
+
+    # Required arg1 = the Scrolled HList widget:
+    my $hlist = shift || return;
+
+    # Required arg2 = reference to variable that HList is bound to:
+    my $rs = shift || return;
+
+    # Optional arg3 = the group string being added onto the path:
+    my $group = shift;
+    $self->{_hlist_active_} = !$self->{_hlist_active_};
+    my $w = $hlist->Subwidget('scrolled');
+    if ( !$self->{_hlist_active_} ) {
+        $$rs = '';
+
+        # Deactivate the entire HList.  HList does not support the
+        # -state configuration option, therefore we use the bindtags
+        # "hack":
+        $self->{_hlist_bindtags_} = $w->bindtags;
+        $w->bindtags( ['Freeze'] );
     }
-  else
-    {
-    $$rs = $hlist->info('anchor');
-    $$rs .= "\\" . $group if $group;
-    if ($self->{_hlist_bindtags_})
-      {
-      $w->bindtags($self->{_hlist_bindtags_});
-      } # if
-    } # else
-  } # toggle_hlist
-
+    else {
+        $$rs = $hlist->info('anchor');
+        $$rs .= "\\" . $group if $group;
+        if ( $self->{_hlist_bindtags_} ) {
+            $w->bindtags( $self->{_hlist_bindtags_} );
+        }    # if
+    }    # else
+}    # toggle_hlist
 
 =head1 CALLBACKS
 
@@ -553,8 +548,7 @@ sub callback_create_shortcut {
     my ( $self, $args ) = ( shift, {@_} );
     croak "-target is required (you gave " . ( join ", ", keys %$args ) . ")"
       unless defined $args->{-target};
-    croak "-save_path is required  (you gave "
-      . ( join ", ", keys %$args ) . ")"
+    croak "-save_path is required  (you gave " . ( join ", ", keys %$args ) . ")"
       unless defined $args->{-save_path};
     $args->{-arguments}   = '' unless exists $args->{-arguments};
     $args->{-description} = '' unless exists $args->{-description};
@@ -585,14 +579,13 @@ sub callback_create_shortcut {
     }
     my $s = new Win32::Shortcut;
     $s->Set(
-        $args->{-target},      $args->{-arguments}, $args->{-workingdir},
-        $args->{-description}, $args->{-show},      $args->{-hotkey},
-        $args->{-iconpath},    $args->{-iconindex},
+        $args->{-target}, $args->{-arguments}, $args->{-workingdir}, $args->{-description},
+        $args->{-show},   $args->{-hotkey},    $args->{-iconpath},   $args->{-iconindex},
     );
     my $r = $s->Save( $args->{-save_path} ) ? $args->{-save_path} : undef;
     $s->Close;
     return $r;
-} # callback_create_shortcut
+}    # callback_create_shortcut
 
 =head2 callback_create_shortcuts
 
@@ -615,14 +608,12 @@ sub callback_create_shortcuts {
         $self->callback_create_shortcut(%$_);
     }
     return wantarray ? @paths : \@paths;
-} # callback_create_shortcuts
+}    # callback_create_shortcuts
 
-
-sub Tk::Error::RedefineIfNeeded
-  {
-  local $\ = "\n";
-  print STDERR @_;
-  }
+sub Tk::Error::RedefineIfNeeded {
+    local $\ = "\n";
+    print STDERR @_;
+}
 
 1;
 

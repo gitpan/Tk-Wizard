@@ -6,8 +6,7 @@ package Tk::Wizard::Sizer;
 use strict;
 use warnings;
 
-our
-$VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -57,53 +56,54 @@ Create a new Sizer wizard.
 
 =cut
 
-sub new
-  {
-  my $class = shift;
-  # This is NOT a clone mechanism:
-  return if ref($class);
-  # Our arguments are exactly the same as Tk::Wizard::new:
-  my $oWiz = $class->SUPER::new(@_);
-  # Make sure the window is resizable!
-  $oWiz->{Configure}{-resizable} = 1;
-  # Make sure the window does not auto-forward:
-  $oWiz->{Configure}{-wait} = 0;
-  # Add our size adder-upper:
-  $oWiz->configure(
-                   -preNextButtonAction  => sub { &_prenext($oWiz) },
-                   -finishButtonAction  => sub { &_finish($oWiz) },
-                  );
-  $oWiz->{_max_width_} = -999;
-  $oWiz->{_max_height_} = -999;
-  return bless $oWiz, 'Tk::Wizard::Sizer';
-  } # new
+sub new {
+    my $class = shift;
 
-sub _prenext
-  {
-  my $self = shift;
-  my $iW = $self->{wizardFrame}->width;
-  my $iH = $self->{wizardFrame}->height;
-  if ($self->{_max_width_} < $iW)
-    {
-    $self->{_max_width_} = $iW;
-    } # if
-  if ($self->{_max_height_} < $iH)
-    {
-    $self->{_max_height_} = $iH;
-    } # if
-  printf STDOUT (qq{For page #%d ("%s"), final dimensions were:\n},
-                 $self->{wizardPagePtr},
-                 $self->{frame_titles}->[$self->{wizardPagePtr}],
-                );
-  print STDOUT "  -width => $iW, -height => $iH,\n";
-  } # _prenext
+    # This is NOT a clone mechanism:
+    return if ref($class);
 
-sub _finish
-  {
-  my $self = shift;
-  printf STDOUT qq{Dimensions of the smallest area that will contain ALL pages are:\n};
-  print STDOUT "  -width => $self->{_max_width_}, -height => $self->{_max_height_},\n";
-  } # _finish
+    # Our arguments are exactly the same as Tk::Wizard::new:
+    my $oWiz = $class->SUPER::new(@_);
+
+    # Make sure the window is resizable!
+    $oWiz->{Configure}{-resizable} = 1;
+
+    # Make sure the window does not auto-forward:
+    $oWiz->{Configure}{ -wait } = 0;
+
+    # Add our size adder-upper:
+    $oWiz->configure(
+        -preNextButtonAction => sub { &_prenext($oWiz) },
+        -finishButtonAction  => sub { &_finish($oWiz) },
+    );
+    $oWiz->{_max_width_}  = -999;
+    $oWiz->{_max_height_} = -999;
+    return bless $oWiz, 'Tk::Wizard::Sizer';
+}    # new
+
+sub _prenext {
+    my $self = shift;
+    my $iW   = $self->{wizardFrame}->width;
+    my $iH   = $self->{wizardFrame}->height;
+    if ( $self->{_max_width_} < $iW ) {
+        $self->{_max_width_} = $iW;
+    }    # if
+    if ( $self->{_max_height_} < $iH ) {
+        $self->{_max_height_} = $iH;
+    }    # if
+    printf STDOUT (
+        qq{For page #%d ("%s"), final dimensions were:\n},
+        $self->{wizardPagePtr},
+        $self->{frame_titles}->[ $self->{wizardPagePtr} ],
+    );
+    print STDOUT "  -width => $iW, -height => $iH,\n";
+}    # _prenext
+
+sub _finish {
+    my $self = shift;
+    printf STDOUT qq{Dimensions of the smallest area that will contain ALL pages are:\n};
+    print STDOUT "  -width => $self->{_max_width_}, -height => $self->{_max_height_},\n";
+}    # _finish
 
 1;
 

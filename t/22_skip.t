@@ -9,21 +9,18 @@ use ExtUtils::testlib;
 use Test::More;
 use Tk;
 
-BEGIN
-  {
-  my $mwTest;
-  eval { $mwTest = Tk::MainWindow->new };
-  if ($@)
-    {
-    plan skip_all => 'Test irrelevant without a display';
+BEGIN {
+    my $mwTest;
+    eval { $mwTest = Tk::MainWindow->new };
+    if ($@) {
+        plan skip_all => 'Test irrelevant without a display';
     }
-  else
-    {
-    plan "no_plan"; # TODO Can't count tests atm
+    else {
+        plan "no_plan";    # TODO Can't count tests atm
     }
-  $mwTest->destroy if Tk::Exists($mwTest);
-  use_ok('Tk::Wizard');
-  } # end of BEGIN block
+    $mwTest->destroy if Tk::Exists($mwTest);
+    use_ok('Tk::Wizard');
+}    # end of BEGIN block
 
 my $VERSION = do { my @r = ( q$Revision: 1.4 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
@@ -43,8 +40,7 @@ foreach ( 1 .. 5 ) {
                     -wait     => 100,
                     -title    => "Title One",
                     -subtitle => "It's just a test",
-                    -text =>
-                      "This Wizard is a simple test of the Skip mechanism.",
+                    -text     => "This Wizard is a simple test of the Skip mechanism.",
                 );
             },
         )
@@ -71,7 +67,7 @@ ok(
                 -wait     => 100,
                 -title    => "Title One",
                 -subtitle => "It's just a test",
-                -text => "This Wizard is a simple test of the Skip mechanism.",
+                -text     => "This Wizard is a simple test of the Skip mechanism.",
             );
         },
     )
