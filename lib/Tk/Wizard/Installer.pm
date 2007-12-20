@@ -5,8 +5,8 @@ package Tk::Wizard::Installer;
 
 use strict;
 use warnings;
-
-our $VERSION = do { my @r = ( q$Revision: 2.28 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+use vars '$VERSION';
+$VERSION = do { my @r = ( q$Revision: 2.28 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -31,6 +31,19 @@ Tk::Wizard::Installer - building-blocks for a software install wizard
   MainLoop;
 
 =cut
+
+BEGIN {
+	eval { require Log::Log4perl; };
+	if($@) {
+		no strict qw(refs);
+		*{"main::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+	} else {
+		no warnings;
+		require Log::Log4perl::Level;
+		Log::Log4perl::Level->import(__PACKAGE__);
+		Log::Log4perl->import(":easy");
+	}
+}
 
 use Carp;
 use Cwd;
@@ -124,10 +137,13 @@ sub addLicencePage {
 
 sub _page_licence_agreement {
     my ( $self, $args ) = ( shift, shift );
+
     DEBUG_FUNC && print STDERR " FFF _page_licence_agreement\n";
+
     my $padx = $self->cget( -style ) eq 'top' ? 30 : 5;
     $self->{licence_agree} = undef;
     my $sFname = $args->{-filepath};
+
     my $text   = read_file($sFname)
       or croak "Could not read licence from $sFname: $!";
 
@@ -178,9 +194,11 @@ sub _page_licence_agreement {
     # Setting -background to undef causes core dump deep inside Tk!
     $opts2{-background} = $self->cget("-background")
       if $self->cget("-background");
+
     $opts2{-underline} = 5;    # 6th character = 'N' of 'Not'
     $self->bind( '<Alt-n>' => sub { ${ $self->{licence_agree} } = 0 } );
     $frame->Radiobutton(%opts2)->pack( -padx => $padx, -anchor => 'w', );
+
     if ( $args->{ -wait } ) {
         Tk::Wizard::_fix_wait( \$args->{ -wait } );
 
@@ -194,7 +212,7 @@ sub _page_licence_agreement {
         );
     }    # if WAIT
     return $frame;
-}    # _page_licence_agreement
+}
 
 =head2 addFileListPage
 

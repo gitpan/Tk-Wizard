@@ -6,6 +6,7 @@ use ExtUtils::testlib;
 use FileHandle;
 use Test::More;
 use Tk;
+use lib "../lib";
 
 BEGIN {
 	my $mwTest;

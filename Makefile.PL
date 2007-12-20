@@ -5,7 +5,7 @@ use inc::Module::Install;
 
 name('Tk-Wizard');
 abstract('GUI for step-by-step interactive logical process');
-version(2.123);
+version(2.124);
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');
 
@@ -18,7 +18,6 @@ build_requires("File::Path");
 requires("File::Slurp");
 requires("File::Spec");
 build_requires("FileHandle");
-build_requires("IO::Capture::Extended");
 requires("IO::Handle");
 
 recommends('IO::Capture::Stderr::Extended');
@@ -43,7 +42,7 @@ requires("Tk::MainWindow");
 requires("Tk::ProgressBar");
 requires("Tk::ROText");
 
-if ( $^O =~ m/(MSWin32|cygwin)/i ) {
+if ( $^O =~ m/(MSWin32)/i ) {
     requires('Win32::Shortcut');
     requires('Win32::TieRegistry');
 

@@ -2,32 +2,30 @@
 
 use strict;
 use warnings;
+our $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use Test::More;
 
-my $sMod;
-
 BEGIN {
     use lib "../lib";
-    $sMod = 'Tk::Wizard::Installer::Win32::Sizer';
-    if ( $^O !~ m!win!i ) {
-        plan 'skip_all' => 'This is not Windows';
-    }    # if
-    plan 'no_plan';
+    if ( $^O !~ m/mswin32/i ) {
+        plan 'skip_all' => 'You are not Windows, you lucky box';
+    } else {
+    	plan 'no_plan';
+	}
     use_ok('Tk::Wizard');
-    use_ok($sMod);
-}    # end of BEGIN block
+    use_ok('Tk::Wizard::Installer::Win32');
+}
 
-our $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 pass('before new');
-my $w = new $sMod(
+my $w = Tk::Wizard::Installer::Win32->new(
 
     # -debug => 3,
     -height => 360,
 );
-isa_ok( $w, $sMod );
+isa_ok( $w, "Tk::Wizard::Installer::Win32" );
 is(
     $w->addSplashPage(
         -wait  => 444,

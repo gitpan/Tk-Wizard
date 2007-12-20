@@ -6,11 +6,11 @@ use Cwd;
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
+use lib "../lib";
 
 BEGIN {
-    my $no_cap;
-    eval { require "IO::Capture::Stderr::Extended" };
-    if ( defined $@ ) {
+    eval { require IO::Capture::Stderr::Extended };
+    if ( $@ ) {
         plan skip_all => 'Test requires IO::Capture::Stderr::Extended';
     }
     else {
@@ -23,14 +23,14 @@ BEGIN {
             plan tests => 26;
         }
         $mwTest->destroy if Tk::Exists($mwTest);
-        use_ok('Tk::Wizard');
+        use_ok('Tk::Wizard' => 2.072);
     }
 }
 
 
 my $WAIT = 1;
 
-my $oICS = new IO::Capture::Stderr::Extended;
+my $ics = new IO::Capture::Stderr::Extended;
 
 ZERO:
 {
@@ -40,10 +40,10 @@ ZERO:
     );
     isa_ok( $wizard, "Tk::Wizard" );
     is( 1, $wizard->addSplashPage( -wait => $WAIT ) );
-    $oICS->start;
+    $ics->start;
     $wizard->Show;
-    $oICS->stop;
-    is( $oICS->matches(qr'only one page long'), 1, 'got warning' );
+    $ics->stop;
+    is( $ics->matches(qr'only one page long'), 1, 'got warning' );
     MainLoop;
     ok('Pretest');
 }

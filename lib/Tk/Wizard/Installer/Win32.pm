@@ -14,11 +14,22 @@ use Tk::Wizard::Installer;
 use base 'Tk::Wizard::Installer';
 my @EXPORT = ("MainLoop");
 
-our $VERSION = do { my @r = ( q$Revision: 2.14 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.15 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use constant DEBUG_FRAME => 0;
 
 BEGIN {
+	eval { require Log::Log4perl; };
+	if($@) {
+		no strict qw(refs);
+		*{"main::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+	} else {
+		no warnings;
+		require Log::Log4perl::Level;
+		Log::Log4perl::Level->import(__PACKAGE__);
+		Log::Log4perl->import(":easy");
+	}
+
     use Win32::Shortcut;
     require Win32;
     if ( $Win32::VERSION lt 0.2 ) {
@@ -27,7 +38,7 @@ BEGIN {
     }    # if
     use Win32;
     use Win32::TieRegistry( Delimiter => "/", ArrayValues => 0 );
-}    # end of BEGIN block
+}
 
 =head1 NAME
 
@@ -156,7 +167,7 @@ registry tree in the current location: YMMV.
 
 sub register_with_windows {
     my ( $self, $args ) = ( shift, {@_} );
-    return 1 if $^O !~ /(mswin32|cygwin)/i;
+    return 1 if $^O !~ /mswin32/i;
     unless ($args->{DisplayName}
         and $args->{UninstallString}
         and ( $args->{uninstall_key_name} or $args->{app_path} ) )

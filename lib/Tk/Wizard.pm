@@ -1,23 +1,20 @@
-
-# $Id: Wizard.pm,v 2.71 2007/11/16 21:28:58 martinthurn Exp $
-
 package Tk::Wizard;
 
 use strict;
 use warnings;
 
-use constant DEBUG_FRAME => 0;
+use vars '$VERSION';
+$VERSION = do { my @r = ( q$Revision: 2.72 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
-our $VERSION = do { my @r = ( q$Revision: 2.71 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
-
-my $sdir = ( $^O =~ m/MSWin32/i ) ? 'folder' : 'directory';
-my $sDir = ucfirst $sdir;
+use warnings::register;
 
 =head1 NAME
 
 Tk::Wizard - GUI for step-by-step interactive logical process
 
 =cut
+
+use constant DEBUG_FRAME => 0;
 
 use Carp;
 use Config;
@@ -36,7 +33,22 @@ use Tk::MainWindow;
 use Tk::ROText;
 use Tk::Wizard::Image;
 
-use vars qw( @EXPORT @ISA );
+use vars qw( @EXPORT @ISA %LABELS );
+
+# use Log4perl if we have it, otherwise stub:
+# See Log::Log4perl::FAQ
+BEGIN {
+	eval { require Log::Log4perl; };
+	if($@) {
+		no strict qw(refs);
+		*{"main::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+	} else {
+		no warnings;
+		require Log::Log4perl::Level;
+		Log::Log4perl::Level->import(__PACKAGE__);
+		Log::Log4perl->import(":easy");
+	}
+}
 
 BEGIN {
     require Exporter;    # Exporting Tk's MainLoop so that
@@ -47,7 +59,8 @@ BEGIN {
 use base qw[ Tk::Derived Tk::Toplevel ];
 Tk::Widget->Construct('Wizard');
 
-use vars qw/ %LABELS /;
+my $sdir = ( $^O =~ m/MSWin32/i ) ? 'folder' : 'directory';
+my $sDir = ucfirst $sdir;
 
 # See INTERNATIONALISATION
 %LABELS = (
@@ -336,10 +349,8 @@ or all of the standard widget options or widget-specific options
 # Rothenberg requires one.
 
 sub new {
+    TRACE "Enter new with ", join",",@_;
     my $inv = ref( $_[0] ) ? ref( $_[0] ) : $_[0];
-
-    # local $" = ',';
-    # print STDERR " DDD Tk::Wizard::New(@_)\n";
     shift;    # Ignore invocant
     my @args = @_;
     unless (
@@ -430,7 +441,7 @@ we document it here only to satisfy Pod coverage tests.
 
 sub Populate {
     my ( $self, $args ) = @_;
-    warn " FFF enter Populate" if $self->{-debug};
+    TRACE "Enter Populate";
     $self->SUPER::Populate($args);
     $self->withdraw;
     my $sTagTextDefault = 'Perl Wizard';
@@ -483,9 +494,12 @@ sub Populate {
     $self->{-imagepath}            = $args->{-imagepath};
     $self->{-topimagepath}         = $args->{-topimagepath};
     $self->{wizardPageList}        = [];
+
     $self->{-debug}                = $args->{-debug} || $Tk::Wizard::DEBUG || undef;
+
     $self->{background_userchoice} = $args->{-background}
       || $self->ConfigSpecs->{-background}[3];
+
     $self->{background} = $self->{background_userchoice};
     $self->{-style} = $args->{-style} || "top";
     $self->{wizardPagePtr} = 0;
@@ -558,27 +572,26 @@ This returns a reference to the parent Tk widget that was used to create the wiz
 sub parent { return $_[0]->{Configure}{ -parent } || shift }
 
 sub _maybe_pack_tag_text {
-    my $self = shift;
-
-    # print STDERR " DDD in _maybe_p_t_t, tag_text is =", $self->{Configure}{-tag_text}, "=\n";
+	my $self = shift;
+	TRACE "Enter _maybe_pack_tag_text";
     return if ( ( $self->{Configure}{-tag_text} || '' ) eq '' );
     $self->{tagtext}->configure( -text => $self->{Configure}{-tag_text} . ' ' );
     $self->{tagtext}->pack(qw( -side left -padx 0 -ipadx 2 ));
-}    # _maybe_pack_tag_text
+}
 
 sub _pack_forget {
     my $self = shift;
     foreach my $o (@_) {
         if ( Tk::Exists($o) ) {
             $o->packForget;
-        }    # if
-    }    # foreach
-}    # _pack_forget
+        }
+    }
+}
 
 sub _repack_buttons {
     my $self  = shift;
     my $panel = $self->Subwidget('buttonPanel');
-    warn " FFF enter _repack_buttons, panel=$panel=" if $self->{-debug};
+    TRACE "Enter _repack_buttons, panel=$panel";
     my %hssPackArgs = (
         -side   => "right",
         -expand => 0,
@@ -602,22 +615,25 @@ sub _repack_buttons {
         )->pack( -side => "right" );
         DEBUG_FRAME && $f1->configure( -background => 'black' );
         push @{ $self->{_button_spacers_} }, $f1;
-        warn " DDD   created cancel button" if $self->{-debug};
+        DEBUG "created cancel button";
         $self->Advertise( cancelButton => $self->{cancelButton} );
-    }    # if
+    }
+
     $self->{nextButton} = $panel->Button(
         -font => $self->{defaultFont},
         -text => $self->_on_last_page ? $LABELS{FINISH} : $LABELS{NEXT},
         -command => [ \&_NextButtonEventCycle, $self ],
     )->pack(%hssPackArgs);
-    warn " DDD   created next button" if $self->{-debug};
+    DEBUG "created next button";
+
     $self->{backButton} = $panel->Button(
         -font    => $self->{defaultFont},
         -text    => $LABELS{BACK},
         -command => [ \&_BackButtonEventCycle, $self ],
         -state   => $self->_on_first_page ? 'disabled' : 'normal',
     )->pack(%hssPackArgs);
-    warn " DDD   created back button" if $self->{-debug};
+    DEBUG "created back button";
+
     if ( !$self->cget( -nohelpbutton ) ) {
         $self->{helpButton} = $panel->Button(
             -font    => $self->{defaultFont},
@@ -631,11 +647,11 @@ sub _repack_buttons {
             -ipadx  => 8,
           );
         $self->Advertise( helpButton => $self->{helpButton} );
-    }    # if
+    }
     $self->Advertise( nextButton => $self->{nextButton} );
     $self->Advertise( backButton => $self->{backButton} );
-    warn " FFF leave _repack_buttons\n" if $self->{-debug};
-}    # _repack_buttons
+    TRACE "Leave _repack_buttons"
+}
 
 # Private method: returns a font family name suitable for the
 # operating system.  (The default system font, if we can determine it)
@@ -661,13 +677,13 @@ sub _font_size {
     my $sFont = $label->cget( -font );
 
     # use Tk::Pretty;
-    # print STDERR Tk::Pretty::Pretty($sFont);
-    # printf STDERR (" III default label font as string: font=%s=\n", $sFont);
+    # DEBUG Tk::Pretty::Pretty($sFont);
+    # DEBUG (" III default label font as string: font=%s=\n", $sFont);
     return $1 if ( $sFont =~ m!(\d+)! );
     return 8  if ( $^O    =~ m!win32!i );
     return 12 if ( $^O    =~ m!solaris!i );
     return 12;    # Linux etc.
-}    # _font_size
+}
 
 =head2 background
 
@@ -698,8 +714,8 @@ sub background {
 #
 sub initial_layout {
     my $self = shift;
-    warn " FFF enter initial_layout" if $self->{-debug};
-    return                           if $self->{_laid_out};
+    TRACE "Enter initial_layout";
+    return if $self->{_laid_out};
 
     # Wizard 98/95 style
     if ( $self->_showing_side_banner ) {
@@ -745,8 +761,7 @@ sub initial_layout {
 #
 sub render_current_page {
     my $self = shift;
-    warn " FFF enter render_current_page $self->{wizardPagePtr}"
-      if $self->{-debug};
+    TRACE "Enter render_current_page $self->{wizardPagePtr}";
     my %frame_pack = ( -side => "top" );
     $self->_pack_forget( $self->{tagtext} );
     if ( !$self->_showing_side_banner ) {
@@ -771,24 +786,26 @@ sub render_current_page {
         Carp::croak 'render_current_page called without any frames: did you add frames to the wizard?';
     }    # if
     my $rPage = $self->{wizardPageList}->[ $self->{wizardPagePtr} ];
-    warn " DDD in render_current_page, rPage=$rPage=" if $self->{-debug};
+
+    DEBUG "render_current_page, rPage=$rPage";
     if ( !ref $rPage ) {
         Carp::croak 'render_current_page() called for a non-existent frame: did you add frames to the wizard?';
-    }    # if
+    }
+
     my $frame = $rPage->();
     if ( !Tk::Exists($frame) ) {
-        Carp::croak
-'render_current_page() called for a non-frame: did your coderef argument to addPage() return something other than a Tk::Frame?';
-    }    # if
+        Carp::croak 'render_current_page() called for a non-frame: "
+        . "did your coderef argument to addPage() return something other than a Tk::Frame?';
+    }
+
     $self->{wizardFrame} = $frame->pack(%frame_pack);
     $self->{wizardFrame}->update;
     $self->Advertise( wizardFrame => $self->{wizardFrame} );
 
     # $self->_resize_window;
     $self->{nextButton}->focus();
-    warn " FFF leave render_current_page $self->{wizardPagePtr}"
-      if $self->{-debug};
-}    # render_current_page
+    TRACE "Leave render_current_page $self->{wizardPagePtr}";
+}
 
 sub _resize_window {
     my $self = shift;
@@ -796,20 +813,16 @@ sub _resize_window {
     if ( Tk::Exists( $self->{wizardFrame} ) ) {
         if ( $self->{frame_sizes}->[ $self->{wizardPagePtr} ] ) {
             my ( $iW, $iH ) = @{ $self->{frame_sizes}->[ $self->{wizardPagePtr} ] };
-            if ( $self->{-debug} ) {
-                warn "Resize frame: -width => $iW, -height => $iH\n";
-            }    # if debug
-                 # print STDERR " DDD self=$self=\n";
+                DEBUG "Resize frame: -width => $iW, -height => $iH\n";
             $self->{wizardFrame}->configure(
                 -width  => $iW,
                 -height => $iH,
             );
             $self->{wizardFrame}->update;
-
             # $self->update;
-        }    # if
-    }    # if
-}    # _resize_window
+        }
+    }
+}
 
 =head2 blank_frame
 
@@ -877,9 +890,9 @@ Also:
 sub blank_frame {
     my $self = shift;
     my $args = {@_};
-    warn " FFF enter blank_frame" if $self->{-debug};
+    TRACE "Enter blank_frame";
+    DEBUG "self.bg = $self->{background}";
 
-    # print STDERR " DDD in blank_frame, self->bg is =$self->{background}=\n";
     my $wrap = $args->{-wraplength} || 375;
     if ( !defined( $args->{-height} ) ) {
 
@@ -896,8 +909,8 @@ sub blank_frame {
     $self->{frame_sizes}->[ $self->{wizardPagePtr} ] = [ $args->{-width}, $args->{-height} ];
     $self->{frame_titles}->[ $self->{wizardPagePtr} ] = $args->{-title}
       || 'no title given';
-    warn " DDD blank_frame setting width/height to $args->{-width}/$args->{-height}"
-      if $self->{-debug};
+
+    DEBUG "blank_frame setting width/height to $args->{-width}/$args->{-height}";
 
     # This is the main content frame:
     my $frame = $self->Frame(
@@ -989,7 +1002,8 @@ sub blank_frame {
                 -height => 2,
             )->pack(qw/-side top -fill x/);
             DEBUG_FRAME && $f->configure( -background => 'red' );
-        }    # if 'top'
+        }
+
         if ( $args->{-text} ) {
             $lText = $frame->Label(
                 -font       => $self->{defaultFont},
@@ -1009,8 +1023,10 @@ sub blank_frame {
                 -padx   => 10,
                 -pady   => 10,
               );
-        }    # if -text
-    }    # if 'top' style, but not first or last page
+        }
+    }
+
+    # if 'top' style, but not first or last page
     else {
 
         # Whenever page does NOT have the side banner:
@@ -1059,32 +1075,34 @@ sub blank_frame {
         else {
             $frame->Label();
         }
-    }    # else
-    DEBUG_FRAME && $lTitle->configure( -background => 'light blue' );
-    DEBUG_FRAME && $lSub->configure( -background   => 'light green' );
-    DEBUG_FRAME
-      && Tk::Exists($lText)
-      && $lText->configure( -background => 'pink' );
+    }
 
-    # print STDERR " DDD in blank_frame(), raw    -wait is $args->{-wait}.\n";
+    if (DEBUG_FRAME){
+    	$lTitle->configure( -background => 'light blue' );
+    	$lSub->configure( -background   => 'light green' );
+    	Tk::Exists($lText) && $lText->configure( -background => 'pink' );
+	}
+
+    DEBUG "blank_frame(), raw -wait is ".($args->{-wait} || "undef");
     $args->{ -wait } ||= 0;
+    DEBUG "blank_frame(), cooked -wait is now $args->{-wait}";
 
-    # print STDERR " DDD in blank_frame(), cooked -wait is $args->{-wait}.\n";
-    if ( 0 < $args->{ -wait } ) {
+    if ( $args->{ -wait } > 0 ) {
         _fix_wait( \$args->{ -wait } );
-
-        # print STDERR " DDD in blank_frame(), fixed  -wait is $args->{-wait}.\n";
-        # print STDERR " DDD installing afterIdle, self is =$self=\n";
+        DEBUG  "in blank_frame(), fixed  -wait is $args->{-wait}";
+        DEBUG  "installing 'after', self is $self";
         $self->after(
             $args->{ -wait },
             sub {
+				DEBUG "Waiting...";
                 $self->{nextButton}->configure( -state => 'normal' );
                 $self->{nextButton}->invoke;
             }
         );
-    }    # if
+    }
     return $frame->pack(qw/-side top -anchor n -fill both -expand 1/);
 }    # end blank_frame
+
 
 =head2 addPage
 
@@ -1105,13 +1123,13 @@ See also L</blank_frame>.
 =cut
 
 sub addPage {
+    TRACE "enter addPage";
     my $self = shift;
-    warn " FFF enter addPage" if $self->{-debug};
     if ( grep { ref $_ ne 'CODE' } @_ ) {
-        confess "addPage requires one or more CODE references as arguments";
+        Carp::croak "addPage requires one or more CODE references as arguments";
     }
     push @{ $self->{wizardPageList} }, @_;
-}    # addPage
+}
 
 =head2 addSplashPage
 
@@ -1124,13 +1142,13 @@ Accepts exactly the same arguments as C<blank_frame>.
 =cut
 
 sub addSplashPage {
+    TRACE "Enter addSplashPage";
     my $self = shift;
-
     # We have to make a copy of our args in order for them to get
     # "saved" in this coderef:
     my $args = {@_};
     return $self->addPage( sub { $self->blank_frame(%$args) } );
-}    # addSplashPage
+}
 
 =head2 addTextFramePage
 
@@ -1149,16 +1167,15 @@ sub addTextFramePage {
     # We have to make a copy of our args in order for them to get
     # "saved" in this coderef:
     my $args = {@_};
-
-    # print STDERR " DDD addTextFramePage args are ", Dumper($args);
+    DEBUG "addTextFramePage args are ", Dumper($args);
     return $self->addPage( sub { $self->_text_frame($args) } );
-}    # addTextFramePage
+}
 
 sub _text_frame {
     my $self = shift;
     my $args = shift;
 
-    # print STDERR " DDD _text_frame args are ", Dumper($args);
+    DEBUG "eNTER _text_frame with ", Dumper($args);
     local *IN;
     my $text;
     my $frame = $self->blank_frame(%$args);
@@ -1197,14 +1214,14 @@ sub _text_frame {
 #
 sub _dispatch {
     my $handler = shift;
+    DEBUG "Enter _dispatch with " . ( $handler || "undef" );
 
-    # print STDERR " DDD _dispatch($handler)\n";
     if ( ref($handler) eq 'Tk::Callback' ) {
         return !$handler->Call();
-    }    # if
+    }
     if ( ref($handler) eq 'CODE' ) {
         return !$handler->();
-    }    # if
+    }
     return 1;
     return ( !( $handler->() ) )
       if ( ( defined $handler )
@@ -1219,89 +1236,87 @@ sub _dispatch {
           and ref $handler
           and ref $handler eq 'CODE';
     return 0;
-}    # _dispatch
+}
 
 # Returns the number of the last page (zero-based):
 sub _last_page {
     my $self = shift;
     my $i    = scalar( @{ $self->{wizardPageList} } ) - 1;
-    $self->{-debug} && print STDERR " DDD _last_page is $i\n";
+    DEBUG "_last_page is $i";
     return $i;
-}    # _last_page
+}
 
 # Returns true if the current page is the last page:
 sub _on_last_page {
     my $self = shift;
-    $self->{-debug}
-      && print STDERR " DDD in _on_last_page(), pagePtr is $self->{wizardPagePtr}\n";
+    DEBUG "_on_last_page(), pagePtr is $self->{wizardPagePtr}";
     return ( $self->_last_page == $self->{wizardPagePtr} );
-}    # _on_last_page
+}
 
 # Returns true if the current page is the first page:
 sub _on_first_page {
     my $self = shift;
     return ( 0 == $self->{wizardPagePtr} );
-}    # _on_last_page
+}
 
 # Method:      _NextButtonEventCycle
 # Description: Runs the complete view of the action handler cycle for the "Next>" button on the
 #              wizard button bar. This includes dispatching the preNextButtonAction and
 #              postNextButtonAction handler at the appropriate times.
 #
+# Dictat: Never ever use goto unless you have a very good reason, and please explain that reason
+#
 sub _NextButtonEventCycle {
     my $self = shift;
-    warn " FFF enter _NextButtonEventCycle\n" if $self->{-debug};
+    TRACE "Enter _NextButtonEventCycle";
     $self->{_inside_nextButtonEventCycle_}++ unless shift;
 
-    # warn " DDD start, NBEC counter is now $self->{_inside_nextButtonEventCycle_}\n";
+    DEBUG "start, NBEC counter is now $self->{_inside_nextButtonEventCycle_}";
     # If there is more than one pending invocation, we will reinvoke
     # ourself when we're done:
+
     if ( 1 < $self->{_inside_nextButtonEventCycle_} ) {
-        warn "   called recursively, bail out\n" if $self->{-debug};
+        DEBUG "Called recursively, bail out";
         return;
-    }    # if
+    }
+
     if ( _dispatch( $self->cget( -preNextButtonAction ) ) ) {
-        warn " DDD preNextButtonAction says we should not go ahead\n"
-          if $self->{-debug};
-        goto ALL_DONE_NBEC;
-    }    # if
-    if ( $self->_on_last_page ) {
-        warn " DDD   we are on the last page\n" if $self->{-debug};
+        DEBUG "preNextButtonAction says we should not go ahead";
+    }
+
+    elsif ( $self->_on_last_page ) {
+        DEBUG "On the last page";
         if ( _dispatch( $self->cget( -preFinishButtonAction ) ) ) {
-            warn " DDD preFinishButtonAction says we should not go ahead\n"
-              if $self->{-debug};
-            goto ALL_DONE_NBEC;
-        }    # if
-        if ( _dispatch( $self->cget( -finishButtonAction ) ) ) {
-            warn " DDD finishButtonAction says we should not go ahead\n"
-              if $self->{-debug};
-            goto ALL_DONE_NBEC;
-        }    # if
-        $self->{really_quit}++;
-        $self->_CloseWindowEventCycle();
+            DEBUG "preFinishButtonAction says we should not go ahead";
+        }
+        elsif ( _dispatch( $self->cget( -finishButtonAction ) ) ) {
+            DEBUG "finishButtonAction says we should not go ahead";
+        }
+        else {
+        	$self->{really_quit}++;
+        	$self->_CloseWindowEventCycle();
+		}
+    }
 
-        # Can't do anything now, we're dead
-        goto ALL_DONE_NBEC;
-    }    # if last page
-         # Advance the wizard page pointer and then adjust the navigation buttons.
-         # Redraw the frame when finished to get changes to take effect.
-    warn " DDD   advance to next page\n" if $self->{-debug};
-    $self->_page_forward;
-    $self->render_current_page;
+	# Advance the wizard page pointer and then adjust the navigation buttons.
+	# Redraw the frame when finished to get changes to take effect.
+	else {
+		DEBUG "advance to next page";
+		$self->_page_forward;
+		$self->render_current_page;
+	}
 
-    # print STDERR " DDD this is before _dispatch postNextButtonAction\n";
+    DEBUG "Before _dispatch postNextButtonAction";
     if ( _dispatch( $self->cget( -postNextButtonAction ) ) ) {
-        warn " DDD postNextButtonAction says we should not go ahead\n"
-          if $self->{-debug};
-        goto ALL_DONE_NBEC;
-    }    # if
-  ALL_DONE_NBEC:
-    warn " DDD all done, NBEC counter is now $self->{_inside_nextButtonEventCycle_}\n"
-      if $self->{-debug};
+        DEBUG "postNextButtonAction says we should not go ahead"
+    }
+
+    DEBUG "all done, NBEC counter is now $self->{_inside_nextButtonEventCycle_}";
+
     $self->{_inside_nextButtonEventCycle_}--;
-    $self->_NextButtonEventCycle('no increment')
-      if $self->{_inside_nextButtonEventCycle_};
-}    # _NextButtonEventCycle
+
+    $self->_NextButtonEventCycle('no increment') if $self->{_inside_nextButtonEventCycle_};
+}
 
 sub _BackButtonEventCycle {
     my $self = shift;
@@ -1313,7 +1328,7 @@ sub _BackButtonEventCycle {
     $self->_page_backward;
     $self->render_current_page;
     if ( _dispatch( $self->cget( -postBackButtonAction ) ) ) { return; }
-}    # _BackButtonEventCycle
+}
 
 sub _HelpButtonEventCycle {
     my $self = shift;
@@ -1327,45 +1342,44 @@ sub _CancelButtonEventCycle {
     return
       if $self->Callback( -preCancelButtonAction => $self->{-preCancelButtonAction} );
     $self->_CloseWindowEventCycle($_);
-}    # _CancelButtonEventCycle
+}
 
 sub _CloseWindowEventCycle {
     my $self = shift;
     my $hGUI = shift;
-    warn " FFF enter _CloseWindowEventCycle... really=[$self->{really_quit}]\n"
-      if $self->{-debug};
+    TRACE "Enter _CloseWindowEventCycle... really=[$self->{really_quit}]";
+
     if ( !$self->{really_quit} ) {
-        warn "# Really?\n" if $self->{-debug};
+        DEBUG "Really?";
         if ( $self->Callback( -preCloseWindowAction => $self->{-preCloseWindowAction} ) ) {
-            warn " DDD preCloseWindowAction says we should not go ahead\n"
-              if $self->{-debug};
+            DEBUG "preCloseWindowAction says we should not go ahead";
             return;
-        }    # if
-    }    # if
+        }
+    }
     if ( Tk::Exists($hGUI) ) {
-        warn "# hGUI=$hGUI= withdraw\n" if $self->{-debug};
+        DEBUG "hGUI=$hGUI= withdraw";
         $hGUI->withdraw;
-    }    # if
+    }
+
     if ( $self->{Configure}{-kill_parent_on_destroy}
         && Tk::Exists( $self->parent ) )
     {
-        warn "Kill parent " . $self->parent . " " . $self->{Configure}{ -parent }
-          if $self->{-debug};
-
+        DEBUG "Kill parent " . $self->parent . " " . $self->{Configure}{ -parent };
         # This should kill us, too:
         $self->parent->destroy;
         return;
     }
-    warn "# Legacy withdraw\n" if $self->{-debug};
+
+    DEBUG "Legacy withdraw";
     $self->{_showing} = 0;
     if ( $self->{Configure}{-kill_self_after_finish} ) {
         $self->destroy;
     }
     else {
         $self->withdraw;    # Legacy
-    }    # else
+    }
     return undef;
-}    # _CloseWindowEventCycle
+}
 
 =head2 addDirSelectPage
 
@@ -1405,7 +1419,7 @@ sub addDirSelectPage {
 
     # print STDERR " DDD addDirSelectPage args are ", Dumper($args);
     $self->addPage( sub { $self->_page_dirSelect($args) } );
-}    # addDirSelectPage
+}
 
 # PRIVATE METHOD _page_dirSelect
 #
@@ -1439,13 +1453,16 @@ sub _page_dirSelect {
         eval('require Win32API::File');
         return Win32API::File::getLogicalDrives();
     };
+
     my ( $frame, @pl ) = $self->blank_frame(
         -title    => $args->{-title}    || "Please choose a $sdir",
         -subtitle => $args->{-subtitle} || "After you have made your choice, press Next to continue.",
         -text     => $args->{-text}     || "",
         -wait     => $args->{ -wait },
     );
+
     DEBUG_FRAME && $frame->configure( -background => 'light blue' );
+
     my $entry = $frame->Entry(
         -justify      => 'left',
         -font         => 'FIXED',
@@ -1486,6 +1503,7 @@ sub _page_dirSelect {
         -background => $self->{background},
         -height     => 5,
     )->pack( -side => 'top' );
+
     my $mkdir = $frame->Button(
         -font    => $self->{defaultFont},
         -text    => "New $sDir",
@@ -2183,17 +2201,22 @@ Normally you would call C<MainLoop> right after this.
 =cut
 
 sub Show {
+	TRACE "Enter Show";
     my $self = shift;
-    warn " FFF enter Show" if $self->{-debug};
-    return                 if $self->{_showing};
-    if ( $self->_last_page == 0 ) {
-        warn "# Showing a Wizard that is only one page long";
+    return if $self->{_showing};
+    if ( $self->_last_page < 2 ) {
+		my $lp = $self->_last_page + 1;
+        warnings::warnif(
+			ref($self), "Showing a Wizard with "
+    	    . $lp . ' page' . ($lp==1? '' : 's').'!'
+		)
     }
     $self->{wizardPagePtr} = 0;
     $self->initial_layout;
     $self->resizable( 0, 0 )
       unless $self->{Configure}{-resizable}
-          and $self->{Configure}{-resizable} =~ /^(1|yes|true)$/i;
+         and $self->{Configure}{-resizable} =~ /^(1|yes|true)$/i;
+
     $self->parent->withdraw;
     $self->Popup;
     $self->transient;    # forbid minimize
@@ -2203,7 +2226,7 @@ sub Show {
     $self->configure( -background => $self->cget("-background") );
     $self->render_current_page;
     $self->{_showing} = 1;
-    warn " FFF leave Show" if $self->{-debug};
+    TRACE "Leave Show";
     return 1;
 }
 
@@ -2442,23 +2465,24 @@ this function returns true (otherwise returns a false value).
 
 sub DIALOGUE_really_quit {
     my $self = shift;
+    TRACE "Enter DIALOGUE_really_quit";
     return 0 if $self->{nextButton}->cget( -text ) eq $LABELS{FINISH};
-    warn "# DIALOGUE_really_quit \n" if $self->{-debug};
+
     unless ( $self->{really_quit} ) {
-        warn "# Get really quit info\n" if $self->{-debug};
+        DEBUG "# Get really quit info";
         my $button = $self->messageBox(
             '-icon'  => 'question',
             -type    => 'yesno',
             -default => 'no',
             -title   => 'Quit Wizard??',
-            -message =>
-"The Wizard has not finished running.\n\nIf you quit now, the job will not be complete.\n\nDo you really wish to quit?"
+            -message => "The Wizard has not finished running.\n\n"
+            	. "If you quit now, the job will not be complete.\n\nDo you really wish to quit?"
         );
         $self->{really_quit} = lc $button eq 'yes' ? 1 : 0;
-        warn "# ... really=[$self->{really_quit}]\n" if $self->{-debug};
-    }    # unless
+        DEBUG "# ... really=[$self->{really_quit}]";
+    }
     return !$self->{really_quit};
-}    # DIALOGUE_really_quit
+}
 
 =head2 callback_dirSelect
 
@@ -2818,4 +2842,5 @@ REDEFINES:
 1;
 
 __END__
+
 

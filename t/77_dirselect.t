@@ -7,9 +7,12 @@ use strict;
 use Cwd;
 use ExtUtils::testlib;
 use FileHandle;
+use Cwd;
 use Test::More;
 use Tk;
-use Cwd;
+use lib "../lib";
+
+
 
 BEGIN {
     my $mwTest;

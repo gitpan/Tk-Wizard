@@ -1,3 +1,37 @@
+2007-12-21 Lee
+	
+    * Log::Log4perl - please!
+    
+    * Warnings
+    
+	* Continued reformatting.
+	
+	* Removed Perl tidy since I've just heard bad news about its impact elsewhere: 
+	  when investigated, may reinstate?
+	
+	* Removed files from distro that I have no permission to modify
+	
+	* Remvoed dependencies on files I have no permission to modify
+	
+	* Removed Tk::Wizard::Tester from install location, into test location
+	
+	
+2007-12-20 Lee
+
+	* Do not treat Cygwin as Win32:
+
+		* removed Cygwin as Win32 from Makefile.PL and now get the following:
+		
+			Had to create Tk::LangVtab unexpectedly at /usr/lib/perl5/5.8/cygwin/DynaLoader.pm line 253.
+			Segmentation fault (core dumped)
+			bash-3.2$
+
+		* Makefile.PL: removed Cygwin as Win32
+		
+		* lib\Tk\Wizard.pm(449): removed Cygwin as Win32
+		
+		* lib\Tk\Wizard\Installer\Win32.pm(159): removed Cygwin as Win32
+	
 2007-12-19	Lee
 
 	* Tweaks for clarity in preperation for use at GSK

@@ -6,7 +6,8 @@ package Tk::Wizard::Image;
 use strict;
 use warnings;
 
-our $VERSION = do { my @r = ( q$Revision: 2.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+use vars '$VERSION';
+$VERSION = do { my @r = ( q$Revision: 2.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 # November 2005
 

@@ -1,10 +1,12 @@
 use strict;
 use warnings;
-my $VERSION = do { my @r = ( q$Revision: 1.14 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 2.072 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
+use lib "../lib";
+use WizTestSettings;
 
 BEGIN {
     my $mwTest;
@@ -16,25 +18,25 @@ BEGIN {
         plan tests => 10;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
-    use_ok('Tk::Wizard::Tester');
+    use_ok('Tk::Wizard' => 2.072) or BAIL_OUT;
 }
 
 # $ENV{TEST_INTERACTIVE} = 1;
 
-foreach my $style ( 'top', '95' ) {
+foreach my $style ( qw(top 95)) {
 
-    diag(" # # # ENV{TEST_INTERACTIVE} is $ENV{TEST_INTERACTIVE}");
-    my $wizard = new Tk::Wizard::Tester(
-
-        # -debug => 3,
+    my $wizard = Tk::Wizard->new(
         -background => 'blue',
         -style      => $style,
-        -wait       => $ENV{TEST_INTERACTIVE} ? -1 : 444,
+        -debug		=> 1,
     );
 
-    isa_ok( $wizard, "Tk::Wizard::Tester" );
-
     isa_ok( $wizard, "Tk::Wizard" );
+
+    WizTestSettings::add_test_pages(
+		$wizard,
+		-wait => $ENV{TEST_INTERACTIVE} ? -1 : 1,
+	);
 
     $wizard->Show;
 

@@ -1,12 +1,14 @@
-
-# $Id: 60_textbox.t,v 1.1 2007/08/08 04:21:18 martinthurn Exp $
-
 use strict;
 use warnings;
+
+my $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
+use lib "../lib";
+
+
 
 BEGIN {
     my $mwTest;
@@ -19,9 +21,8 @@ BEGIN {
     }
     $mwTest->destroy if Tk::Exists($mwTest);
     use_ok('Tk::Wizard::Tester');
-}    # end of BEGIN block
+}
 
-my $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 my $iWait = $ENV{TEST_INTERACTIVE} ? 0 : 333;
 my $wizard = new Tk::Wizard::Tester(

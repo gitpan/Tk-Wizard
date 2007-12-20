@@ -1,6 +1,4 @@
 Changes
-scripts/tidy.pl
-scripts/perltidyrc
 examples/application.pl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
@@ -13,11 +11,10 @@ inc/Module/Install/WriteAll.pm
 lib/Tk/Wizard.pm
 lib/Tk/Wizard/Image.pm
 lib/Tk/Wizard/Installer.pm
-lib/Tk/Wizard/Installer/Sizer.pm
+# lib/Tk/Wizard/Installer/Sizer.pm
 lib/Tk/Wizard/Installer/Win32.pm
-lib/Tk/Wizard/Installer/Win32/Sizer.pm
-lib/Tk/Wizard/Sizer.pm
-lib/Tk/Wizard/Tester.pm
+# lib/Tk/Wizard/Installer/Win32/Sizer.pm
+# lib/Tk/Wizard/Sizer.pm
 Makefile.PL
 MANIFEST			This list of files
 META.yml
@@ -35,13 +32,14 @@ t/60_textbox.t
 t/70_TopLevel.t
 t/77_dirselect.t
 t/99_prepost.t
+t/WizTestSettings.pm
 t/dos.txt
 t/extra.txt
 t/fonts.t
 t/pod-coverage.t
 t/pod.t
 t/single.t
-t/sizer.t
+# t/sizer.t
 t/subtitle.t
 t/unix.txt
 TODO

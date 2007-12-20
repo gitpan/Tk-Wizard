@@ -1,12 +1,11 @@
-
-# $Id: fonts.t,v 1.1 2007/10/17 11:59:30 martinthurn Exp $
-
 use strict;
 use warnings;
 
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
+use lib "../lib";
+
 
 BEGIN {
     my $mwTest;

@@ -7,11 +7,12 @@ use ExtUtils::testlib;
 use FileHandle;
 use Test::More;
 use Tk;
+use lib "../lib";
 
 BEGIN {
-    eval { require "IO::Capture::Stderr::Extended" };
-    if ( defined $@ ) {
-        plan skip_all => 'Test requires IO::Capture::Stderr::Extended';
+    eval { require IO::Capture::Stderr::Extended };
+    if ( $@ ) {
+        plan skip_all => 'Test requires IO::Capture::Stderr::Extended: '.$@;
     }
     else {
 		my $mwTest;
@@ -29,13 +30,14 @@ BEGIN {
 
 our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 555;
 
-my $oICS   = IO::Capture::Stdout::Extended->new;
+my $oICS   = IO::Capture::Stderr::Extended->new;
 my $wizard = Tk::Wizard->new(
     -title => "Title Wrap Test",
 
     # -debug => 88,
 );
-isa_ok( $wizard, "Tk::Wizard" );
+isa_ok( $wizard, "Tk::Wizard" ) or BAIL_OUT;
+
 $wizard->configure( -preNextButtonAction => sub { &preNext($wizard) } );
 is(
     $wizard->addSplashPage(

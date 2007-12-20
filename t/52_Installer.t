@@ -10,6 +10,9 @@ use ExtUtils::testlib;
 use File::Path;
 use Test::More;
 use Tk;
+use lib "../lib";
+
+
 
 BEGIN {
     my $mwTest;
