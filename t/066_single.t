@@ -1,13 +1,13 @@
 use warnings;
 use strict;
-my $VERSION = do { my @r = ( q$Revision: 1.2 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use Cwd;
 use ExtUtils::testlib;
 use FileHandle;
 use Test::More;
 use Tk;
-use lib "../lib";
+use lib qw(../lib . t/);
 
 BEGIN {
     eval { require IO::Capture::Stderr::Extended };
@@ -21,10 +21,11 @@ BEGIN {
 			plan skip_all => 'Test irrelevant without a display';
 		}
 		else {
-			plan tests => 11;
+			plan tests => 12;
 		}
 		$mwTest->destroy if Tk::Exists($mwTest);
 		use_ok('Tk::Wizard');
+	    use_ok('WizTestSettings');
 	}
 }
 
@@ -47,6 +48,7 @@ is(
     1,
     'splash is 1'
 );
+
 my $the_chosen_one;
 is(
     $wizard->addSingleChoicePage(
@@ -63,6 +65,7 @@ is(
     2,
     'page is 2'
 );
+
 is(
     $wizard->addSingleChoicePage(
         -wait     => $WAIT,
@@ -84,6 +87,7 @@ is(
     3,
     'page is 3'
 );
+
 is(
     $wizard->addSingleChoicePage(
         -wait     => $WAIT,
@@ -109,14 +113,17 @@ is(
     4,
     'page is 4'
 );
+
 $wizard->addSplashPage(
     -wait  => 100,
     -title => "Page Bye!",
     -text  => "Thanks for testing!"
 );
+
 $oICS->start;
 $wizard->Show;
 $oICS->stop;
+
 pass('after Show');
 MainLoop();
 pass('after MainLoop');
@@ -126,9 +133,9 @@ sub preNext {
     my $iPage = $wiz->currentPage;
     if ( ( 1 < $iPage ) && ( $iPage < 5 ) ) {
         is( $the_chosen_one, $iPage * 10, qq{page $iPage correct chosen value} );
-    }    # if
+    }
     return 1;
-}    # preNext
+}
 
 __END__
 

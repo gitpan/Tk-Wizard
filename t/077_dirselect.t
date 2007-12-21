@@ -10,8 +10,7 @@ use FileHandle;
 use Cwd;
 use Test::More;
 use Tk;
-use lib "../lib";
-
+use lib qw(../lib . t/);
 
 
 BEGIN {
@@ -21,11 +20,12 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     }
     else {
-        plan tests => 10;
+        plan tests => 11;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
     use_ok('Tk::Wizard');
-}    # end of BEGIN block
+    use_ok('WizTestSettings');
+}
 
 my $VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 

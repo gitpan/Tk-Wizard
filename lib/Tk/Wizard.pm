@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.72 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.73 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use warnings::register;
 
@@ -41,7 +41,7 @@ BEGIN {
 	eval { require Log::Log4perl; };
 	if($@) {
 		no strict qw(refs);
-		*{"main::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
 	} else {
 		no warnings;
 		require Log::Log4perl::Level;
@@ -349,7 +349,7 @@ or all of the standard widget options or widget-specific options
 # Rothenberg requires one.
 
 sub new {
-    TRACE "Enter new with ", join",",@_;
+    TRACE "Enter new with ", (@_ || 'nothing');
     my $inv = ref( $_[0] ) ? ref( $_[0] ) : $_[0];
     shift;    # Ignore invocant
     my @args = @_;

@@ -1,12 +1,11 @@
 use strict;
 use warnings;
-my $VERSION = do { my @r = ( q$Revision: 2.072 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 2.073 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
-use lib "../lib";
-use WizTestSettings;
+use lib qw(../lib . t/);
 
 BEGIN {
     my $mwTest;
@@ -18,7 +17,9 @@ BEGIN {
         plan tests => 10;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
-    use_ok('Tk::Wizard' => 2.072) or BAIL_OUT;
+    use_ok('Tk::Wizard' => 2.073) or BAIL_OUT;
+    use_ok('WizTestSettings');
+    use_ok('WizTestSettings');
 }
 
 # $ENV{TEST_INTERACTIVE} = 1;

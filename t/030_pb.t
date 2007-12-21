@@ -9,7 +9,7 @@ use Cwd;
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
-use lib "../lib";
+use lib qw(../lib . t/);
 
 
 
@@ -20,12 +20,13 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     }
     else {
-        plan tests => 8;
+        plan tests => 9;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
+    use_ok('WizTestSettings');
     use_ok('Tk::Wizard');
     use_ok('Tk::ProgressBar');
-}    # end of BEGIN block
+}
 
 our $PB;     # Index number of page
 our $bar;    # Progress bar

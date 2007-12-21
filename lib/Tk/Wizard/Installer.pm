@@ -6,7 +6,7 @@ package Tk::Wizard::Installer;
 use strict;
 use warnings;
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.28 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.29 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -36,7 +36,7 @@ BEGIN {
 	eval { require Log::Log4perl; };
 	if($@) {
 		no strict qw(refs);
-		*{"main::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
 	} else {
 		no warnings;
 		require Log::Log4perl::Level;

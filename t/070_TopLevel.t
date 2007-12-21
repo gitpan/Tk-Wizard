@@ -4,7 +4,7 @@
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
-use lib "../lib";
+use lib qw(../lib . t/);
 
 
 
@@ -19,7 +19,8 @@ BEGIN {
     }
     $mwTest->destroy if Tk::Exists($mwTest);
     use_ok('Tk::Wizard');
-}    # end of BEGIN block
+    use_ok('WizTestSettings');
+}
 
 my $VERSION = do { my @r = ( q$Revision: 1.10 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 

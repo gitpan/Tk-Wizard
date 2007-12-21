@@ -21,9 +21,9 @@ use Tk::Wizard;
 BEGIN {
 	eval { require Log::Log4perl; };
 	if($@) {
-		print "Log::Log4perl not installed - stubbing.\n";
 		no strict qw(refs);
 		*{"main::$_"} = sub { } for qw(DEBUG INFO WARN ERROR FATAL);
+		*{"WizTestSettings::$_"} = sub { } for qw(DEBUG INFO WARN ERROR FATAL);
 	} else {
 		no warnings;
 		require Log::Log4perl::Level;

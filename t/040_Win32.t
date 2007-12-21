@@ -6,18 +6,18 @@ our $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%0
 
 use ExtUtils::testlib;
 use Test::More;
+use lib qw(../lib . t/);
 
 BEGIN {
-    use lib "../lib";
     if ( $^O !~ m/mswin32/i ) {
         plan 'skip_all' => 'You are not Windows, you lucky box';
     } else {
     	plan 'no_plan';
 	}
+    use_ok('WizTestSettings');
     use_ok('Tk::Wizard');
     use_ok('Tk::Wizard::Installer::Win32');
 }
-
 
 pass('before new');
 my $w = Tk::Wizard::Installer::Win32->new(

@@ -4,9 +4,7 @@ use strict;
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
-use lib "../lib";
-
-
+use lib qw(../lib . t/);
 
 BEGIN {
     my $mwTest;
@@ -15,11 +13,12 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     }
     else {
-        plan tests => 35;
+        plan tests => 36;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
+    use_ok('WizTestSettings');
     use_ok('Tk::Wizard');
-}    # end of BEGIN block
+}
 
 my $VERSION = do { my @r = ( q$Revision: 1.7 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
@@ -38,7 +37,8 @@ foreach my $style (qw[ top 95 ]) {
             -postNextButtonAction  => sub { &postNextButtonAction($wizard) },
             -preFinishButtonAction => sub { &postNextButtonAction($wizard) },
             -finishButtonAction    => sub { &postNextButtonAction($wizard) },
-        )
+        ),
+        "Configure"
     );
     isa_ok( $wizard->cget( -preNextButtonAction ), "Tk::Callback" );
     ok(
@@ -49,8 +49,10 @@ foreach my $style (qw[ top 95 ]) {
                     -wait  => $Wait,
                 );
             }
-        )
+        ),
+        "blank_frame 1"
     );
+
     ok(
         $wizard->addPage(
             sub {
@@ -60,8 +62,10 @@ foreach my $style (qw[ top 95 ]) {
                     -width => 300,
                 );
             }
-        )
+        ),
+        "blank_frame 2"
     );
+
     ok(
         $wizard->addPage(
             sub {
@@ -71,8 +75,10 @@ foreach my $style (qw[ top 95 ]) {
                     -width => 900,
                 );
             }
-        )
+        ),
+        "blank_frame 3"
     );
+
     ok(
         $wizard->addPage(
             sub {
@@ -81,8 +87,10 @@ foreach my $style (qw[ top 95 ]) {
                     -wait  => $Wait,
                 );
             }
-        )
+        ),
+        "blank_frame 4"
     );
+
     $wizard->Show;
     MainLoop;
     pass;
@@ -94,9 +102,9 @@ sub preNextButtonAction {
     push @out, "pre next button on page $_";
 
     # diag $out[-1];
-    pass;
+    pass "preNextButtonAction";
     return 1;
-}    # preNextButtonAction
+}
 
 sub postNextButtonAction {
     my $wizard = shift;
@@ -104,9 +112,9 @@ sub postNextButtonAction {
     push @out, "post next button on page $_";
 
     # diag $out[-1];
-    pass;
+    pass "postNextButtonAction";
     return 1;
-}    # postNextButtonAction
+}
 
 sub preFinishButtonAction {
     my $wizard = shift;
@@ -114,9 +122,9 @@ sub preFinishButtonAction {
     push @out, "pre finish button on page $_";
 
     # diag $out[-1];
-    pass;
+    pass "preFinishButtonAction";
     return 1;
-}    # preFinishButtonAction
+}
 
 sub finishButtonAction {
     my $wizard = shift;
@@ -124,9 +132,9 @@ sub finishButtonAction {
     push @out, "finish button on page $_";
 
     # diag $out[-1];
-    pass;
+    pass "finishButtonAction";
     return 1;
-}    # finishButtonAction
+}
 
 __END__
 

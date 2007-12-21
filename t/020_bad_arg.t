@@ -3,7 +3,7 @@ my $VERSION = do { my @r = ( q$Revision: 1.6 $ =~ /\d+/g ); sprintf "%d." . "%03
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
-use lib "../lib";
+use lib qw(../lib . t/);
 
 
 BEGIN {
@@ -17,7 +17,8 @@ BEGIN {
         plan "no_plan";    # TODO Can't count tests atm
     }
     $mwTest->destroy if Tk::Exists($mwTest);
-	use_ok('Tk::Wizard' => 2.072) or BAIL_OUT;
+	use_ok('WizTestSettings');
+	use_ok('Tk::Wizard') or BAIL_OUT;
 }
 
 my $wizard = Tk::Wizard->new( -title => "Bad Argument Test", );

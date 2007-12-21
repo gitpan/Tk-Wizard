@@ -6,9 +6,8 @@ my $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
-use lib "../lib";
-
-
+use Cwd;
+use lib qw(../lib . t/);
 
 BEGIN {
     my $mwTest;
@@ -20,34 +19,38 @@ BEGIN {
         plan tests => 5;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
-    use_ok('Tk::Wizard::Tester');
+    use_ok('Tk::Wizard');
+    use_ok('WizTestSettings');
 }
 
 
-my $iWait = $ENV{TEST_INTERACTIVE} ? 0 : 333;
-my $wizard = new Tk::Wizard::Tester(
-
-    # -debug => 3,
-    -style => 'top',
-    -wait  => $iWait,
-);
-isa_ok( $wizard, "Tk::Wizard::Tester" );
+my $wizard = Tk::Wizard->new;
 isa_ok( $wizard, "Tk::Wizard" );
-my $text = "This is in a box";
-$wizard->addTextFramePage(
-    -wait      => $iWait,
-    -title     => "1: Text from literal",
-    -boxedtext => \$text,
+
+chdir ".." if getcwd =~ /\Wt$/;
+
+$wizard->addSplashPage(
+    -wait      => $ENV{TEST_INTERACTIVE} ? 0 : 1,
 );
+
 $wizard->addTextFramePage(
-    -wait      => $iWait,
+    -wait      => $ENV{TEST_INTERACTIVE} ? 0 : 1,
+    -title     => "1: Text from literal",
+    -boxedtext => \"This is in a box", # "
+);
+
+$wizard->addTextFramePage(
+    -wait      => $ENV{TEST_INTERACTIVE} ? 0 : 1,
     -subtitle  => "2: Text from filename",
     -boxedtext => 'perl_licence_blab.txt',
 );
+
 $wizard->Show;
+
 pass('before MainLoop');
 MainLoop;
 pass('after MainLoop');
+
 exit 0;
 
 __END__

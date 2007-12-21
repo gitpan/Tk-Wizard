@@ -10,7 +10,7 @@ use ExtUtils::testlib;
 use File::Path;
 use Test::More;
 use Tk;
-use lib "../lib";
+use lib qw(../lib . t/);
 
 
 
@@ -25,7 +25,8 @@ BEGIN {
     }
     $mwTest->destroy if Tk::Exists($mwTest);
     use_ok("Tk::Wizard::Installer");
-}    # end of BEGIN block
+    use_ok('WizTestSettings');
+}
 
 my $WAIT   = $ENV{TEST_INTERACTIVE} ? 0 : 111;
 my @asFrom = qw( 1 2 );

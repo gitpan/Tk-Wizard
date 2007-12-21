@@ -6,7 +6,7 @@ use Cwd;
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
-use lib "../lib";
+use lib qw(../lib . t/);
 
 BEGIN {
     eval { require IO::Capture::Stderr::Extended };
@@ -20,45 +20,44 @@ BEGIN {
             plan skip_all => 'Test irrelevant without a display';
         }
         else {
-            plan tests => 26;
+            plan tests => 28
         }
         $mwTest->destroy if Tk::Exists($mwTest);
-        use_ok('Tk::Wizard' => 2.072);
+        use_ok('WizTestSettings');
+        use_ok('Tk::Wizard');
     }
 }
 
 
 my $WAIT = 1;
 
-my $ics = new IO::Capture::Stderr::Extended;
-
-ZERO:
-{
-    my $wizard = new Tk::Wizard(
-
-        # -debug => 88,
-    );
+ZERO: {
+    my $wizard = Tk::Wizard->new;
     isa_ok( $wizard, "Tk::Wizard" );
-    is( 1, $wizard->addSplashPage( -wait => $WAIT ) );
-    $ics->start;
+    is( 1, $wizard->addSplashPage( -wait => $WAIT ), 'One page' );
+
+	my $capture = IO::Capture::Stderr::Extended->new;
+    $capture->start;
     $wizard->Show;
-    $ics->stop;
-    is( $ics->matches(qr'only one page long'), 1, 'got warning' );
+    $capture->stop;
+    is( $capture->matches(qr'Showing a Wizard with 1 page!'), 1, 'got warning' );
     MainLoop;
-    ok('Pretest');
+    pass('Pretest');
 }
 
-ONE:
-{
+
+ONE: {
     my $wizard = new Tk::Wizard( -title => "Test", );
     isa_ok( $wizard, "Tk::Wizard" );
     is( 1, $wizard->addPage( sub { $wizard->blank_frame( -wait => $WAIT ) } ), 'pre page' );
     is( 2, $wizard->addPage( sub { page_splash($wizard) } ), 'p1' );
     is( 3, $wizard->addPage( sub { page_finish($wizard) } ), 'p2' );
+
     $wizard->Show;
     MainLoop;
+
     isa_ok( $wizard, "Tk::Wizard", "Wizard survived CloseWindowEventCycle" );
-    ok( 1, 'end of ONE tests' );
+    pass('end of ONE');
 }
 
 TWO: {
@@ -75,13 +74,19 @@ TWO: {
     isa_ok( $wizard->cget( -finishButtonAction ), "Tk::Callback" );
     is( 1, $wizard->addPage( sub { page_splash($wizard) } ), "TWO page one" );
     is( 2, $wizard->addPage( sub { page_finish($wizard) } ), "TWO page two" );
+
+	my $capture = IO::Capture::Stderr::Extended->new;
+    $capture->start;
     $wizard->Show;
+    $capture->stop;
+    is( $capture->matches(qr'Showing a Wizard with 2 pages!'), 1, 'got warning' )
+    	or diag join",", $capture->all_screen_lines();
+
     MainLoop;
-    ok( 1, 'Done TWO' );
+    pass( 'Done TWO' );
 }
 
-THREE:
-{
+THREE: {
     my $wizard = new Tk::Wizard( -title => "Test", );
     isa_ok( $wizard, "Tk::Wizard" );
     $wizard->configure(
@@ -90,19 +95,23 @@ THREE:
     );
     is( 1, $wizard->addPage( sub { page_splash($wizard) } ), 'THREE addPage 1' );
     is( 2, $wizard->addPage( sub { page_finish($wizard) } ), 'THREE addPage 2' );
+
+	my $capture = IO::Capture::Stderr::Extended->new;
+    $capture->start;
     $wizard->Show;
+    $capture->stop;
+    is( $capture->matches(qr'Showing a Wizard with 2 pages!'), 1, 'got warning' )
+    	or diag join",", $capture->all_screen_lines();
+
     MainLoop;
     isa_ok( $wizard, "Tk::Wizard", "Wizard survived CloseWindowEventCycle" );
-    ok( 1, 'end of THREE block' );
-}    # end of THREE block
+    pass( 'end of THREE block' );
+}
 
-pass;
 
 sub page_splash {
     my $wizard = shift;
     my $frame = $wizard->blank_frame( -wait => $WAIT );
-
-    # $frame->after($WAIT,sub{$wizard->forward});
     return $frame;
 }
 
@@ -113,8 +122,6 @@ sub page_finish {
         -title => "Wizard Test 'pb' Complete",
         -text  => "Thanks for running this test.",
     );
-
-    #$frame->after($WAIT,sub{$wizard->forward});
     return $frame;
 }
 

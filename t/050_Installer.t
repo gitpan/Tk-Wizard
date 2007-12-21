@@ -11,7 +11,7 @@ use File::Path;
 use LWP::UserAgent;
 use Test::More;
 use Tk;
-use lib "../lib";
+use lib qw(../lib . t/);
 
 
 
@@ -32,6 +32,7 @@ BEGIN {
     }
     plan tests => 23;
     pass('can get cpan');
+    use_ok('WizTestSettings');
     use_ok("Tk::Wizard");
     use_ok("Tk::Wizard::Installer");
 }
