@@ -1,16 +1,15 @@
-
-# $Id: Installer.pm,v 2.28 2007/11/16 17:01:18 martinthurn Exp $
-
 package Tk::Wizard::Installer;
 
 use strict;
 use warnings;
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.29 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.30 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
-Tk::Wizard::Installer - building-blocks for a software install wizard
+Tk::Wizard::Installer - Building-blocks for a software install wizard
+
+=head1 SYNOPSIS
 
   use Tk::Wizard::Installer;
   my $wizard = new Tk::Wizard::Installer( -title => "Installer Test", );
@@ -52,7 +51,6 @@ use File::Path;
 use File::Copy;
 use FileHandle;
 use File::Spec;
-use File::Slurp;
 use Tk::ErrorDialog;
 use Tk::LabFrame;
 use Tk::ProgressBar;
@@ -66,10 +64,9 @@ use base "Tk::Wizard";
 use constant DEBUG_FUNC => 0;
 
 # See INTERNATIONALISATION
-
 my %LABELS = (
 
-    # Buttons
+	# Buttons
     BACK   => "< Back",
     NEXT   => "Next >",
     FINISH => "Finish",
@@ -122,9 +119,9 @@ function or with the Wizard's C<callback_licence_agreement> function.
 sub addLicencePage {
     my ( $self, $args ) = ( shift, {@_} );
     DEBUG_FUNC && print STDERR " FFF addLicencePage\n";
-    croak "No -filepath argument present" if not $args->{-filepath};
+    Carp::croak "No -filepath argument present" if not $args->{-filepath};
     $self->addPage( sub { $self->_page_licence_agreement($args) } );
-}    # addLicencePage
+}
 
 # PRIVATE METHOD _page_licence_agreement
 #
@@ -142,10 +139,13 @@ sub _page_licence_agreement {
 
     my $padx = $self->cget( -style ) eq 'top' ? 30 : 5;
     $self->{licence_agree} = undef;
-    my $sFname = $args->{-filepath};
+    my $fname = $args->{-filepath};
 
-    my $text   = read_file($sFname)
-      or croak "Could not read licence from $sFname: $!";
+	my $text;
+	open my $in, $fname or Carp::croak "Could not read licence from $fname: $!";
+	read $in, $text, -s $in;
+	close $in;
+	WARN "Licence file $fname is empty." if not length $text;
 
     # Clean up line endings because Tk::ROText on *NIX displays them:
     $text =~ s![\r\n]+!\n!g;
@@ -210,7 +210,7 @@ sub _page_licence_agreement {
                 $self->{nextButton}->invoke;
             }
         );
-    }    # if WAIT
+    }
     return $frame;
 }
 
@@ -338,17 +338,15 @@ sub addFileListPage {
 
 sub _page_filelist {
     my ( $self, $args ) = ( shift, shift );
-    croak "Arguments should be supplied as a hash ref"
-      if not ref $args
-          or ref $args ne "HASH";
-    croak "-from and -to are required"
-      if not $args->{-from}
-          or not $args->{-to};
-    croak "-from and -to are different lengths"
+    Carp::croak "Arguments should be supplied as a hash ref"
+      if not ref $args or ref $args ne "HASH";
+    Carp::croak "-from and -to are required"
+      if not $args->{-from} or not $args->{-to};
+    Carp::croak "-from and -to are different lengths"
       if $#{ $args->{-from} } != $#{ $args->{-to} };
-    croak "Nothing to do! -from and -to empty"
-      if $#{ $args->{-from} } == -1
-          or $#{ $args->{-to} } == -1;
+    Carp::croak "Nothing to do! -from and -to empty"
+      if $#{ $args->{-from} } == -1 or $#{ $args->{-to} } == -1;
+
     my $frame = $self->blank_frame(
         -title    => $args->{-title}    || "Copying Files",
         -subtitle => $args->{-subtitle} || "Please wait whilst Setup copies files to your computer.",
@@ -385,41 +383,38 @@ sub _page_filelist {
         $args->{-delay} || 1000,
         sub {
             my $todo = $self->_pre_install_files($args);
-            warn "# Configure bar to $todo\n" if $self->{-debug};
+            INFO "Configure bar to $todo\n" if $self->{-debug};
             $self->{-bar}->configure( -to => $todo );
             $self->_install_files($args);
             $self->{nextButton}->configure( -state => "normal" );
             $self->{backButton}->configure( -state => "normal" );
 
-            #$self->{nextButton}->invoke unless $args->{-wait};
-
             if ( $args->{ -wait } ) {
                 Tk::Wizard::_fix_wait( \$args->{ -wait } );
 
-                #      $frame->after($args->{-wait},sub{$self->forward});
                 $frame->after(
                     $args->{ -wait },
                     sub {
                         $self->{nextButton}->configure( -state => 'normal' );
                         $self->{nextButton}->invoke;
-                      }    # sub
-                );         # after
-            }    # if WAIT
-          }    # sub
-    );         # after
+                      }
+                );
+            }
+          }
+    );
     return $frame;
-}    # _page_filelist
+}
 
 # Pre-parse, counting files and expanding directories if necessary
 # Return total number of files to process
 # Puts any failures into %{$self->{-failed}}
 sub _pre_install_files {
     my ( $self, $args ) = ( shift, shift );
-    croak "Arguments should be supplied as a hash ref"
-      if not ref $args
-          or ref $args ne "HASH";
-    croak "-from and -to are different lengths"
+    Carp::croak "Arguments should be supplied as a hash ref"
+      if not ref $args or ref $args ne "HASH";
+    Carp::croak "-from and -to are different lengths"
       if $#{ $args->{-from} } != $#{ $args->{-from} };
+
     my $total = 0;
     my $i     = -1;
     $args->{-labelFrom}->configure( -text => $args->{-label_preparing} || "Preparing..." );
@@ -444,47 +439,47 @@ sub _pre_install_files {
             if ( !-d $sTo ) {
                 $self->{-failed}->{$sTo} = qq{Can not copy directory $sFrom to file};
                 next FILELIST_ELEMENT;
-            }    # if
+            }
             if ( !opendir DIR, $sFrom ) {
                 $self->{-failed}->{$sFrom} = qq{Can not read directory};
                 next FILELIST_ELEMENT;
-            }    # if
+            }
             foreach ( grep { !/^\.{1,2}$/ } readdir DIR ) {
                 push @asFrom, "$sFrom/$_";
                 push @asTo,   "$sTo/$_";
                 $total++;
-            }    # foreach
-            closedir DIR or warn;
+            }
+            closedir DIR or warn "Could not closedir: $!";
             next FILELIST_ELEMENT;
-        }    # if from dir
-             # Files:
+        }
+
+		# Files:
         elsif ( -f $sFrom ) {
             if ( -d $sTo ) {
-
                 # Copy from file to directory:
-                my ( $sJunkVol, $sJunkPath, $sFname ) = splitpath($sFrom);
-                $sTo = "$sTo/$sFname";
-            }    # if
+                my ( $sJunkVol, $sJunkPath, $fname ) = splitpath($sFrom);
+                $sTo = "$sTo/$fname";
+            }
             push @asFrom, $sFrom;
             push @asTo,   $sTo;
             $total++;
-        }    # if from file
+        }
         else {
             $self->{-failed}->{$sFrom} = qq{No such file or directory};
         }
-    }    # foreach FILELIST_ELEMENT
+    }
+
     if ( scalar keys %{ $self->{-failed} } > 0 ) {
-        warn "# Failed " . ( scalar keys %{ $self->{-failed} } )
-          if $self->{-debug};
+        DEBUG "Failed " . ( scalar keys %{ $self->{-failed} } );;
         if ( ref $args->{-on_error} eq 'CODE' ) {
-            warn "# Calling -on_error handler." if $self->{-debug};
+            DEBUG "Calling -on_error handler.";
             &{ $args->{-on_error} };
         }
-        else {    # if ($args->{-on_error}) {
-            warn "# Calling self/pre_install_files_quit." if $self->{-debug};
+        else {
+            DEBUG "Calling self/pre_install_files_quit.";
             $self->pre_install_files_quit( scalar keys %{ $self->{-failed} } );
         }
-    }    # if
+    }
     @{ $args->{-from} } = @asFrom;
     @{ $args->{-to} }   = @asTo;
     return $total;    # why was it total+1?
@@ -493,11 +488,11 @@ sub _pre_install_files {
 # See page_filelist
 sub _install_files {
     my ( $self, $args ) = ( shift, shift );
-    croak "Arguments should be supplied as a hash ref"
-      if not ref $args
-          or ref $args ne "HASH";
-    croak "-from and -to are different lengths"
+    Carp::croak "Arguments should be supplied as a hash ref"
+      if not ref $args or ref $args ne "HASH";
+    Carp::croak "-from and -to are different lengths"
       if $#{ $args->{-from} } != $#{ $args->{-from} };
+
     $args->{-label_from} = $args->{-move} ? 'Moving: ' : "Copying: "
       if not $args->{-label_from};
     $args->{-label_file} = "To: " if not $args->{-label_file};
@@ -534,8 +529,7 @@ sub _install_files {
             $args->{-labelTo}->configure( -text => $args->{-label_file} . @{ $args->{-to} }[$i] );
             $args->{-labelTo}->update;
             $self->{-bar}->value( $self->{-bar}->value + 1 );
-            warn "# Updating bar to " . $self->{-bar}->value . "\n"
-              if $self->{-debug};
+            DEBUG "Updating bar to " . $self->{-bar}->value;
             $self->{-bar}->update;
 
             # Make the path, if needs be
@@ -545,9 +539,9 @@ sub _install_files {
             if ( !-d $d ) {
                 eval { File::Path::mkpath($d) };
                 if ($@) {
-                    croak "Could not make path $d : $!";
-                }    # if
-            }    # if dir not exist
+                    Carp::croak "Could not make path $d : $!";
+                }
+            }
 
             # Do the move/copy
             if ( $args->{-move} ) {
@@ -555,41 +549,41 @@ sub _install_files {
                     $self->{-failed}->{ @{ $args->{-to} }[$i] } = "Could not write file";
                     @{ $args->{-from} }[$i] = undef;
                 }
-            }    # if -move
+            }
             else {
                 if ( not copy( @{ $args->{-from} }[$i], @{ $args->{-to} }[$i] ) ) {
                     $self->{-failed}->{ @{ $args->{-to} }[$i] } = "Could not write file";
                     @{ $args->{-from} }[$i] = undef;
                 }
-            }    # else -copy
-        }    # if file readable
+            }
+        }
 
         else {
             $self->{-failed}->{ @{ $args->{-from} }[$i] } = "Could not read file";
             @{ $args->{-from} }[$i] = undef;
         }    # else file not readable
-             # print STDERR " DDD slowdown is =$args->{-slowdown}=\n";
-        sleep( $args->{-slowdown} / 1000 );
+		 DEBUG "slowdown is =$args->{-slowdown}=\n";
+		sleep( $args->{-slowdown} / 1000 );
     }    # foreach
 
     if ( scalar keys %{ $self->{-failed} } > 0 ) {
-        warn "# Failed " . ( scalar keys %{ $self->{-failed} } )
-          if $self->{-debug};
+        WARN "Failed " . ( scalar keys %{ $self->{-failed} } );
         if ( ref $args->{-on_error} eq 'CODE' ) {
-            warn "# Calling -on_error handler." if $self->{-debug};
+            TRACE "# Calling -on_error handler.";
             &{ $args->{-on_error} };
         }
-        else {    # ($args->{-on_error}) {
-            warn "# Calling pre_install_files_quit." if $self->{-debug};
+        else {
+            TRACE "# Calling pre_install_files_quit.";
             $self->pre_install_files_quit( scalar keys %{ $self->{-failed} } );
         }
-    }    # if any failed
+    }
     else {
         $args->{-labelFrom}->configure( -text => 'All done.' );
         $args->{-labelTo}->configure( -text   => '' );
-    }                 # else none failed
-    return $total;    # why was it total + 1?
-}    # _install_files
+    }
+
+    return $total;
+}
 
 =head2 addDownloadPage
 
@@ -665,12 +659,12 @@ sub addDownloadPage {
 sub _page_download {
     my ( $self, $args ) = ( shift, shift );
     DEBUG_FUNC && print STDERR " FFF _page_download\n";
-    croak "Arguments should be supplied as a hash ref"
-      if not ref $args
-          or ref $args ne "HASH";
-    croak "-files is required" if not $args->{-files};
-    croak "-files should be a hash of uri => filepath pairs"
+    Carp::croak "Arguments should be supplied as a hash ref"
+      if not ref $args or ref $args ne "HASH";
+    Carp::croak "-files is required" if not $args->{-files};
+    Carp::croak "-files should be a hash of uri => filepath pairs"
       if ref $args->{-files} ne 'HASH';
+
     my @failed;
     my $frame = $self->blank_frame(
         -title    => $args->{-title}    || "Downloading Files",
@@ -718,8 +712,9 @@ sub _page_download {
                 $args->{file_label}->update;
                 $self->{-bar}->value(0);
                 $self->{-bar}->configure( -to => scalar keys %{ $args->{-files} } );
+
                 foreach my $uri ( keys %{ $args->{-files} } ) {
-                    warn "# Try $args->{-files}->{$uri}\n" if $self->{-debug};
+                    TRACE "Try $args->{-files}->{$uri}";
                     my ($uri_msg) = $uri =~ m!^\w+:/+[^/]+(.*?)/?$!;
                     $args->{file_label}->configure( -label => $uri_msg || "Current File" );
                     $args->{file_label}->update;
@@ -740,36 +735,35 @@ sub _page_download {
                     $args->{-file_bar}->update;
                 }    # foreach
                 if ( scalar keys %{ $args->{-files} } > 0 ) {
-                    warn "# Files left: ", ( scalar keys %{ $args->{-files} } ), "\n"
-                      if $self->{-debug};
+                    DEBUG "Files left: ", ( scalar keys %{ $args->{-files} } );
                     if ( $args->{-no_retry}
                         || !$self->confirm_download_again( scalar keys %{ $args->{-files} } ) )
                     {
-                        warn "# Not trying again.\n" if $self->{-debug};
+                        INFO "Not trying again";
                         $self->{-failed} = $args->{-files};
                         $args->{-files}  = {};
-                    }    # if
-                }    # if
-            }    # while
+                    }
+                }
+            }
+
             if ( scalar keys %{ $self->{-failed} } > 0 and $args->{-on_error} ) {
                 warn "# Failed." if $self->{-debug};
                 if ( ref $args->{-on_error} eq 'CODE' ) {
-                    warn "# Calling -on_error handler." if $self->{-debug};
+                    DEBUG "Calling -on_error handler.";
                     &{ $args->{-on_error} };
-                }    # if
+                }
                 elsif ( $args->{-on_error} ) {
-                    warn "# Calling self/download_quit." if $self->{-debug};
+                    DEBUG "Calling self/download_quit.";
                     $self->download_quit( scalar keys %{ $self->{-failed} } );
-                }    # else
-            }    # if
+                }
+            }
             else {
-                warn "# Failures: ", scalar keys %{ $self->{-failed} }, "\n"
-                  if $self->{-debug};
+                INFO "Failures: ", scalar keys %{ $self->{-failed} };
                 foreach ( keys %{ $self->{-failed} } ) {
-                    warn "# \t$_\n" if $self->{-debug};
-                }    # foreach
+                    INFO "\t$_\n";
+                }
                 $self->{-failed} = 0;
-            }    # else
+            }
             $self->{-bar}->packForget;
             $args->{-file_bar}->packForget;
             $args->{file_label}->packForget;
@@ -810,23 +804,22 @@ sub _read_uri {
     if ( defined $args->{proxy} ) {
         $proxy_user = $args->{HTTP_PROXY_USER};
         $proxy_pass = $args->{HTTP_PROXY_PASS};
-        warn("_read_uri: calling env_proxy: $args->{http_proxy}")
-          if $self->{-debug};
+        DEBUG "_read_uri: calling env_proxy: $args->{http_proxy}";
         $ua->env_proxy;
     }
     elsif ( defined $ENV{HTTP_PROXY} ) {
         $proxy_user = $ENV{HTTP_PROXY_USER};
         $proxy_pass = $ENV{HTTP_PROXY_PASS};
-        warn("_read_uri: calling env_proxy: $ENV{HTTP_proxy}")
-          if $self->{-debug};
+        DEBUG "_read_uri: calling env_proxy: $ENV{HTTP_proxy}";
         $ua->env_proxy;
     }
     my $req = HTTP::Request->new( GET => $args->{uri} );
     if ( defined $proxy_user and defined $proxy_pass ) {
-        warn("_read_uri: calling proxy_authorization_basic($proxy_user, $proxy_pass)") if $self->{-debug};
+        DEBUG "_read_uri: calling proxy_authorization_basic($proxy_user, $proxy_pass)";
         $req->proxy_authorization_basic( $proxy_user, $proxy_pass );
-    }    # if
-         # update the progress bar
+    }
+
+    # update the progress bar
     ( $self->{response}, $self->{bytes_transferred} ) = ( undef, 0 );
     $self->{response} = $ua->request( $req, sub { &_lwp_callback( $self, $args->{bar}, @_ ) },, 4096 );
     if ( $self->{response} && $self->{response}->is_success ) {
@@ -834,31 +827,31 @@ sub _read_uri {
         if ( $dirs and $dirs !~ /^\.{1,2}$/ and !-d $dirs ) {
             eval { File::Path::mkpath($dirs) };
             if ($@) {
-                croak "Could not make path $dirs : $!";
-            }    # if
-        }    # if
+                Carp::croak "Could not make path $dirs : $!";
+            }
+        }
         my $TARGET;
         if ( !open $TARGET, '>', $args->{target} ) {
-            warn("_read_uri: Couldn't open $args->{target} for writing")
-              if $self->{-debug};
+            ERROR "_read_uri: Couldn't open $args->{target} for writing";
             $self->{errstr} = "Couldn't open $args->{target} for writing: $!\n";
             return;
         }
-        warn "# Writing to $args->{target}...\n" if $self->{-debug};
+        DEBUG "# Writing to $args->{target}...";
         $TARGET->binmode;
         $TARGET->print( $self->{response}->content ) or warn;
         $TARGET->close                               or warn;
         return 1;
-    }    # if success
+    }
+
     my $sMsg = "Error(2) reading $args->{uri}\n";
     if ( $self->{response} ) {
         $sMsg =
           join( ' ', qq{Error(1) reading $args->{uri}:}, $self->{response}->code, $self->{response}->message, "\n" );
-    }    # if
-    warn("_read_uri: $sMsg") if $self->{-debug};
+    }
+    DEBUG "_read_uri: $sMsg";
     $self->{errstr} = $sMsg;
     return 0;
-}    # _read_uri
+}
 
 # c/o PPM.pm
 sub _lwp_callback {
@@ -968,9 +961,9 @@ this dialogue refers to "the Installer", rather than "the Wizard".
 =cut
 
 sub DIALOGUE_really_quit {
+    TRACE "Enter Installer DIALOGUE_really_quit  ...";
     my $self = shift;
     return 0 if $self->{nextButton}->cget( -text ) eq $LABELS{FINISH};
-    warn "# Installer DIALOGUE_really_quit  ...\n" if $self->{-debug};
     unless ( $self->{really_quit} ) {
         my $button = $self->parent->messageBox(
             -icon    => 'question',

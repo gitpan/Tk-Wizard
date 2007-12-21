@@ -4,7 +4,7 @@ use inc::Module::Install;
 
 name('Tk-Wizard');
 abstract('GUI for step-by-step interactive logical process');
-version(2.125);
+version(2.126);
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');
 
@@ -14,7 +14,6 @@ build_requires("ExtUtils::testlib");
 requires("File::Copy");
 requires("File::Path");
 build_requires("File::Path");
-requires("File::Slurp");
 requires("File::Spec");
 build_requires("FileHandle");
 requires("IO::Handle");

@@ -12,6 +12,8 @@ use Test::More;
 use Tk;
 use lib qw(../lib . t/);
 
+use Cwd;
+chdir ".." if getcwd =~ /\Wt$/;
 
 
 BEGIN {

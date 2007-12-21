@@ -28,7 +28,6 @@ requires:
   Cwd: 0
   File::Copy: 0
   File::Path: 0
-  File::Slurp: 0
   File::Spec: 0
   IO::Handle: 0
   Scalar::Util: 0

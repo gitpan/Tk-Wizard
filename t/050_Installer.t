@@ -30,7 +30,7 @@ BEGIN {
     if ( $response->is_error ) {
         plan skip_all => "LWP cannot get cpan, guess we're not able to get online";
     }
-    plan tests => 23;
+    plan tests => 22;
     pass('can get cpan');
     use_ok('WizTestSettings');
     use_ok("Tk::Wizard");

@@ -1,9 +1,13 @@
-
-# $Id: Win32.pm,v 2.14 2007/10/18 12:04:06 martinthurn Exp $
-
 package Tk::Wizard::Installer::Win32;
 
+=head1 NAME
+
+Tk::Wizard::Installer::Win32 - Win32-specific routines for Tk::Wizard::Installer
+
+=cut
+
 use strict;
+use warnings;
 
 use Carp;
 use Cwd;
@@ -12,7 +16,9 @@ use File::Path;
 use Exporter;
 use Tk::Wizard::Installer;
 use base 'Tk::Wizard::Installer';
-my @EXPORT = ("MainLoop");
+
+use vars '@EXPORT';
+@EXPORT = ("MainLoop");
 
 our $VERSION = do { my @r = ( q$Revision: 2.16 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
@@ -39,10 +45,6 @@ BEGIN {
     use Win32;
     use Win32::TieRegistry( Delimiter => "/", ArrayValues => 0 );
 }
-
-=head1 NAME
-
-Tk::Wizard::Installer::Win32 - Win32-specific routines for Tk::Wizard::Installer
 
 =head1 DESCRIPTION
 

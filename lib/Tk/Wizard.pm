@@ -2,11 +2,11 @@ package Tk::Wizard;
 
 use strict;
 use warnings;
+use warnings::register;
 
 use vars '$VERSION';
 $VERSION = do { my @r = ( q$Revision: 2.73 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
-use warnings::register;
 
 =head1 NAME
 
@@ -20,7 +20,6 @@ use Carp;
 use Config;
 use Data::Dumper;
 use File::Path;
-use File::Slurp;
 use File::Spec::Functions qw( rootdir );
 use Scalar::Util qw( reftype );
 use Tk;
@@ -1175,8 +1174,7 @@ sub _text_frame {
     my $self = shift;
     my $args = shift;
 
-    DEBUG "eNTER _text_frame with ", Dumper($args);
-    local *IN;
+    DEBUG "Enter _text_frame with ", Dumper($args);
     my $text;
     my $frame = $self->blank_frame(%$args);
     if ( $args->{-boxedtext} ) {
@@ -1184,8 +1182,11 @@ sub _text_frame {
             $text = $args->{-boxedtext};
         }
         elsif ( not ref $args->{-boxedtext} ) {
-            $$text = read_file( $args->{-boxedtext} )
-              or croak "Could not read file: $args->{-boxedtext}; $!";
+            open my $in, $args->{-boxedtext}
+            	or Carp::croak "Could not read file: $args->{-boxedtext}; $!";
+            read $in, $$text, -s $in;
+            close $in;
+            WARN "Boxedtext file $args->{-boxedtext} is empty." if not length $text;
         }
     }
     $$text = "" if not defined $text;
@@ -1202,7 +1203,7 @@ sub _text_frame {
     $t->insert( '0.0', $$text );
     $t->configure( -state => "disabled" );
     return $frame;
-}    # _text_frame
+}
 
 #
 # Function (NOT a method!):       _dispatch

@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-my $VERSION = do { my @r = ( q$Revision: 1.13 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.14 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use Cwd;
 use ExtUtils::testlib;
@@ -8,46 +8,55 @@ use Test::More;
 use Tk;
 use lib qw(../lib . t/);
 
+my $cap;
+
 BEGIN {
     eval { require IO::Capture::Stderr::Extended };
-    if ( $@ ) {
-        plan skip_all => 'Test requires IO::Capture::Stderr::Extended';
-    }
-    else {
-        my $mwTest;
-        eval { $mwTest = Tk::MainWindow->new };
-        if ($@) {
-            plan skip_all => 'Test irrelevant without a display';
-        }
-        else {
-            plan tests => 28
-        }
-        $mwTest->destroy if Tk::Exists($mwTest);
-        use_ok('WizTestSettings');
-        use_ok('Tk::Wizard');
-    }
+	$cap = !$@;
+
+	my $mwTest;
+	eval { $mwTest = Tk::MainWindow->new };
+	if ($@) {
+		plan skip_all => 'Test irrelevant without a display';
+	}
+	else {
+		plan tests => 28
+	}
+	$mwTest->destroy if Tk::Exists($mwTest);
+	use_ok('WizTestSettings');
+	use_ok('Tk::Wizard');
 }
 
 
 my $WAIT = 1;
+my $capture;
 
 ZERO: {
-    my $wizard = Tk::Wizard->new;
+	my $wizard = Tk::Wizard->new;
     isa_ok( $wizard, "Tk::Wizard" );
     is( 1, $wizard->addSplashPage( -wait => $WAIT ), 'One page' );
 
-	my $capture = IO::Capture::Stderr::Extended->new;
-    $capture->start;
-    $wizard->Show;
-    $capture->stop;
-    is( $capture->matches(qr'Showing a Wizard with 1 page!'), 1, 'got warning' );
+    if ($cap){
+		$capture = IO::Capture::Stderr::Extended->new;
+		$capture->start;
+	    $wizard->Show;
+	    $capture->stop;
+	} else {
+		no warnings "Tk::Wizard";
+	    $wizard->Show;
+	}
+
+    SKIP: {
+		skip "No IO Capture", 1 unless $cap;
+    	is( $capture->matches(qr'Showing a Wizard with 1 page!'), 1, 'got warning' );
+	}
     MainLoop;
     pass('Pretest');
 }
 
 
 ONE: {
-    my $wizard = new Tk::Wizard( -title => "Test", );
+    my $wizard = Tk::Wizard->new( -title => "Test", );
     isa_ok( $wizard, "Tk::Wizard" );
     is( 1, $wizard->addPage( sub { $wizard->blank_frame( -wait => $WAIT ) } ), 'pre page' );
     is( 2, $wizard->addPage( sub { page_splash($wizard) } ), 'p1' );
@@ -59,6 +68,8 @@ ONE: {
     isa_ok( $wizard, "Tk::Wizard", "Wizard survived CloseWindowEventCycle" );
     pass('end of ONE');
 }
+
+
 
 TWO: {
     my $wizard = new Tk::Wizard( -title => "Test", );
@@ -75,12 +86,21 @@ TWO: {
     is( 1, $wizard->addPage( sub { page_splash($wizard) } ), "TWO page one" );
     is( 2, $wizard->addPage( sub { page_finish($wizard) } ), "TWO page two" );
 
-	my $capture = IO::Capture::Stderr::Extended->new;
-    $capture->start;
-    $wizard->Show;
-    $capture->stop;
-    is( $capture->matches(qr'Showing a Wizard with 2 pages!'), 1, 'got warning' )
-    	or diag join",", $capture->all_screen_lines();
+    if ($cap){
+		$capture = IO::Capture::Stderr::Extended->new;
+		$capture->start;
+	    $wizard->Show;
+	    $capture->stop;
+	} else {
+		no warnings "Tk::Wizard";
+	    $wizard->Show;
+	}
+
+    SKIP: {
+		skip "No IO Capture", 1 unless $cap;
+		is( $capture->matches(qr'Showing a Wizard with 2 pages!'), 1, 'got warning' )
+			or diag join",", $capture->all_screen_lines();
+	}
 
     MainLoop;
     pass( 'Done TWO' );
@@ -96,12 +116,21 @@ THREE: {
     is( 1, $wizard->addPage( sub { page_splash($wizard) } ), 'THREE addPage 1' );
     is( 2, $wizard->addPage( sub { page_finish($wizard) } ), 'THREE addPage 2' );
 
-	my $capture = IO::Capture::Stderr::Extended->new;
-    $capture->start;
-    $wizard->Show;
-    $capture->stop;
-    is( $capture->matches(qr'Showing a Wizard with 2 pages!'), 1, 'got warning' )
-    	or diag join",", $capture->all_screen_lines();
+    if ($cap){
+		$capture = IO::Capture::Stderr::Extended->new;
+		$capture->start;
+	    $wizard->Show;
+	    $capture->stop;
+	} else {
+		no warnings "Tk::Wizard";
+	    $wizard->Show;
+	}
+
+	SKIP: {
+		skip "No IO Capture", 1 unless $cap;
+		is( $capture->matches(qr'Showing a Wizard with 2 pages!'), 1, 'got warning' )
+			or diag join",", $capture->all_screen_lines();
+	}
 
     MainLoop;
     isa_ok( $wizard, "Tk::Wizard", "Wizard survived CloseWindowEventCycle" );

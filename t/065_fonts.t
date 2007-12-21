@@ -5,7 +5,7 @@ use ExtUtils::testlib;
 use Test::More;
 use Tk;
 use lib qw(../lib . t/);
-
+use WizTestSettings;
 
 BEGIN {
     my $mwTest;
@@ -24,7 +24,6 @@ BEGIN {
 my $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 foreach my $iSize ( 4, 8, 12 ) {
-    DEBUG "ENV{TEST_INTERACTIVE} is ".($ENV{TEST_INTERACTIVE} || 'undef');
     my $wizard = new Tk::Wizard(
         -basefontsize => $iSize,
     );

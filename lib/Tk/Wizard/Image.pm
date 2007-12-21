@@ -1,6 +1,3 @@
-
-# $Id: Image.pm,v 2.8 2007/06/07 21:22:32 martinthurn Exp $
-
 package Tk::Wizard::Image;
 
 use strict;
@@ -9,11 +6,9 @@ use warnings;
 use vars '$VERSION';
 $VERSION = do { my @r = ( q$Revision: 2.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
-# November 2005
-
 =head1 NAME
 
-Tk::Wizard::Image - images for Tk::Wizard
+Tk::Wizard::Image - Base64-encoded images for Tk::Wizard
 
 =head1 DESCRIPTION
 

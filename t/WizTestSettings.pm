@@ -33,7 +33,7 @@ BEGIN {
 		if (not Log::Log4perl::initialized()){
 			# my ($fn) = $0 =~ /[^\/]+$/;
 			my $Log_Conf = q[
-				log4perl.logger                   = TRACE, Screen
+				log4perl.logger                   = ERROR, Screen
 				log4perl.appender.Screen          = Log::Log4perl::Appender::ScreenColoredLevels
 				log4perl.appender.Screen.stderr   = 1
 				log4perl.appender.Screen.layout   = PatternLayout::Multiline
