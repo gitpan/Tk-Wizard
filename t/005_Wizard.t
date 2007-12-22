@@ -14,11 +14,10 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     }
     else {
-        plan tests => 10;
+        plan tests => 9;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
-    use_ok('Tk::Wizard' => 2.073) or BAIL_OUT;
-    use_ok('WizTestSettings');
+    use_ok('Tk::Wizard' => 2.074) or BAIL_OUT "Is this a fake-log4perl error?";
     use_ok('WizTestSettings');
 }
 
@@ -47,6 +46,6 @@ foreach my $style ( qw(top 95)) {
 }
 
 pass('after foreach loop');
-exit 0;
+
 
 __END__

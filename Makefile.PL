@@ -4,7 +4,7 @@ use inc::Module::Install;
 
 name('Tk-Wizard');
 abstract('GUI for step-by-step interactive logical process');
-version(2.126);
+version(2.127);
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');
 
@@ -60,7 +60,7 @@ if ( $^O =~ m/(MSWin32)/i ) {
     }
     else {
         die
-"There appears to be something wrong with your Perl installation. You are on a Windows platform without the core Win32 module. You can still use this module, but parts you will not be able to create shortcuts to the windows special folders.";
+"You are on a Windows platform without the core Win32 module. You can still use this module, but will experience errors if you try to create shortcuts to the Windows special folders.";
     }
 }    # if MSWin32
 

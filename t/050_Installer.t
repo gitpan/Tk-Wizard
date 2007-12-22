@@ -10,6 +10,7 @@ use ExtUtils::testlib;
 use File::Path;
 use LWP::UserAgent;
 use Test::More;
+use FindBin '$Bin';
 use Tk;
 use lib qw(../lib . t/);
 
@@ -20,42 +21,43 @@ BEGIN {
     eval { $mwTest = Tk::MainWindow->new };
     if ($@) {
         plan skip_all => 'Test irrelevant without a display';
-        exit;
-    }    # if
-    $mwTest->destroy if Tk::Exists($mwTest);
-    my $ua = LWP::UserAgent->new;
-    $ua->timeout(10);
-    $ua->env_proxy;
-    my $response = $ua->get('http://search.cpan.org/');
-    if ( $response->is_error ) {
-        plan skip_all => "LWP cannot get cpan, guess we're not able to get online";
-    }
-    plan tests => 22;
-    pass('can get cpan');
-    use_ok('WizTestSettings');
-    use_ok("Tk::Wizard");
-    use_ok("Tk::Wizard::Installer");
+    } else {
+		$mwTest->destroy if Tk::Exists($mwTest);
+		my $ua = LWP::UserAgent->new;
+		$ua->timeout(10);
+		$ua->env_proxy;
+		my $response = $ua->get('http://search.cpan.org/');
+		if ( $response->is_error ) {
+			plan skip_all => "LWP cannot get cpan, guess we're not able to get online";
+		} else {
+			plan tests => 21;
+			pass('can get cpan');
+			use_ok('WizTestSettings');
+			use_ok("Tk::Wizard");
+			use_ok("Tk::Wizard::Installer");
+		}
+	}
 }
 
 my $WAIT      = 100;
-my $sTestDir  = 't/temp';
-my $rhssFiles = {
-    'http://www.cpan.org/'      => "$sTestDir/cpan_index.html",
+my $test_dir  = $Bin.'/temp/';
+
+my $get_files = {
+    'http://www.cpan.org/' => "$test_dir/cpan_index.html",
 };
-my @asDest = values %$rhssFiles;
+
 my $wizard = Tk::Wizard::Installer->new( -title => "Installer Test", );
+
 isa_ok( $wizard, 'Tk::Wizard::Installer' );
 isa_ok( $wizard->parent, "Tk::MainWindow", "Parent" );
 
 ok(
     $wizard->configure(
-        -preNextButtonAction => sub { &preNextButtonAction($wizard); },
         -finishButtonAction  => sub { pass('Finished'); 1; },
     ),
     'Configure'
 );
 
-isa_ok( $wizard->cget( -preNextButtonAction ), "Tk::Callback" );
 isa_ok( $wizard->cget( -finishButtonAction ),  "Tk::Callback" );
 
 # Create pages
@@ -65,8 +67,7 @@ is( $SPLASH, 1, 'Splash page is first' );
 ok(
     $wizard->addDownloadPage(
         -wait  => $WAIT,
-        -files => $rhssFiles,
-
+        -files => $get_files,
         #-on_error => 1,
         -no_retry => 1,
     ),
@@ -92,19 +93,19 @@ foreach ( 1 .. 3 ) {
     isa_ok( $wizard->{wizardPageList}->[0], 'CODE', 'Page in list' );
 }
 
-foreach my $sFname (@asDest) {
-    unlink $sFname;    # Ignore return code
-    ok( !-f $sFname, "before test, destination local file $sFname does not exist" );
+foreach my $f (values %$get_files) {
+    unlink $f;    # Ignore return code
+    ok( !-f $f, "before test, destination local file $f does not exist" );
 }
 
 ok( $wizard->Show, "Show" );
 Tk::Wizard::Installer::MainLoop();
 pass("Exited MainLoop");
 
-foreach my $sFname (@asDest) {
-    ok( -f $sFname, "Post test: destination local file $sFname exists" );
+foreach my $f (values %$get_files) {
+    ok( -f $f, "Post test: destination local file $f exists" );
 }
-rmtree $sTestDir;
+is(rmtree($test_dir), 2, 'Removed temp dir and files');
 
 
 sub page_splash {
@@ -117,6 +118,5 @@ sub page_splash {
     return $frame;
 }
 
-sub preNextButtonAction { return 1; }
 
 __END__

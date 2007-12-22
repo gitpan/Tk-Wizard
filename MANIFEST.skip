@@ -1,3 +1,5 @@
+report.pl
+\.tar\.gz$
 \.tdy$
 blib
 .extra

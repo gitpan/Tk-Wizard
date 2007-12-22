@@ -1,6 +1,8 @@
 use strict;
 use warnings;
 
+my $VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
 use ExtUtils::testlib;
 use Test::More;
 use Tk;
@@ -14,48 +16,31 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     }
     else {
-        plan tests => 21;
+        plan tests => 30;
+		$mwTest->destroy if Tk::Exists($mwTest);
+		use_ok('Tk::Wizard');
+		use_ok('WizTestSettings');
     }
-    $mwTest->destroy if Tk::Exists($mwTest);
-    use_ok('Tk::Wizard');
-    use_ok('WizTestSettings');
 }
 
-my $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+foreach my $size ( 4, 8, 12 ) {
+	foreach my $font (qw( Arial Courier Times )) {
+		my $wizard = Tk::Wizard->new(
+			-basefontsize	=> $size,
+			-fontfamily		=> $font,
+		);
+		isa_ok( $wizard, "Tk::Wizard", "Obj for $font $size" );
 
-foreach my $iSize ( 4, 8, 12 ) {
-    my $wizard = new Tk::Wizard(
-        -basefontsize => $iSize,
-    );
-    isa_ok( $wizard, "Tk::Wizard" );
+		WizTestSettings::add_test_pages(
+			$wizard,
+			-wait => $ENV{TEST_INTERACTIVE} ? -1 : 1,
+		);
 
-    WizTestSettings::add_test_pages(
-		$wizard,
-		-wait => $ENV{TEST_INTERACTIVE} ? -1 : 1,
-	);
-
-    $wizard->Show;
-    pass('before MainLoop');
-    MainLoop;
-    pass('after MainLoop');
-
-}
-
-foreach my $sFont (qw( Arial Courier Times )) {
-    my $wizard = new Tk::Wizard(
-        -fontfamily => $sFont,
-    );
-    isa_ok( $wizard, "Tk::Wizard" );
-
-    WizTestSettings::add_test_pages(
-		$wizard,
-		-wait => $ENV{TEST_INTERACTIVE} ? -1 : 1,
-	);
-
-    $wizard->Show;
-    pass('before MainLoop');
-    MainLoop;
-    pass('after MainLoop');
+		$wizard->Show;
+		pass("before MainLoop for $font $size");
+		MainLoop;
+		pass('after MainLoop for $font $size');
+	}
 }
 
 pass 'after foreach loop';

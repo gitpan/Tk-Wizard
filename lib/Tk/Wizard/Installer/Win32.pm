@@ -20,7 +20,7 @@ use base 'Tk::Wizard::Installer';
 use vars '@EXPORT';
 @EXPORT = ("MainLoop");
 
-our $VERSION = do { my @r = ( q$Revision: 2.16 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.17 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use constant DEBUG_FRAME => 0;
 
@@ -28,7 +28,10 @@ BEGIN {
 	eval { require Log::Log4perl; };
 	if($@) {
 		no strict qw(refs);
-		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+		*{"Tk::Wizard::Installer::Win32::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+		if (__PACKAGE__ ne 'Tk::Wizard::Installer::Win32'){
+			*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+		}
 	} else {
 		no warnings;
 		require Log::Log4perl::Level;

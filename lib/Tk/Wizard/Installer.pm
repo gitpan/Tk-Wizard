@@ -3,7 +3,7 @@ package Tk::Wizard::Installer;
 use strict;
 use warnings;
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.30 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.31 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -35,7 +35,10 @@ BEGIN {
 	eval { require Log::Log4perl; };
 	if($@) {
 		no strict qw(refs);
-		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+		*{"Tk::Wizard::Installer::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+		if (__PACKAGE__ ne 'Tk::Wizard::Installer'){
+			*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+		}
 	} else {
 		no warnings;
 		require Log::Log4perl::Level;
@@ -994,8 +997,9 @@ Asks if the user wishes to continue after file copy errors.
 
 sub pre_install_files_quit {
     my ( $self, $failed ) = ( shift, shift );
-    warn "# pre_install_files_quit ...\n" if $self->{-debug};
-  SHOW:
+    TRACE "Enter pre_install_files_quit ...\n" if $self->{-debug};
+
+	SHOW:
     my $d = $self->Dialog(
         -bitmap         => 'error',
         -buttons        => [ 'Yes', 'No', 'Details' ],
@@ -1016,8 +1020,9 @@ sub pre_install_files_quit {
                   keys %{ $self->{-failed} }
             ),
         );
-        goto SHOW;
+        goto SHOW; # XXX Martin, why goto?!
     }
+
     if ( lc $button eq 'no' ) {
         warn "Won't continue....\n" if $self->{-debug};
         $self->{cancelButton}->configure( -state => 'normal' );
@@ -1030,7 +1035,7 @@ sub pre_install_files_quit {
     # Clear out the error list so we don't inform the user twice about
     # the same problem:
     $self->{-failed} = undef;
-}    # pre_install_files_quit
+}
 
 1;
 
