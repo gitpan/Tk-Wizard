@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.74 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.75 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 
 =head1 NAME
@@ -39,16 +39,20 @@ use vars qw( @EXPORT @ISA %LABELS );
 BEGIN {
 	eval { require Log::Log4perl; };
 	if($@) {
-		no strict qw(refs);
-		*{"Tk::Wizard::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
-		if (__PACKAGE__ ne 'Tk::Wizard'){
-			*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
-		}
+		no strict qw"refs";
+		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
 	} else {
 		no warnings;
+		no strict qw"refs";
 		require Log::Log4perl::Level;
 		Log::Log4perl::Level->import(__PACKAGE__);
 		Log::Log4perl->import(":easy");
+		# It took four CPAN uploads and tests to workout why
+		# one user was getting syntax errors for TRACE: must
+		# be the Mithrasmas spirit (hic):
+		if ($Log::Log4perl::VERSION < 1.11){
+			*{__PACKAGE__."::TRACE"} = *DEBUG;
+		}
 	}
 
     require Exporter;    # Exporting Tk's MainLoop so that

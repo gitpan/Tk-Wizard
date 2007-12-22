@@ -3,8 +3,8 @@ use inc::Module::Install;
 # $Id: Makefile.PL,v 2.39 2007/11/02 21:56:21 martinthurn Exp $
 
 name('Tk-Wizard');
+version(2.128);
 abstract('GUI for step-by-step interactive logical process');
-version(2.127);
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');
 

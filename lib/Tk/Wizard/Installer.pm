@@ -3,7 +3,7 @@ package Tk::Wizard::Installer;
 use strict;
 use warnings;
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.31 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.32 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -31,19 +31,25 @@ Tk::Wizard::Installer - Building-blocks for a software install wizard
 
 =cut
 
+# use Log4perl if we have it, otherwise stub:
+# See Log::Log4perl::FAQ
 BEGIN {
 	eval { require Log::Log4perl; };
 	if($@) {
-		no strict qw(refs);
-		*{"Tk::Wizard::Installer::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
-		if (__PACKAGE__ ne 'Tk::Wizard::Installer'){
-			*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
-		}
+		no strict qw"refs";
+		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
 	} else {
 		no warnings;
+		no strict qw"refs";
 		require Log::Log4perl::Level;
 		Log::Log4perl::Level->import(__PACKAGE__);
 		Log::Log4perl->import(":easy");
+		# It took four CPAN uploads and tests to workout why
+		# one user was getting syntax errors for TRACE: must
+		# be the Mithrasmas spirit (hic):
+		if ($Log::Log4perl::VERSION < 1.11){
+			*{__PACKAGE__."::TRACE"} = *DEBUG;
+		}
 	}
 }
 
