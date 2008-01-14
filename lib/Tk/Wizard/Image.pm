@@ -2273,3 +2273,12 @@ wMDA/wAA/wAA/wAAwMDA////////////////////////////////////////wMDA/wAA/wAA
 __END__
 
 
+=head1 AUTHOR
+
+Lee Goddard (lgoddard@cpan.org).
+
+=head1 COPYRIGHT
+
+Copyright (C) Lee Goddard, 11/2002 - 01/2008 ff.
+
+Made available under the same terms as Perl itself.

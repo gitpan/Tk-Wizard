@@ -664,10 +664,12 @@ L<Win32::OLE>.
 
 Wizard; set-up; setup; installer; uninstaller; install; uninstall; Tk; GUI; windows; win32; registry; shortcut;
 
+=head1 AUTHOR
+
+Lee Goddard (lgoddard@cpan.org).
+
 =head1 COPYRIGHT
 
-Copyright (C) Lee Goddard, 11/2002 ff.
+Copyright (C) Lee Goddard, 11/2002 - 01/2008 ff.
 
-Distributed under the same terms as Perl itself.
-
-=cut
+Made available under the same terms as Perl itself.

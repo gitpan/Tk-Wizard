@@ -1084,10 +1084,12 @@ Lee Goddard (lgoddard @ cpan.org).
 
 Wizard; set-up; setup; installer; uninstaller; install; uninstall; Tk; GUI.
 
+=head1 AUTHOR
+
+Lee Goddard (lgoddard@cpan.org).
+
 =head1 COPYRIGHT
 
-Copyright (C) Lee Goddard, 11/2002 ff.
+Copyright (C) Lee Goddard, 11/2002 - 01/2008 ff.
 
-Available under the same terms as Perl itself; no warranty of any kind.
-
-
+Made available under the same terms as Perl itself.

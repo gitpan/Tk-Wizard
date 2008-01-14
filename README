@@ -3,22 +3,19 @@ Tk::Wizard - Wizard GUI Framework
 
 IMPORTANT CHANGE(S) FROM PREVOUS VERSION(S)
 
-As of Tk::Wizard version 2.044 (distribution version 2.111),
-the -width and -height arguments to blank_frame() are applied
-to the CONTENT AREA ONLY, not to the entire Wizard window.
-Use the new Tk::Wizard::Sizer module (included with this distro)
-to semi-automatically recalculate what you should pass in the
--width and -height arguments.
+* Version 2.131 has moved some methods to new modules to keep
+  in line with the original ethos as outlined in the POD.
+  This should have no practical effect until verseion 3.00 but
+  pleaes read the documentation for the "import" method for
+  further details/
 
-WARNING
+* As of Tk::Wizard version 2.044 (distribution version 2.111),
+  the -width and -height arguments to blank_frame() are applied
+  to the CONTENT AREA ONLY, not to the entire Wizard window.
 
-There is a bug in some versions of Tk::DirTree (part of the Tk-Tree
-distribution) that will cause Tk::Wizard's dirSelect page to spit out
-large warning messages, and cause the Wizard to get stuck, on MSWin32
-systems.  See RT bug #30781
-<https://rt.cpan.org/Ticket/Display.html?id=30781>.  To work around
-this, look at your Tk/DirTree.pm line 98.  Delete the '/', which
-appears as the first argument to catfile().
+  Look-up the Martin Thurn's Tk::Wizard::Sizer module (included with this distro)
+  to semi-automatically recalculate what you should pass in the
+  -width and -height arguments. 
 
 INSTALLATION
 
@@ -56,8 +53,6 @@ Windows 2000-like feel is also supported (see the "-style" entry in
 "WIDGET-SPECIFIC OPTIONS".)  Subclassing the module to provide different
 look-and-feel is highly encouraged: please see "NOTES ON SUB-CLASSING
 Tk::Wizard".
-
-NB: THIS SHOULD BE CONSIDERED ALPHA SOFTWARE.  ALL CONTRIBUTIONS ARE WELCOME!
 
 AUTHOR
         Lee Goddard (lgoddard@cpan.org) based on work Daniel T Hable.

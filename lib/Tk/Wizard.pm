@@ -1926,7 +1926,7 @@ Originally, only the former was supported - the reasoning was that
 Wizards are applications in their own right, and not usually parts of other
 applications. However, conventions are not always bad things, hence the update.
 
-=head1 THE Tk::Wizard NAMESPACE
+=head1 THE C<Tk::Wizard> NAMESPACE
 
 In discussion on comp.lang.perl.tk, it was suggested by Dominique Dumont
 that the following guidelines for the use of the C<Tk::Wizard> namespace be followed:
@@ -2019,7 +2019,7 @@ Please see the file F<CHANGES.txt> included with the distribution.
 =head1 AUTHOR
 
 Lee Goddard (lgoddard@cpan.org) based on work Daniel T Hable.
-Thanks to Martin Thurn (mthurn@cpan.org) for support and patches.
+Thanks to co-maintainer Martin Thurn (mthurn@cpan.org) for support and patches.
 
 =head1 KEYWORDS
 
@@ -2029,9 +2029,7 @@ Wizard; set-up; setup; installer; uninstaller; install; uninstall; Tk; GUI.
 
 Initial beta Copyright (c) Daniel T Hable, 2/2002.
 
-Copyright (C) Lee Goddard, 11/2002 - 05/2005 ff.
-
-Patches Copyright (C) Martin Thurn 2005.
+Re-write and extension Copyright (C) Lee Goddard, 11/2002 - 01/2008 ff.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
