@@ -1,9 +1,11 @@
 use inc::Module::Install;
 
-# $Id: Makefile.PL,v 2.39 2007/11/02 21:56:21 martinthurn Exp $
+#
+# I am not a fan of Module::Install.
+#
 
 name('Tk-Wizard');
-version(2.128);
+version(2.129);
 abstract('GUI for step-by-step interactive logical process');
 author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
 license('perl');

@@ -133,10 +133,10 @@ ok(
 );
 $iPageCount++;
 
-isa_ok( $wizard->{wizardPageList}, 'ARRAY', 'Page list array' );
-is( scalar( @{ $wizard->{wizardPageList} } ), $iPageCount, 'Number of pages' );
+isa_ok( $wizard->{_pages}, 'ARRAY', 'Page list array' );
+is( scalar( @{ $wizard->{_pages} } ), $iPageCount, 'Number of pages' );
 foreach my $iPage ( 1 .. $iPageCount ) {
-    isa_ok( $wizard->{wizardPageList}->[ $iPage - 1 ], 'CODE', qq'Page $iPage in list' );
+    isa_ok( $wizard->{_pages}->[ $iPage - 1 ], 'CODE', qq'Page $iPage in list' );
 }    # foreach
 
 ok( $wizard->Show, "Show" );

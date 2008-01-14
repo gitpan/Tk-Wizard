@@ -36,19 +36,20 @@ isa_ok( $wizard, "Tk::Wizard" );
 
 my $sMsg = q'YOU SHOULD NOT SEE THIS';
 foreach ( 1 .. 5 ) {
-    ok(
-        $wizard->addPage(
-            sub {
-                $wizard->blank_frame(
-                    -wait     => 100,
-                    -title    => "Title One",
-                    -subtitle => "It's just a test",
-                    -text     => "This Wizard is a simple test of the Skip mechanism.",
-                );
-            },
-        )
-    );
+
     my $i = $wizard->addPage(
+		sub {
+			$wizard->blank_frame(
+				-wait     => 100,
+				-title    => "Title One",
+				-subtitle => "It's just a test",
+				-text     => "This Wizard is a simple test of the Skip mechanism.",
+			);
+		},
+	);
+	is( 1, $i % 2, 'Page A' );
+
+    my $j = $wizard->addPage(
         sub {
             $wizard->blank_frame(
                 -wait     => 900,
@@ -58,24 +59,25 @@ foreach ( 1 .. 5 ) {
             );
         },
     );
-    ok($i);
-    $wizard->setPageSkip($i);
-}    # foreach
+    is( 0, $j % 2, "Page B");
+    $wizard->setPageSkip($j);
+}
+
 
 # Make sure the last page of the wizard is not set to skip:
-ok(
-    $wizard->addPage(
-        sub {
-            $wizard->blank_frame(
-                -wait     => 100,
-                -title    => "Title One",
-                -subtitle => "It's just a test",
-                -text     => "This Wizard is a simple test of the Skip mechanism.",
-            );
-        },
-    )
+my $i = $wizard->addPage(
+	sub {
+		$wizard->blank_frame(
+			-wait     => 100,
+			-title    => "Title One",
+			-subtitle => "It's just a test",
+			-text     => "This Wizard is a simple test of the Skip mechanism.",
+		);
+	},
 );
+is( $i, 11, "Page 11");
 pass('before Show');
+
 $wizard->Show;
 pass('before MainLoop');
 MainLoop;

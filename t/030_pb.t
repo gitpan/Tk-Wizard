@@ -32,23 +32,20 @@ our $PB;     # Index number of page
 our $bar;    # Progress bar
 
 my $wizard = new Tk::Wizard(
-
-    # -debug => 3,
     -title => "ProgressBar Test",
 );
 isa_ok( $wizard, "Tk::Wizard" );
 $wizard->configure(
     -postNextButtonAction => sub { &postNextButtonAction($wizard); },
     -preNextButtonAction  => sub { &preNextButtonAction($wizard); },
-
     # -finishButtonAction   => sub { ok(1); $wizard->destroy; 1; },
 );
 isa_ok( $wizard->cget( -preNextButtonAction ), "Tk::Callback" );
 
-is( 1, $wizard->addPage( sub { page_splash($wizard) } ) );
+is( 1, $wizard->addPage( sub { page_splash($wizard) } ), "Page one" );
 $PB = $wizard->addPage( sub { pb($wizard) } );
-is( 2, $PB );
-is( 3, $wizard->addPage( sub { page_finish($wizard) } ) );
+is( 2, $PB, "Page two" );
+is( 3, $wizard->addPage( sub { page_finish($wizard) } ), "Page three" );
 $wizard->Show;
 MainLoop;
 pass;
@@ -64,7 +61,8 @@ sub page_splash {
           . "\n\nHowever in the test, the -wait flag means you don't have to..."
     );
     return $frame;
-}    # page_splash
+}
+
 
 sub page_finish {
     my $wizard = shift;
@@ -74,13 +72,12 @@ sub page_finish {
     );
     $frame->after( 100, sub { $wizard->forward } );
     return $frame;
-}    # page_finish
+}
 
 sub pb {
     my $wizard = shift;
     my $frame  = $wizard->blank_frame(
-
-        # -wait => 1, ### Using this with a progress bar really messes things up!,
+#        -wait => 1, ### Using this with a progress bar really messes things up!, How so?
         -title    => "postNextButtonAction Test",
         -subtitle => "Updating a progress bar in real-time",
         -text     => "The bar should fill, thanks to calling the 'update' method upon the Wizard, "
@@ -105,16 +102,16 @@ sub pb {
     $wizard->{nextButton}->configure( -state => 'disable' );
     $wizard->update;
     return $frame;
-}    # pb
+}
 
 sub preNextButtonAction {
     my $wizard = shift;
-
     # diag('this is preNextButtonAction');
     1;
-}    # preNextButtonAction
+}
 
 sub postNextButtonAction {
+
     my $wizard = shift;
     my $iPage  = $wizard->currentPage;
 
@@ -131,8 +128,9 @@ sub postNextButtonAction {
 
             # diag('step 2.1');
             $bar->update;
-        }    # foreach
-             # diag('step 3');
+        }
+
+        # diag('step 3');
         $wizard->{nextButton}->configure( -state => "normal" );
 
         # diag('step 4');
@@ -143,7 +141,7 @@ sub postNextButtonAction {
 
     # diag('step 6');
     return 1;
-}    # postNextButtonAction
+}
 
 __END__
 

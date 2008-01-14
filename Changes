@@ -1,43 +1,52 @@
+2008-01-13 Lee
+
+	* As a means of supply event-handling arguments at the time of page creation:
+	  added @PAGE_EVENT_LIST, $self->{_pages_e} (list of page events), 
+	  and updated &addPage to call &_addPage_with_args if args are received other
+	  than code refs - this changes old behaviour, which was to die under these 
+	  circumstances. See t/007_e.t
+	* Replaced TEST_INTERACTIVE in WizTestSettings.pm
+	* Updated WizTestSettings.pm for dynamic version
+	* render_current_page renamed _render_current_page
+	* initial_layout renamed _initial_layout
+	* wizardPageList renamed _pages
+	* wizardPagePtr renamed _current_page_idx
+	* Again (?) changed all checks on OS matching 'win' which matches Darwin:
+	  should have seen that when doing the Cygwin/win32 checks.
+	* Replaced _render_buttons into _render_current_frame for now; corrected
+	  warning for cget with single arg
+	* Renamed _button_spacers_ to _button_spacers
+	* Test descriptors in 022_skip.t
+	* Removed lots of ugly formatting
+	* Updated pod coverage test 110 to ignore L4p stubs
+	
 2007-12-22 Lee
 
 	* Lots more style "correction"
-	
 	* Some test corrections
-	
 	* Forgot to test without L4p
 
 2007-12-21 Lee
 	
     * Log::Log4perl - please!
-    
     * Warnings
-    
 	* Continued reformatting.
-	
 	* Removed Perl tidy since I've just heard bad news about its impact elsewhere: 
 	  when investigated, may reinstate?
-	
 	* Removed files from distro that I have no permission to modify
-	
 	* Remvoed dependencies on files I have no permission to modify
-	
 	* Removed Tk::Wizard::Tester from install location, into test location
 	
 	
 2007-12-20 Lee
 
 	* Do not treat Cygwin as Win32:
-
 		* removed Cygwin as Win32 from Makefile.PL and now get the following:
-		
 			Had to create Tk::LangVtab unexpectedly at /usr/lib/perl5/5.8/cygwin/DynaLoader.pm line 253.
 			Segmentation fault (core dumped)
 			bash-3.2$
-
 		* Makefile.PL: removed Cygwin as Win32
-		
 		* lib\Tk\Wizard.pm(449): removed Cygwin as Win32
-		
 		* lib\Tk\Wizard\Installer\Win32.pm(159): removed Cygwin as Win32
 	
 2007-12-19	Lee

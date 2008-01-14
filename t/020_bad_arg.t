@@ -9,6 +9,11 @@ use lib qw(../lib . t/);
 BEGIN {
     my $mwTest;
 
+	plan skip_all => 'No longer used';
+}
+
+__END__
+
     eval { $mwTest = Tk::MainWindow->new };
     if ($@) {
         plan skip_all => 'Test irrelevant without a display';

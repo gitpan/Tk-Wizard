@@ -87,10 +87,10 @@ ok(
     'Add finish page'
 );
 
-isa_ok( $wizard->{wizardPageList}, 'ARRAY', 'Page list array' );
-is( scalar( @{ $wizard->{wizardPageList} } ), 3, 'Number of pages' );
+isa_ok( $wizard->{_pages}, 'ARRAY', 'Page list array' );
+is( scalar( @{ $wizard->{_pages} } ), 3, 'Number of pages' );
 foreach ( 1 .. 3 ) {
-    isa_ok( $wizard->{wizardPageList}->[0], 'CODE', 'Page in list' );
+    isa_ok( $wizard->{_pages}->[0], 'CODE', 'Page in list' );
 }
 
 foreach my $f (values %$get_files) {

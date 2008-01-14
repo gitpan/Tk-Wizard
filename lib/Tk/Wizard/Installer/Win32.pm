@@ -202,10 +202,9 @@ sub register_with_windows {
         next if $_ =~ /^(app_path|uninstall_key_name)$/g;
         $uninst_key_ref->{"/$_"} = $args->{$_};
     }
-    return 1;
 
-    # return $!? undef : 1;
-}    # register_with_windows
+    return 1;
+}
 
 =head2 addStartMenuPage
 

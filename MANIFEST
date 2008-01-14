@@ -1,5 +1,5 @@
 Changes
-MANIFEST			This list of files
+t/extra.txt
 MANIFEST.skip
 META.yml
 Makefile.PL
@@ -21,6 +21,7 @@ lib/Tk/Wizard/Installer/Win32.pm
 perl_licence_blab.txt
 t/001_MANIFEST.t
 t/005_Wizard.t
+t/007_e.t
 t/010_warnings.t
 t/012_AutoDestroy.t
 t/020_bad_arg.t
@@ -35,9 +36,9 @@ t/066_single.t
 t/070_TopLevel.t
 t/077_dirselect.t
 t/099_prepost.t
-t/100_pod.t
-t/110_pod-coverage.t
+t/002_pod.t
+t/003_pod-coverage.t
 t/WizTestSettings.pm
 t/dos.txt
-t/extra.txt
 t/unix.txt
+MANIFEST			This list of files

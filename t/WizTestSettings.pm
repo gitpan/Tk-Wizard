@@ -3,8 +3,6 @@ package WizTestSettings;
 use strict;
 use warnings;
 
-our $VERSION = do { my @r = ( q$Revision: 1.2 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
-
 =head1 NAME
 
 Tk::Wizard::Testing - used in wizard testing
@@ -13,18 +11,36 @@ Tk::Wizard::Testing - used in wizard testing
 
 One subroutine, C<add_test_pages>, that adds pages to a wizard.
 
+=head1 VARIABLES
+
+C<$VERSION> should be set to the release version of C<Wizard.pm> for automated tests.
+
 =cut
 
 use Carp;
-use Tk::Wizard;
+
+our $VERSION; # see POD
 
 BEGIN {
+	# Set our version to be the TK::Wizard version to use
+	$VERSION = do { my @r = ( q$Revision: 2.76 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
+	# Require the correct version
+	use lib "../lib";
+	eval 'use Tk::Wizard ' . $VERSION;
+	die $@ if $@;
+
+	# Log l4p is we have it
 	eval { require Log::Log4perl; };
-	if($@) {
+	# No l4p - add stubs
+	if ($@) {
 		no strict qw(refs);
 		*{"main::$_"} = sub { } for qw(DEBUG INFO WARN ERROR FATAL);
 		*{"WizTestSettings::$_"} = sub { } for qw(DEBUG INFO WARN ERROR FATAL);
-	} else {
+	}
+
+	# Have l4p - configure
+	else {
 		no warnings;
 		require Log::Log4perl::Level;
 		Log::Log4perl::Level->import(__PACKAGE__);
@@ -54,11 +70,11 @@ BEGIN {
 sub add_test_pages {
 	my ($wiz, $args) = (shift, ref($_[0])? shift : {@_});
 
-    my ( $sDirSelect, $sFileSelect, $mc1, $mc2, $mc3 );
+    my ( $dir_select, $file_select, $mc1, $mc2, $mc3 );
 
-	$args->{-wait} ||= 250;
+	$args->{-wait} ||= $ENV{TEST_INTERACTIVE}? -1 : 250,
 
-    $sDirSelect = $^O =~ m/MSWin32/i ? 'C:\\' : '/';
+    $dir_select = $^O =~ m/MSWin32/i ? 'C:\\' : '/';
 
     $wiz->addPage(
         sub {
@@ -82,23 +98,26 @@ and a reference to this string variable is passed to the addTextFramePage() meth
         -boxedtext  => \$s,
         -background => 'yellow',
     );
+
     $wiz->addDirSelectPage(
         -wait       => $args->{-wait},
         -title      => "Tester DirSelect Page Title ($wiz->{-style} style)",
         -subtitle   => "Tester DirSelect Page Subtitle ($wiz->{-style} style)",
         -text       => "This is the Text of the Tester DirSelect Page ($wiz->{-style} style)",
         -nowarnings => 88,
-        -variable   => \$sDirSelect,
+        -variable   => \$dir_select,
         -background => 'yellow',
     );
+
     $wiz->addFileSelectPage(
         -wait       => $args->{-wait},
         -title      => "Tester FileSelect Page Title ($wiz->{-style} style)",
         -subtitle   => "Tester FileSelect Page Subtitle ($wiz->{-style} style)",
         -text       => "This is the Text of the Tester FileSelect Page ($wiz->{-style} style)",
-        -variable   => \$sFileSelect,
+        -variable   => \$file_select,
         -background => 'yellow',
     );
+
     $wiz->addMultipleChoicePage(
         -wait     => $args->{-wait},
         -title    => "Tester Multiple-Choice Page Title ($wiz->{-style} style)",
@@ -126,6 +145,7 @@ and a reference to this string variable is passed to the addTextFramePage() meth
         ],    # -choices
         -background => 'yellow',
     );
+
     $wiz->addTaskListPage(
         -wait     => $args->{-wait},
         -title    => "Tester Task List Page Title ($wiz->{-style} style)",
@@ -140,8 +160,12 @@ and a reference to this string variable is passed to the addTextFramePage() meth
         ],
         -background => 'yellow',
     );
+
     return $wiz;
-}    # new
+}
+
+
+
 
 =head2 Show
 
