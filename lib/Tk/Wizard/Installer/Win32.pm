@@ -9,18 +9,19 @@ Tk::Wizard::Installer::Win32 - Win32-specific routines for Tk::Wizard::Installer
 use strict;
 use warnings;
 
+use lib "../../../"; # dev
 use Carp;
 use Cwd;
 use Data::Dumper;    # for debugging only
 use File::Path;
 use Exporter;
-use Tk::Wizard::Installer;
+use Tk::Wizard ':use' => 'FileSystem';
 use base 'Tk::Wizard::Installer';
 
 use vars '@EXPORT';
 @EXPORT = ("MainLoop");
 
-our $VERSION = do { my @r = ( q$Revision: 2.17 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.18 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use constant DEBUG_FRAME => 0;
 

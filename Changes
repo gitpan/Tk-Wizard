@@ -1,3 +1,8 @@
+2008-01-14 Lee
+
+	* Backwards-compat Log4perl config 
+	* Test 65 freebsd "Tk_FreeColor called with bogus color" so skip for now
+	
 2008-01-13 Lee
 
 	* As a means of supply event-handling arguments at the time of page creation:

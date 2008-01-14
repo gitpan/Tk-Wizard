@@ -1,8 +1,6 @@
-#! perl -w
-
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 1.8 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use Test::More;
@@ -14,17 +12,15 @@ BEGIN {
     } else {
     	plan 'no_plan';
 	}
+	use Tk;
     use_ok('WizTestSettings');
-    use_ok('Tk::Wizard');
+    use_ok('Tk::Wizard' => ':old');
     use_ok('Tk::Wizard::Installer::Win32');
 }
 
 pass('before new');
-my $w = Tk::Wizard::Installer::Win32->new(
+my $w = Tk::Wizard::Installer::Win32->new;
 
-    # -debug => 3,
-    -height => 360,
-);
 isa_ok( $w, "Tk::Wizard::Installer::Win32" );
 is(
     $w->addSplashPage(

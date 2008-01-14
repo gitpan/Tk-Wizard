@@ -14,10 +14,11 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     }
     else {
-        plan tests => 9;
+        plan tests => 10;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
-    use_ok('Tk::Wizard' => 2.074) or BAIL_OUT "Is this a fake-log4perl error?";
+	use_ok('WizTestSettings' => ':old');
+    is($Tk::Wizard::VERSION, 2.077, 'pm version') or BAIL_OUT "Is this a fake-log4perl error?";
     use_ok('WizTestSettings');
 }
 

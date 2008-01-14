@@ -15,6 +15,9 @@ BEGIN {
     if ($@) {
         plan skip_all => 'Test irrelevant without a display';
     }
+	elsif ($^O eq 'freebsd'){
+		plan skip_all => "OS=freebsd - testers have reported 'Tk_FreeColor called with bogus color' but no OS to dev on atm";
+	}
     else {
         plan tests => 30;
 		$mwTest->destroy if Tk::Exists($mwTest);

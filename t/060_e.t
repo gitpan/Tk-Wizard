@@ -38,7 +38,7 @@ BEGIN {
 		}
 		$mwTest->destroy if Tk::Exists($mwTest);
 		use_ok('Tk::Wizard' => 2.074) or BAIL_OUT "Is this a fake-log4perl error?";
-		use_ok('WizTestSettings');
+		use_ok('WizTestSettings' => ':old');
 	}
 }
 

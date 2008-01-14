@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-my $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 2 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use Test::More;
@@ -19,10 +19,12 @@ BEGIN {
 		}
 		else {
 			plan tests => 7;
+
+			$mwTest->destroy if Tk::Exists($mwTest);
+
+			use_ok('Tk::Wizard'=>':old') or BAIL_OUT;
+			use_ok('WizTestSettings');
 		}
-		$mwTest->destroy if Tk::Exists($mwTest);
-		use_ok('WizTestSettings');
-		use_ok('Tk::Wizard') or BAIL_OUT;
 	}
 }
 
@@ -62,7 +64,7 @@ my $capture = IO::Capture::Stderr::Extended->new;
 $capture->start;
 $wiz->Show;
 $capture->stop;
-is( $capture->matches(qr/Showing a Wizard with 2 pages/), 1, 'got warning' );
+is( $capture->matches(qr/Showing a Wizard with 2 pages/), 1, 'few pages warning' );
 
 pass('before MainLoop');
 MainLoop;

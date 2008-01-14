@@ -27,7 +27,7 @@ BEGIN {
 
 	# Require the correct version
 	use lib "../lib";
-	eval 'use Tk::Wizard ' . $VERSION;
+	eval 'use Tk::Wizard ' . $VERSION . ' ":old"';
 	die $@ if $@;
 
 	# Log l4p is we have it
@@ -48,11 +48,19 @@ BEGIN {
 
 		if (not Log::Log4perl::initialized()){
 			# my ($fn) = $0 =~ /[^\/]+$/;
-			my $Log_Conf = q[
-				log4perl.logger                   = ERROR, Screen
-				log4perl.appender.Screen          = Log::Log4perl::Appender::ScreenColoredLevels
-				log4perl.appender.Screen.stderr   = 1
-				log4perl.appender.Screen.layout   = PatternLayout::Multiline
+
+			my $log_conf = "log4perl.logger                   	= ERROR, Screen\n";
+
+			if ($Log::Log4Perl::VERSION >= 1.11){
+				$log_conf .= "log4perl.appender.Screen       	= Log::Log4perl::Appender::ScreenColoredLevels\n";
+				$log_conf .= "log4perl.appender.Screen.layout	= PatternLayout::Multiline\n";
+			} else {
+				$log_conf .= "log4perl.appender.Screen        	= Log::Log4perl::Appender::Screen\n";
+				$log_conf .= "log4perl.appender.Screen.layout	= PatternLayout\n";
+			}
+
+			$log_conf .= q[
+				log4perl.appender.Screen.stderr   				= 1
 				log4perl.appender.Screen.layout.ConversionPattern = %7p | %-70m | %M %L%n
 			];
 
@@ -62,7 +70,7 @@ BEGIN {
 			#	log4perl.appender.File.autoflush  = 1
 			#	log4perl.appender.File.layout     = PatternLayout::Multiline
 			#	log4perl.appender.File.layout.ConversionPattern = %7p | %-70m | %M %L%n
-			Log::Log4perl->init( \$Log_Conf );
+			Log::Log4perl->init( \$log_conf );
 		}
 	}
 }

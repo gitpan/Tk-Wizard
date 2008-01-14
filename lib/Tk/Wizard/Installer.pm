@@ -3,7 +3,7 @@ package Tk::Wizard::Installer;
 use strict;
 use warnings;
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.32 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.33 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -53,6 +53,7 @@ BEGIN {
 	}
 }
 
+use lib '../../'; # dev
 use Carp;
 use Cwd;
 use Data::Dumper;
@@ -60,10 +61,12 @@ use File::Path;
 use File::Copy;
 use FileHandle;
 use File::Spec;
+use Tk;
 use Tk::ErrorDialog;
 use Tk::LabFrame;
 use Tk::ProgressBar;
-use Tk::Wizard;
+use Tk::Wizard ':use' => 'FileSystem';
+
 use Exporter;
 use vars qw/ @EXPORT /;
 

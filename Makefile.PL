@@ -5,9 +5,9 @@ use inc::Module::Install;
 #
 
 name('Tk-Wizard');
-version(2.129);
+version("2.130");
 abstract('GUI for step-by-step interactive logical process');
-author('cpan-at-lgoddard-dot-net & mthurn@cpan.org');
+author('cpan-at-lgoddard-dot-net');
 license('perl');
 
 requires("Carp");
@@ -21,7 +21,8 @@ build_requires("FileHandle");
 requires("IO::Handle");
 
 recommends('IO::Capture::Stderr::Extended');
-recommends('Log::Log4perl');
+recommends 'Log::Log4perl' => '1.12';
+
 
 # This is used by Tk::Wizard::Installer::addDownloadPage:
 recommends('LWP::UserAgent');

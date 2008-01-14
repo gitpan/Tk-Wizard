@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.76 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.77 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -20,11 +20,8 @@ use Config;
 use Data::Dumper;
 use File::Path;
 use File::Spec::Functions qw( rootdir );
-use Scalar::Util qw( reftype );
 use Tk;
 use Tk::DialogBox;
-use Tk::DirTree;
-use Tk::LabFrame;
 use Tk::Frame;
 use Tk::Font;
 use Tk::MainWindow;
@@ -37,10 +34,15 @@ use vars qw( @EXPORT @ISA %LABELS );
 # See Log::Log4perl::FAQ
 BEGIN {
 	eval { require Log::Log4perl; };
+
+	# No Log4perl so bluff: see Log4perl FAQ
 	if($@) {
 		no strict qw"refs";
 		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
-	} else {
+	}
+
+	# Setup log4perl
+	else {
 		no warnings;
 		no strict qw"refs";
 		require Log::Log4perl::Level;
@@ -74,8 +76,6 @@ Tk::Widget->Construct('Wizard');
 );
 
 my $WINDOZE = ($^O =~ m/MSWin32/i);
-my $sdir = $WINDOZE ? 'folder' : 'directory';
-my $sDir = ucfirst $sdir;
 my @PAGE_EVENT_LIST = qw(
 	-preNextButtonAction
 	-postNextButtonAction
@@ -85,7 +85,7 @@ my @PAGE_EVENT_LIST = qw(
 
 =head1 SYNOPSIS
 
-	use Tk::Wizard;
+	use Tk::Wizard ();
 	my $wizard = new Tk::Wizard;
 	# OR my $wizard = Tk::MainWindow->new -> Wizard();
 	$wizard->configure( -property=>'value' );
@@ -119,12 +119,7 @@ can move/copy/rename them without harm once you have installed the module.
 
 =head1 CHANGES
 
-The widget now works from within a C<MainWindow>, or creates its own
-as necessary for backwards compatibility.
-
-The option C<-image_dir> has been deprecated, and the once-used binary
-images have been dropped from the distribution in favour of Base64-
-encoded images. More and other details in F<Changes>.
+Please see the documentation for the new C<import> method: L<import|import>.
 
 =head1 DEPENDENCIES
 
@@ -158,13 +153,7 @@ L</NOTES ON SUB-CLASSING Tk::Wizard>. If anyone would like to do a I<Darwin> or
 I<Aqua> version, please let me know how you would like to handle the buttons. I'm not
 hot on advertising widgets.
 
-NB: B<THIS IS STILL AN ALPHA RELEASE: ALL CONTRIBUTIONS ARE WELCOME!>
-
-Please read L</CAVEATS> and L</BUGS>.
-
 =head1 ADVERTISED SUB-WIDGETS
-
-Still untested. Use:
 
   $wizard->Subwidget('buttonPanel');
 
@@ -349,9 +338,61 @@ Please see also L</ACTION EVENT HANDLERS>.
 
 =head1 METHODS
 
+=head2 import
+
+	use Tk::Wizard;
+	use Tk::Wizard ();
+	use Tk::Wizard ':old';
+	use Tk::Wizard ':use' => [qw[ Choices FileSystem ]];
+
+All the above examples are currently equivalent. However,
+as of version 3.00, later in 2008, the first two will no
+longer act as the last two -- that is, they will no longer
+import the methods now located in the C<Choices> and
+C<FileSystem> modules (L<Tk::Wizard::Choices>, L<Tk::Wizard::FileSystem>).
+
+=cut
+
+sub import {
+	my $inv = shift;
+	DEBUG "Enter import for ".$inv;
+	DEBUG "# Import list: ",join",",@_;
+
+	# Maintian backwards compatabilty while $VERSION < 3
+	if (not @_ or $_[0] eq ':old'){
+
+		require Tk::Wizard::Choices;
+		Tk::Wizard::Choices->import if Tk::Wizard::Choices->can('import');
+
+		require Tk::Wizard::FileSystem;
+		Tk::Wizard::FileSystem->import if Tk::Wizard::FileSystem->can('import');
+	}
+
+	elsif (scalar @_ == 1){
+		if ($_[0] eq ':none'){
+			DEBUG "Load no modules";
+		}
+	}
+
+	elsif ($_[0] eq ':use'){
+		shift;
+		my $use = shift;
+		foreach my $m (ref $use? @$use : $use){
+			my $n = 'Tk::Wizard::'.$m.'.pm';
+			my $o = $n;
+			$n =~ s/::/\//g;
+			require Tk::Wizard::Choices;
+			require $n;
+			$o->import;
+		}
+	}
+
+	return @_;
+}
+
 =head2 new
 
-Create a new Tk::Wizard object.  You can provide custom values for any
+Create a new C<Tk::Wizard> object.  You can provide custom values for any
 or all of the standard widget options or widget-specific options
 
 =cut
@@ -605,9 +646,7 @@ sub _maybe_pack_tag_text {
 sub _pack_forget {
     my $self = shift;
     foreach my $o (@_) {
-        if ( Tk::Exists($o) ) {
-            $o->packForget;
-        }
+        $o->packForget if Tk::Exists($o);
     }
 }
 
@@ -859,7 +898,7 @@ sub _resize_window {
     if ( Tk::Exists( $self->{wizardFrame} ) ) {
         if ( $self->{frame_sizes}->[ $self->{_current_page_idx} ] ) {
             my ( $iW, $iH ) = @{ $self->{frame_sizes}->[ $self->{_current_page_idx} ] };
-                DEBUG "Resize frame: -width => $iW, -height => $iH\n";
+            DEBUG "Resize frame: -width => $iW, -height => $iH\n";
             $self->{wizardFrame}->configure(
                 -width  => $iW,
                 -height => $iH,
@@ -1467,816 +1506,6 @@ sub _CloseWindowEventCycle {
     return undef;
 }
 
-=head2 addDirSelectPage
-
-  $wizard->addDirSelectPage ( -variable => \$chosen_dir )
-
-Adds a page (C<Tk::Frame>) that contains a scrollable tree list of all
-directories including, on Win32, logical drives.
-
-Supply in C<-variable> a reference to a variable to set the initial
-directory, and to have set with the chosen path.
-
-Supply C<-nowarnings> with a value of C<1> to list only drives which are
-accessible, thus avoiding C<Tk::DirTree> warnings on Win32 where removable
-drives have no media.
-
-Supply in C<-nowarnings> a value other than C<1> to avoid listing drives
-which are both inaccessible and - on Win32 - are
-either fixed drives, network drives, or RAM drives (that is types 3, 4, and
-6, according to L<Win32API::File/GetDriveType>).
-
-You may also specify the C<-title>, C<-subtitle> and C<-text> parameters, as
-in L</blank_frame>.
-
-An optional C<-background> argument is used as the background of the Entry and DirTree widgets
-(default is white).
-
-Also see L</callback_dirSelect>.
-
-=cut
-
-sub addDirSelectPage {
-    my $self = shift;
-
-    # We have to make a copy of our args in order for them to get
-    # "saved" in this coderef:
-    my $args = {@_};
-
-    # print STDERR " DDD addDirSelectPage args are ", Dumper($args);
-    $self->addPage( sub { $self->_page_dirSelect($args) } );
-}
-
-# PRIVATE METHOD _page_dirSelect
-#
-# It'd be nice to use FBox here, but it doesn't seem to support dir selection
-# and DirSelect is broken and ugly
-#
-# As blank_frame plus:
-# -variable => Reference to a variable to set.
-# -nowarnings => 1 : chdir to each drive first and only list if accessible
-#             => !1: as 1, plus on types 3,4 and 6.
-sub _page_dirSelect {
-    my $self = shift;
-    my $args = shift;
-
-    # print STDERR " DDD _page_dirSelect args are ", Dumper($args);
-    if ( not $args->{-variable} ) {
-        confess "You must supply a -variable parameter";
-    }
-    elsif ( not ref $args->{-variable} ) {
-        confess "The -variable parameter must be a reference";
-    }
-    ${ $args->{-variable} } ||= '';
-
-    # The DirTree can take a long time to read all the disk drives when
-    # populating itself:
-    $self->Busy;
-    my $_drives = sub {
-        return '/' if not $WINDOZE;
-
-        # Yuck: it does work, though. Somehow.
-        eval('require Win32API::File');
-        return Win32API::File::getLogicalDrives();
-    };
-
-    my ( $frame, @pl ) = $self->blank_frame(
-        -title    => $args->{-title}    || "Please choose a $sdir",
-        -subtitle => $args->{-subtitle} || "After you have made your choice, press Next to continue.",
-        -text     => $args->{-text}     || "",
-        -wait     => $args->{ -wait },
-    );
-
-    DEBUG_FRAME && $frame->configure( -background => 'light blue' );
-
-    my $entry = $frame->Entry(
-        -justify      => 'left',
-        -font         => 'FIXED',
-        -textvariable => $args->{-variable},
-        -background => ( $args->{ -background } || 'white' ),
-      )->pack(
-        -side   => 'top',
-        -anchor => 'w',
-        -fill   => "x",
-        -padx   => 15,
-        -pady   => 4,
-      );
-
-    # $entry->configure( -background => $self->cget("-background") ) if $self->cget("-background");
-    my $s = shift @Tk::DirTree::ISA;
-    unshift @Tk::DirTree::ISA, $s if ( $s ne 'Tk::Widget' );
-    my $dirsParent = $frame->Scrolled(
-        "DirTree",
-        -background => ( $args->{ -background } || 'white' ),
-        -scrollbars => 'osoe',
-        -selectbackground => "navy",
-        -selectforeground => "white",
-        -selectmode       => 'browse',
-        -height           => 7,
-        -browsecmd        => sub { ${ $args->{-variable} } = shift },
-      )->pack(
-        -fill   => "both",
-        -padx   => 5,
-        -pady   => 4,
-        -expand => 1,
-      );
-
-    # $dirsParent->configure( -background => $self->cget("-background") ) if $self->cget("-background");
-    my $dirs = $dirsParent->Subwidget('scrolled');
-
-    # Add a little margin between the tree and the buttons underneath:
-    $frame->Frame(
-        -background => $self->{background},
-        -height     => 5,
-    )->pack( -side => 'top' );
-
-    my $mkdir = $frame->Button(
-        -font    => $self->{defaultFont},
-        -text    => "New $sDir",
-        -command => sub {
-            my $new_name = $self->prompt(
-                -title => "Create New $sDir",
-                -text  => "Enter name for new $sdir to be created in ${$args->{-variable}}"
-            );
-            if ($new_name) {
-                $new_name =~ s/[\/\\]//g;
-                $new_name = ${ $args->{-variable} } . "/$new_name";
-                if ( $self->_cb_try_create_dir($new_name) ) {
-                    ${ $args->{-variable} } = $new_name;
-                    $dirs->configure( -directory => $new_name );
-                    $dirs->chdir($new_name);
-                }    # if
-            }    # if new_name
-        },    # end of -command sub
-      )->pack(
-        -side   => 'right',
-        -anchor => 'w',
-        -padx   => 10,
-        -ipadx  => 5,
-      );
-    $self->{wizardFrame}->update;
-    $self->idletasks;
-    if ( $self->{desktop_dir} ) {    # Thanks, Slaven Rezic.
-        $frame->Button(
-            -font    => $self->{defaultFont},
-            -text    => "Desktop",
-            -command => sub {
-                ${ $args->{-variable} } = $self->{desktop_dir};
-
-                # print STDERR " DDD   5 DirTree->configure(-directory=>$self->{desktop_dir})\n";
-                $dirs->configure( -directory => $self->{desktop_dir} );
-                $dirs->chdir( $self->{desktop_dir} );
-            },
-          )->pack(
-            -side   => 'right',
-            -anchor => 'w',
-            -padx   => 10,
-            -ipadx  => 5,
-          );
-    }    # if
-    foreach my $d (&$_drives) {
-
-        # Try to prevent GUI freeze:
-        $self->idletasks;
-        $self->{wizardFrame}->update;
-        $self->update;
-        ($d) =~ /^(\w+:)/;
-        if (
-            $args->{-nowarnings}
-            and (  $args->{-nowarnings} eq "1" or not $WINDOZE ) )
-        {
-
-            # print STDERR " DDD   1 DirTree->configure(-directory=>$d)\n";
-            $dirs->configure( -directory => $d ) if -d $d;
-        }    # if
-        elsif ( $args->{-nowarnings} ) {    # Fixed drive only
-                                            # print STDERR " DDD   2 DirTree->configure(-directory=>$d)\n";
-            $dirs->configure( -directory => $d )
-              if ( ( Win32API::File::GetDriveType($d) == 3 )
-                && -d $d );
-        }
-        else {
-
-            # print STDERR " DDD   3 DirTree->configure(-directory=>$d)\n";
-            $dirs->configure( -directory => $d );
-        }
-    }    # foreach
-         # Make the user's requested directory appear as the default (?):
-    $dirs->chdir( ${ $args->{-variable} } )
-      if ( ${ $args->{-variable} } ne '' );
-    $self->Unbusy;
-    return $frame;
-}    # _page_dirSelect
-
-# Tk::DirTree sorts its folder list case-sensitively, but on Windows
-# we want case-INsensitive search.  We roll our own until/unless the
-# author of Tk::DirTree implements a fix (bug report submitted, see
-# https://rt.cpan.org/Ticket/Display.html?id=28888):
-REDEFINE:
-{
-    no warnings 'redefine';
-
-    sub Tk::DirTree::add_to_tree {
-        my ( $w, $dir, $name, $parent ) = @_;
-
-        # print STDERR " DDD Martin's add_to_tree($dir,$name,$parent)\n";
-        # confess;
-        my $dirSortable = $WINDOZE? uc $dir : $dir;
-        my $image = $w->cget('-image');
-        if ( !UNIVERSAL::isa( $image, 'Tk::Image' ) ) {
-            $image = $w->Getimage($image);
-        }
-        my $mode = 'none';
-        $mode = 'open' if $w->has_subdir($dir);
-
-        my @args = ( -image => $image, -text => $name );
-        if ($parent) {                                 # Add in alphabetical order.
-            foreach my $sib ( $w->infoChildren($parent) ) {
-                my $sibSortable = $WINDOZE? uc $sib : $sib;    # added by Martin Thurn
-                                                               # if( $sib gt $dir ) {  # commented out by Martin Thurn
-                       # print STDERR " DDD in Martin's add_to_tree, $sibSortable gt? $dirSortable\n";
-                if ( $sibSortable gt $dirSortable ) {    # added by Martin Thurn
-                    push @args, ( -before => $sib );
-                    last;
-                }
-            }
-        }
-
-        $w->add( $dir, @args );
-        $w->setmode( $dir, $mode );
-    }
-}
-
-=head2 addFileSelectPage
-
-  $wizard->addFileSelectPage(
-                             -directory => 'C:/Windows/System32',
-                             -variable => \$chosen_file,
-                            );
-
-Adds a page (C<Tk::Frame>) that contains a "Browse" button which pops
-up a file-select dialog box.  The selected file will be displayed in a
-read-only Entry widget.
-
-Supply in C<-directory> the full path of an existing folder where the
-user's search shall begin.
-
-Supply in C<-variable> a reference to a variable to have set with the
-chosen file name.
-
-You may also specify the C<-title>, C<-subtitle> and C<-text>
-parameters, as in L</blank_frame>.
-
-An optional C<-background> argument is used as the background of the Entry widget
-(default is white).
-
-=cut
-
-sub addFileSelectPage {
-    my $self = shift;
-
-    # We have to make a copy of our args in order for them to get
-    # "saved" in this coderef:
-    my $args = {@_};
-
-    # print STDERR " DDD addFileSelectPage args are ", Dumper($args);
-    $self->addPage( sub { $self->_page_fileSelect($args) } );
-}    # addFileSelectPage
-
-#
-# PRIVATE _page_fileSelect
-#
-# As blank_frame plus:
-# -variable => Reference to a variable to set.
-# -directory  => start dir
-sub _page_fileSelect {
-    my $self = shift;
-    my $args = shift;
-
-    # Verify arguments:
-    if ( not $args->{-variable} ) {
-        confess "You must supply a -variable parameter";
-    }
-    elsif ( not ref $args->{-variable} ) {
-        confess "The -variable parameter must be a reference";
-    }
-    $args->{-directory} ||= '.';
-    $args->{-title}     ||= "Please choose an existing file";
-    $args->{-subtitle}  ||= "After you have made your choice, click 'Next' to continue.";
-    $args->{-text}      ||= '';
-
-    # Create the mother frame:
-    my ( $frame, @pl ) = $self->blank_frame(
-        -title    => $args->{-title},
-        -subtitle => $args->{-subtitle},
-        -text     => $args->{-text},
-        -wait     => $args->{ -wait },
-    );
-
-    # Put some space around the embedded elements:
-    $frame->Frame(
-        -background => $frame->cget("-background"),
-        -width      => 10,
-    )->pack(qw( -side left ));
-    $frame->Frame(
-        -background => $frame->cget("-background"),
-        -width      => 10,
-    )->pack(qw( -side right ));
-    my $entry = $frame->Entry(
-        -justify      => 'right',
-        -textvariable => $args->{-variable},
-
-        # For now (i.e. because we're lazy), don't
-        # let the user type in.  They must click
-        # the Browse button:
-        -state => 'disabled',
-        -background => ( $args->{ -background } || 'white' ),
-      )->pack(
-        -side   => 'left',
-        -anchor => 'w',
-        -fill   => "x",
-        -expand => 1,
-        -padx   => 3,
-      );
-    my $bBrowse = $frame->Button(
-        -font    => $self->{defaultFont},
-        -text    => 'Browse...',
-        -command => sub {
-
-            # getOpenFile will croak if the
-            # -initialdir we give it does not
-            # exist:
-            my $sDirInit = $args->{-directory};
-            if ( !-d $sDirInit ) {
-                $sDirInit = &File::Spec::rootdir;
-            }    # if
-            my $sFname = $frame->getOpenFile(
-                -initialdir => $sDirInit,
-                -title      => $args->{-title},
-            );
-            ${ $args->{-variable} } = $sFname if $sFname;
-        },
-    )->pack(qw( -side left -padx 3));
-    return $frame;
-}    # _page_fileSelect
-
-=head2 addTaskListPage
-
-Adds a page to the Wizard that will perform a series of tasks, keeping the user
-informed by ticking-off a list as each task is accomplished.
-
-Whilst the task list is being executed, both the I<Back> and I<Next> buttons
-are disabled.
-
-Parameters are as for L</blank_frame>, plus:
-
-=over 4
-
-=item -tasks
-
-The tasks to perform, supplied as a reference to an array, where each
-entry is a pair (i.e. a two-member list), the first of which is a text
-string to display, the second a reference to code to execute.
-
-=item -delay
-
-The length of the delay, in milliseconds, after the page has been
-displayed and before execution the task list is begun.
-Default is 1000 milliseconds (1 second).
-See L<Tk::after>.
-
-=item -continue
-
-Display the next Wizard page once the job is done: invokes the
-callback of the I<Next> button at the end of the task.
-
-=item -todo_photo
-
-=item -doing_photo
-
-=item -ok_photo
-
-=item -error_photo
-
-=item -na_photo
-
-Optional: all L<Tk::Photo|Tk::Photo> objects, displayed as appropriate.
-C<-na_photo> is displayed if the task code reference returns an undef value, otherwise:
-C<-ok_photo> is displayed if the task code reference returns a true value, otherwise:
-C<-error_photo> is displayed.
-These have defaults taken from L<Tk::Wizard::Image|Tk::Wizard::Image>.
-
-=item -label_frame_title
-
-The label above the L<Tk::LabFrame|Tk::LabFrame> object which
-contains the task list.  Default label is the boring C<Performing Tasks:>.
-
-=item -frame_args
-
-Optional: the arguments to pass in the creation of the C<Frame> object used to contain the list.
-
-=item -frame_pack
-
-Optional: array-refernce to pass to the C<pack> method of the C<Frame> containing the list.
-
-=back
-
-=head3 TASK LIST EXAMPLE
-
-  $wizard->addTaskListPage(
-    -title => "Toy example",
-    -tasks => [
-      "Wait five seconds" => sub { sleep 5; 1; },
-      "Wait ten seconds!" => sub { sleep 10; 1; },
-      ],
-    );
-
-=cut
-
-sub addTaskListPage {
-    my $self = shift;
-
-    # We have to make a copy of our args in order for them to get
-    # "saved" in this coderef:
-    my $args = {@_};
-
-    # print STDERR " DDD addTaskListPage args are ", Dumper($args);
-    $self->addPage( sub { $self->_page_taskList($args) } );
-}    # addTaskListPage
-
-sub _page_taskList {
-    my $self = shift;
-    my $args = shift;
-    my @tasks;
-    my @states = qw[ todo doing ok error na ];
-    my $photos = {};
-    foreach my $state (@states) {
-        my $sArg = "-" . $state . "_photo";
-        if ( !$args->{$sArg} ) {
-            $photos->{$state} = $self->Photo( $state, -data => $Tk::Wizard::Image::TASK_LIST{$state} );
-        }
-        elsif (!-r $args->{$sArg}
-            || !$self->Photo( $state, -file => $args->{$sArg} ) )
-        {
-            warn "# Could not read $sArg from " . $args->{$sArg};
-        }
-    }    # foreach
-    $args->{-frame_pack} = [qw/-expand 1 -fill x -padx 30 -pady 10/]
-      unless $args->{-frame_pack};
-    $args->{-frame_args} = [
-        -background => $self->{background},
-        -relief     => "flat",
-        -bd         => 0,
-        -label => $args->{-label_frame_title} || "Performing Tasks: ",
-        -labelside => "acrosstop"
-      ]
-      unless $args->{-frame_args};
-    my $frame = $self->blank_frame(
-        -title    => $args->{-title}    || "Performing Tasks",
-        -subtitle => $args->{-subtitle} || "Please wait whilst the Wizard performs these tasks.",
-        -text     => $args->{-text}     || "",
-        -wait     => $args->{ -wait },
-    );
-    if ( $#{ $args->{-tasks} } > -1 ) {
-        my $task_frame =
-          $frame->LabFrame( @{ $args->{-frame_args} }, -background => $self->{background}, )
-          ->pack( @{ $args->{-frame_pack} }, );
-
-        foreach ( my $i = 0 ; $i <= $#{ $args->{-tasks} } ; $i += 2 ) {
-            my $icn = "-1";
-            my $p = $task_frame->Frame( -background => $self->{background}, )->pack( -side => 'top', -anchor => "w" );
-            if ( exists $photos->{todo} ) {
-                $icn = $p->Label(
-                    -image      => "todo",
-                    -anchor     => "w",
-                    -background => $self->{background},
-                )->pack( -side => "left" );
-            }
-            $p->Label(
-                -font       => $self->{defaultFont},
-                -text       => @{ $args->{-tasks} }[$i],
-                -anchor     => "w",
-                -background => $self->{background},
-            )->pack( -side => "left" );
-            push @tasks, [ $icn, @{ $args->{-tasks} }[ $i + 1 ] ];
-        }
-    }    # if got any tasks
-    else {
-        $args->{-delay} = 1;
-    }
-    if ( $args->{ -wait } ) {
-
-        # If we got a non-zero -wait argument, we must be part of an
-        # automated test.  In any case, this page is going to auto-flip to
-        # the next page soon (via a call to $widget->after).  We do NOT
-        # want to start executing our tasks, only to have the Wizard flip
-        # to the next page while we're still executing, because then we'll
-        # be trying to update Photos that no longer exist (or worse).
-    }
-    else {
-
-        # Do not let the user click any buttons while we're working:
-        $self->{nextButton}->configure( -state => "disabled" )
-          if Tk::Exists( $self->{nextButton} );
-        $self->{backButton}->configure( -state => "disabled" )
-          if Tk::Exists( $self->{backButton} );
-        $frame->after(
-            $args->{-delay} || 1000,
-            sub {
-                foreach my $task (@tasks) {
-                    if ( Tk::Exists( $task->[0] ) ) {
-                        $task->[0]->configure( -image => "doing" );
-                        $task->[0]->update;
-                    }    # if
-                    my $result = &{ $task->[1] };
-                    if ( Tk::Exists( $task->[0] ) ) {
-                        $task->[0]->configure(
-                            -image => defined($result)
-                            ? $result
-                                  ? 'ok'
-                                  : 'error'
-                            : 'na'
-                        );
-                        $task->[0]->update;
-                    }    # if
-                }    # foreach
-                     # We're all done, the user can click buttons again:
-                $self->{backButton}->configure( -state => "normal" )
-                  if Tk::Exists( $self->{backButton} );
-                if ( Tk::Exists( $self->{nextButton} ) ) {
-                    $self->{nextButton}->configure( -state => "normal" );
-
-                    # $self->{nextButton}->invoke if $args->{ -continue };
-                }
-              }    # sub
-        );
-    }
-    return $frame;
-}
-
-=head2 addMultipleChoicePage
-
-Allow the user to make multiple choices among several options:
-each choice sets a variable passed as reference to this method.
-
-Accepts the usual parameters plus:
-
-=over 4
-
-=item -relief
-
-For the checkbox buttons - see L<Tk::options>.
-
-=item -choices
-
-A reference to an array of hashes with the following fields:
-
-=over 4
-
-=item -title
-
-Title of the option, will be rendered in bold
-
-=item -subtitle
-
-Text rendered smaller beneath the title
-
-=item -variable
-
-Reference to a variable that will contain the result of the choice.
-Croaks if none supplied.  Your -variable will contain the default
-L<Tk::Checkbutton|Tk::Checkbutton> values of 1 for checked and 0 for
-unchecked.
-
-=item -checked
-
-Pass a true value to specify that the box should initially
-appear checked.
-
-=back
-
-Here is an example of what the -choices parameter should look like:
-
-  $wizard->addMultipleChoicePage(
-    -title => "Another toy example",
-    -choices =>
-      [
-        {
-         -title => 'choice 1',
-         -variable => \$choice1,
-        },
-        {
-         -title => 'choice 2, default is checked',
-         -variable => \$choice2,
-         -checked => 1,
-        },
-      ],
-    );
-
-=back
-
-=cut
-
-sub addMultipleChoicePage {
-    my $self = shift;
-
-    # We have to make a copy of our args in order for them to get
-    # "saved" in this coderef:
-    my $args = {@_};
-
-    # print STDERR " DDD addMultipleChoicePage args are ", Dumper($args);
-    return $self->addPage( sub { $self->_page_multiple_choice($args) } );
-}    # addMultipleChoicePage
-
-sub _page_multiple_choice {
-    my $self  = shift;
-    my $args  = shift;
-    my $frame = $self->blank_frame(%$args);
-    if ( !ref( $args->{-choices} ) || ( ref( $args->{-choices} ) ne 'ARRAY' ) ) {
-        croak "-choices should be a ref to an array!";
-    }    # if
-    my $content = $frame->Frame( -background => $self->{background}, )->pack(
-        -side   => 'top',
-        -anchor => "n",
-        -padx   => 10,
-        -pady   => 10,
-    );
-    foreach my $opt ( @{ $args->{-choices} } ) {
-        croak "Option in -choices array is not a hash!"
-          if not ref $opt
-              or ref $opt ne 'HASH';
-        croak "No -variable!"                    if not $opt->{-variable};
-        croak "-variable should be a reference!" if not ref $opt->{-variable};
-        my $b = $content->Checkbutton(
-            -text             => $opt->{-title},
-            -justify          => 'left',
-            -relief           => $args->{-relief} || 'flat',
-            -font             => "RADIO_BOLD",
-            -variable         => $opt->{-variable},
-            -background       => $self->{background},
-            -activebackground => $self->{background},
-        )->pack(qw/-side top -anchor w /);
-        $b->invoke if $opt->{-checked};
-        my $s = $opt->{-subtitle} || '';
-
-        # Seven spaces indentation is perfect with my Windows XP
-        # default font:
-        $s =~ s!(^|\n)!$1       !g;
-        my $l = $content->Label(
-            -font       => $self->{defaultFont},
-            -text       => $s,
-            -anchor     => 'w',
-            -justify    => 'left',
-            -background => $self->{background},
-        )->pack(qw/-side top -anchor w/);
-        DEBUG_FRAME && $l->configure( -background => 'light blue' );
-    }    # foreach
-    return $frame;
-}
-
-=head2 addSingleChoicePage
-
-Allow the user to make one choice from among several options
-(i.e. a group of radio buttons).
-Each choice sets a variable passed as reference to this method.
-
-Accepts the usual parameters plus:
-
-=over 4
-
-=item -relief
-
-For the radio buttons - see L<Tk::options>.
-
-=item -variable
-
-Reference to a variable that will contain the result of the choice.
-Croaks if none supplied.  Your -variable will contain the -value of the
-radio button that is selected when the user clicks "Next".
-
-=item -choices
-
-A reference to an array of hashes with the following fields:
-
-=over 4
-
-=item -title
-
-Title of the option, will be rendered in bold
-
-=item -subtitle
-
-Text rendered smaller beneath the title
-
-=item -value
-
-This value will be placed in your -variable variable if this button is
-selected
-
-=item -selected
-
-Pass a true value to specify that this radio should initially appear
-selected.  If none of the choices have -selected, then the first
-choice will be selected by default.
-
-=back
-
-Here is an example of what the -choices parameter should look like:
-
-  $wizard->addSingleChoicePage(
-    -title => 'Another toy example',
-    -text => 'Choose one of the following:',
-    -variable => \$choice,
-    -choices =>
-      [
-        {
-         -title => 'choice 1',
-         -value => 1,
-        },
-        {
-         -title => 'choice two, default this one selected',
-         -value => 'two',
-         -selected => 1,
-        },
-      ],
-    );
-
-=back
-
-=cut
-
-sub addSingleChoicePage {
-    my $self = shift;
-
-    # We have to make a copy of our args in order for them to get
-    # "saved" in this coderef:
-    my $args = {@_};
-
-    # print STDERR " DDD addSingleChoicePage args are ", Dumper($args);
-    return $self->addPage( sub { $self->_page_single_choice($args) } );
-}
-
-sub _page_single_choice {
-    my $self = shift;
-    my $args = shift;
-    my $not_first_page = 0;
-
-    if (not defined( $args->{-choices} ) ) {
-        Carp::croak "-choices argument missing";
-    }
-    if (not ref( $args->{-choices} ) or ( ref( $args->{-choices} ) ne 'ARRAY' ) ) {
-        Carp::croak "-choices must be a ref to an array!";
-    }
-    Carp::croak "-variable argument missing"     if !defined( $args->{-variable} );
-    Carp::croak "-variable must be a reference!" if !ref $args->{-variable};
-
-    # Take care of the -title, -text, etc.:
-    my $frame = $self->blank_frame(%$args);
-    my $content = $frame->Frame( -background => $self->{background}, )->pack(
-        -side   => 'top',
-        -anchor => "n",
-        -padx   => 10,
-        -pady   => 10,
-    );
-
-    foreach my $opt ( @{ $args->{-choices} } ) {
-        if ( reftype($opt) ne 'HASH' ) {
-            croak "Option in -choices array must be a hash";
-        }
-        $opt->{-title} ||= '';
-        my $sValue = $opt->{-value} || $opt->{-title};
-        my $b = $content->Radiobutton(
-            -text             => $opt->{-title},
-            -justify          => 'left',
-            -relief           => $args->{-relief} || 'flat',
-            -font             => "RADIO_BOLD",
-            -variable         => $args->{-variable},
-            -value            => $sValue,
-            -background       => $self->{background},
-            -activebackground => $self->{background},
-        )->pack(qw/-side top -anchor w /);
-        ${ $args->{-variable} } = $sValue if not $not_first_page++;
-        ${ $args->{-variable} } = $sValue if $opt->{-selected};
-        my $s = $opt->{-subtitle} || '';
-
-		# Seven spaces indentation is perfect with my Windows XP default
-		# font:
-        if ( $s ne '' ) {
-            $s =~ s!(^|\n)!$1       !g;
-            my $l = $content->Label(
-                -font       => $self->{defaultFont},
-                -text       => $s,
-                -anchor     => 'w',
-                -justify    => 'left',
-                -background => $self->{background},
-            )->pack(qw/-side top -anchor w/);
-            DEBUG_FRAME && $l->configure( -background => 'light blue' );
-        }
-    }
-
-    return $frame;
-}
-
 =head2 Show
 
 	$wizard->Show();
@@ -2528,7 +1757,7 @@ sub prompt {
     )->pack(qw( -padx 2 -pady 2 -expand 1 ));
     $d->Show;
     return $input ? $input : undef;
-}    # prompt
+}
 
 #
 # Using a -wait value for After of less than this seems to cause a weird Tk dump
@@ -2570,80 +1799,7 @@ sub DIALOGUE_really_quit {
     return !$self->{really_quit};
 }
 
-=head2 callback_dirSelect
 
-A callback to check that the directory, passed as a reference in the sole
-argument, exists, or can and should be created.
-
-Will not allow the Wizard to continue unless a directory has been chosen.
-If the chosen directory does not exist, a messageBox will ask if it should be created.
-If the user affirms, it is created; otherwise the user is again asked to
-choose a directory.
-
-Returns a Boolean value.
-
-=cut
-
-sub callback_dirSelect {
-    my $self = shift;
-    my $var  = shift;
-    if ( not $$var ) {
-        $self->messageBox(
-            '-icon'  => 'info',
-            -type    => 'ok',
-            -title   => 'Form Incomplete',
-            -message => "Please select a $sdir to continue."
-        );
-        return 0;
-    }    # if got no arg
-    if ( !-d $$var ) {
-        $$var =~ s|[\\]+|/|g;
-        $$var =~ s|/$||g;
-        my $button = $self->messageBox(
-            -icon    => 'info',
-            -type    => 'yesno',
-            -title   => qq'$sDir does not exist',
-            -message => "The $sdir you selected does not exist.\n\n" . "Shall I create " . $$var . " ?"
-        );
-        if ( lc $button eq 'yes' ) {
-            return $self->_cb_try_create_dir($$var);
-        }    # if user clicked "Yes"
-        $self->messageBox(
-            -icon    => 'info',
-            -type    => 'ok',
-            -title   => qq'$sDir Required',
-            -message => "Please select a $sdir so that the Wizard can install the software on your machine.",
-        );
-        return 0;
-    }    # if dir not exist
-    return 1;
-}    # callback_dirSelect
-
-sub _cb_try_create_dir {
-    my $self         = shift;
-    my $sDirToCreate = shift;
-    my $rasError;
-    File::Path::mkpath( $sDirToCreate, { error => \$rasError } );
-
-    if (@$rasError) {
-        my $rh = shift @$rasError;
-
-        # Only report the first error encountered:
-        my ($sDirEntered) = keys %$rh;
-        my ($sError)      = values %$rh;
-        my $sMsg =
-          "The $sdir you entered ($sDirEntered) could not be created ($sError)\nPlease choose a different $sdir.";
-        $self->messageBox(
-            -icon    => 'warning',
-            -type    => 'ok',
-            -title   => qq'$sDir Could Not Be Created',
-            -message => $sMsg,
-        );
-        return 0;
-    }
-
-    return 1;
-}
 
 
 =head1 ACTION EVENT HANDLERS
