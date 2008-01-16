@@ -1,14 +1,10 @@
-
-# $Id: 50_Installer.t,v 1.11 2007/10/02 03:04:48 martinthurn Exp $
-
 use strict;
 use warnings;
 
-my $VERSION = do { my @r = ( q$Revision: 1.11 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.12 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use File::Path;
-use LWP::UserAgent;
 use Test::More;
 use FindBin '$Bin';
 use Tk;
@@ -23,18 +19,23 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     } else {
 		$mwTest->destroy if Tk::Exists($mwTest);
-		my $ua = LWP::UserAgent->new;
-		$ua->timeout(10);
-		$ua->env_proxy;
-		my $response = $ua->get('http://search.cpan.org/');
-		if ( $response->is_error ) {
-			plan skip_all => "LWP cannot get cpan, guess we're not able to get online";
+		eval { require LWP::UserAgent };
+		if ($@){
+			plan skip_all => "LWP Requird";
 		} else {
-			plan tests => 21;
-			pass('can get cpan');
-			use_ok('WizTestSettings');
-			use_ok("Tk::Wizard");
-			use_ok("Tk::Wizard::Installer");
+			my $ua = LWP::UserAgent->new;
+			$ua->timeout(10);
+			$ua->env_proxy;
+			my $response = $ua->get('http://search.cpan.org/');
+			if (not $response or  $response->is_error ) {
+				plan skip_all => "LWP cannot get cpan, guess we're not able to get online";
+			} else {
+				plan tests => 21;
+				pass('can get cpan');
+				use_ok('WizTestSettings');
+				use_ok("Tk::Wizard");
+				use_ok("Tk::Wizard::Installer");
+			}
 		}
 	}
 }

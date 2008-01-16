@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-my $VERSION = do { my @r = ( q$Revision: 2.073 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 2.074 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use Test::More;
@@ -17,7 +17,7 @@ BEGIN {
         plan tests => 10;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
-	use_ok('WizTestSettings' => ':old');
+	use_ok('Tk::Wizard' => ':old');
     is($Tk::Wizard::VERSION, 2.077, 'pm version') or BAIL_OUT "Is this a fake-log4perl error?";
     use_ok('WizTestSettings');
 }
