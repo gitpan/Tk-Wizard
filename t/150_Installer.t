@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-my $VERSION = do { my @r = ( q$Revision: 1.12 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+my $VERSION = do { my @r = ( q$Revision: 1.13 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use File::Path;
@@ -34,7 +34,7 @@ BEGIN {
 				pass('can get cpan');
 				use_ok('WizTestSettings');
 				use_ok("Tk::Wizard");
-				use_ok("Tk::Wizard::Installer");
+				use_ok("Tk::Wizard::Installer" => 2.034);
 			}
 		}
 	}

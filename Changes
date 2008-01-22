@@ -1,6 +1,9 @@
 2008-01-16 Lee
 
 	* Typos in tests and attempts at other test fixes
+	* Typo call to File::Spec in Installer.pm
+	* RT#32490 "next_page_number is off by one"
+	* Renamed hiiSkip to page_skip -- the former seemd to mean nothing
 	
 2008-01-14 Lee
 

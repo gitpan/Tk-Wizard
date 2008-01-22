@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.77 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.078 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -295,7 +295,7 @@ Specify empty string to disable the display of the tag text box.
 
 =item -fontfamily
 
-Specify the "family" (i.e. name) of the font you want to use for all Wizard elements.
+Specify the "family" (ie name) of the font you want to use for all Wizard elements.
 The default is your operating system default (or a sans serif), which on my test computers is
 "MS Sans Serif" on Windows, "Helvetica" on Linux, and "Helvetica" on Solaris.
 
@@ -1605,73 +1605,83 @@ sub currentPage {
 
 Mark one or more pages to be skipped at runtime.
 All integer arguments are taken to be page numbers
-(i.e. the number returned by any of the addPage methods)
+(ie the number returned by any of the C<add*Page> methods)
 
-You should never set the first page to be skipped.
-You can not set the last page to be skipped.
+You should never set the first page to be skipped, and
+you can not set the last page to be skipped, though these
+rules are not (yet) enforced.
 
 =cut
 
 sub setPageSkip {
     my $self = shift;
+	# The user's argument is 1-based, but our internal data structures
+	# are zero-based, ergo minus 1:
     foreach my $i (@_) {
-
-        # The user's argument is 1-based, but our internal data structures
-        # are zero-based, ergo minus 1:
-        $self->{hiiSkip}{ $i - 1 } = 1;
+        $self->{page_skip}{ $i - 1 } = 1;
     }
 }
 
 =head2 setPageUnskip
 
 Mark one or more pages not to be skipped at runtime
-(i.e. reverse the effects of setPageSkip).
+(ie reverse the effects of setPageSkip).
 All integer arguments are taken to be page numbers
-(i.e. the number returned by any of the addPage methods)
+(ie the number returned by any of the addPage methods)
 
 =cut
 
 sub setPageUnskip {
     my $self = shift;
+	# The user's argument is 1-based, but our internal data structures
+	# are zero-based, ergo minus 1:
     foreach my $i (@_) {
-
-        # The user's argument is 1-based, but our internal data structures
-        # are zero-based, ergo minus 1:
-        $self->{hiiSkip}{ $i - 1 } = 0;
+        $self->{page_skip}{ $i - 1 } = 0;
     }
 }
 
 =head2 next_page_number
 
-Returns the number (i.e. the integer returned by add*Page) of the page
-the Wizard will land on if the Next button is clicked.
+Returns the number of the page the Wizard will land on if the Next button is clicked
+(ie the integer returned by C<add*Page>).
 
 =cut
 
 sub next_page_number {
     my $self  = shift;
-    my $iPage = $self->{_current_page_idx};
+	return $self->_next_page_number + 1;
+}
 
-    # print STDERR " DDD _page_forward($iPage -->";
+
+# _next_page_number
+# As public, but value is minus one
+#
+sub _next_page_number {
+    my $self  = shift;
+    my $i = $self->{_current_page_idx};
+    DEBUG "_page_forward($i -->";
+
     do {
-        $iPage++;
-    } until ( !$self->{hiiSkip}{$iPage} || ( $self->_last_page <= $iPage ) );
-    $iPage = $self->_last_page if ( $self->_last_page < $iPage );
+        $i++;
+    } until (
+		not $self->{page_skip}->{$i} or $self->_last_page <= $i
+    );
+    $i = $self->_last_page if ( $self->_last_page < $i );
 
-    # print STDERR " $iPage)\n";
-    return $iPage;
+    DEBUG " $i)\n";
+    return $i;
 }
 
 # Increments the page pointer forward to the next logical page,
 # honouring the Skip flags:
 sub _page_forward {
     my $self = shift;
-    $self->{_current_page_idx} = $self->next_page_number;
+    $self->{_current_page_idx} = $self->_next_page_number;
 }
 
 =head2 back_page_number
 
-Returns the number (i.e. the integer returned by add*Page) of the page
+Returns the number (ie the integer returned by add*Page) of the page
 the Wizard will land on if the Back button is clicked.
 
 =cut
@@ -1681,7 +1691,7 @@ sub back_page_number {
     my $iPage = $self->{_current_page_idx};
     do {
         $iPage--;
-    } until ( !$self->{hiiSkip}{$iPage} || ( $iPage <= 0 ) );
+    } until ( !$self->{page_skip}{$iPage} || ( $iPage <= 0 ) );
     $iPage = 0 if ( $iPage < 0 );
     return $iPage;
 }

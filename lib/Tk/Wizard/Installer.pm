@@ -3,7 +3,7 @@ package Tk::Wizard::Installer;
 use strict;
 use warnings;
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.33 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.34 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -469,7 +469,7 @@ sub _pre_install_files {
         elsif ( -f $sFrom ) {
             if ( -d $sTo ) {
                 # Copy from file to directory:
-                my ( $sJunkVol, $sJunkPath, $fname ) = splitpath($sFrom);
+                my ( $sJunkVol, $sJunkPath, $fname ) = File::Spec->splitpath($sFrom);
                 $sTo = "$sTo/$fname";
             }
             push @asFrom, $sFrom;

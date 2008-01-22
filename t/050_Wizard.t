@@ -18,11 +18,11 @@ BEGIN {
     }
     $mwTest->destroy if Tk::Exists($mwTest);
 	use_ok('Tk::Wizard' => ':old');
-    is($Tk::Wizard::VERSION, 2.077, 'pm version') or BAIL_OUT "Is this a fake-log4perl error?";
+    is($Tk::Wizard::VERSION, 2.078, 'pm version') or BAIL_OUT "Is this a fake-log4perl error?";
     use_ok('WizTestSettings');
 }
 
-# $ENV{TEST_INTERACTIVE} = 1;
+$ENV{TEST_INTERACTIVE} = 0;
 
 foreach my $style ( qw(top 95)) {
 

@@ -23,7 +23,7 @@ our $VERSION; # see POD
 
 BEGIN {
 	# Set our version to be the TK::Wizard version to use
-	$VERSION = do { my @r = ( q$Revision: 2.77 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+	$VERSION = do { my @r = ( q$Revision: 2.078 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 	# Require the correct version
 	use lib "../lib";
