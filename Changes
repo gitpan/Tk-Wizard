@@ -1,4 +1,13 @@
-2008-01-16 Lee
+2008-01-23 Lee 2.135
+
+	* RT#32513 typo in Win32.pm (and some warnings)
+	* RT#32517 typos missing returns in refactoring
+
+2008-01-22 Lee 2.134 
+
+	* Tests
+
+2008-01-22 Lee
 
 	* Typos in tests and attempts at other test fixes
 	* Typo call to File::Spec in Installer.pm

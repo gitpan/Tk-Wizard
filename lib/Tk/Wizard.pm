@@ -405,19 +405,20 @@ sub new {
     TRACE "Enter new with ", (@_ || 'nothing');
     my $inv = ref( $_[0] ) ? ref( $_[0] ) : $_[0];
     shift;    # Ignore invocant
+
     my @args = @_;
+
     unless (
         ( scalar(@_) % 2 )    # Not a simple list
         && ref $args[0]       # Already got a MainWindow
       )
     {
-
         # Get a main window:
         unshift @args, Tk::MainWindow->new;
         push @args, "-parent" => $args[0];
         push @args, "-kill_parent_on_destroy" => 1;
         $args[0]->optionAdd( '*BorderWidth' => 1 );
-    }    # if
+    }
     my $self        = $inv->SUPER::new(@args);
     my $sFontFamily = $self->cget( -fontfamily );
     my $iFontSize   = $self->cget( -basefontsize );
@@ -538,12 +539,15 @@ sub Populate {
         -basefontsize           => [ 'PASSIVE',  undef,       undef,      $self->_font_size ],
         -fontfamily             => [ 'PASSIVE',  undef,       undef,      $self->_font_family ],
     );
+
     if ( exists $args->{-imagepath} and not -e $args->{-imagepath} ) {
-        confess "Can't find file at -imagepath: " . $args->{-imagepath};
-    }    # if
+        Carp::confess "Can't find file at -imagepath: " . $args->{-imagepath};
+    }
+
     if ( exists $args->{-topimagepath} and not -e $args->{-topimagepath} ) {
-        confess "Can't find file at -topimagepath: " . $args->{-topimagepath};
-    }    # if
+        Carp::confess "Can't find file at -topimagepath: " . $args->{-topimagepath};
+    }
+
     $self->{-imagepath}            = $args->{-imagepath};
     $self->{-topimagepath}         = $args->{-topimagepath};
 
@@ -737,11 +741,10 @@ sub _initial_layout {
             -fill   => 'y',
           );
         DEBUG_FRAME && $self->{left_object}->configure( -background => 'blue' );
-    }    # if 95 or first page
+    }    # end if 95 or first page
 
+	# Wizard 2k style - builds the left side of the wizard
     else {
-
-        # Wizard 2k style - builds the left side of the wizard
         my $im = $self->cget( -topimagepath );
         if ( ref $im ) {
             $self->Photo( "topbanner", -data => $$im );
@@ -797,9 +800,8 @@ sub _render_current_page {
 		}
 	}
 
-
 	######################################
-    ###$self->_repack_buttons;
+    ### $self->_repack_buttons now below;
 
     # Process button events and re-rendering
     my $panel = $self->Subwidget('buttonPanel');
@@ -863,8 +865,6 @@ sub _render_current_page {
 
 	########################################
 
-
-    # xxx
     $self->configure( -background => $self->cget("-background") );
     $self->_pack_forget( $self->{wizardFrame} );
 
@@ -1110,9 +1110,8 @@ sub blank_frame {
     }
 
     # if 'top' style, but not first or last page
+	# Whenever page does NOT have the side banner:
     else {
-
-        # Whenever page does NOT have the side banner:
         $lTitle = $frame->Label(
             -justify    => 'left',
             -anchor     => 'w',
@@ -1122,9 +1121,7 @@ sub blank_frame {
           )->pack(
             -side   => 'top',
             -anchor => 'n',
-
-            # -expand => 1,
-            -expand => 0,
+            -expand => 0, # 1
             -fill   => 'x',
           );
         $lSub = $frame->Label(
@@ -1183,8 +1180,9 @@ sub blank_frame {
             }
         );
     }
+
     return $frame->pack(qw/-side top -anchor n -fill both -expand 1/);
-}    # end blank_frame
+}
 
 
 =head2 addPage
@@ -1270,10 +1268,7 @@ Accepts exactly the same arguments as C<blank_frame>.
 
 sub addSplashPage {
     TRACE "Enter addSplashPage";
-    my $self = shift;
-    # We have to make a copy of our args in order for them to get
-    # "saved" in this coderef:
-    my $args = {@_};
+    my ($self, $args) = (shift, {@_});
     return $self->addPage( sub { $self->blank_frame(%$args) } );
 }
 
@@ -1289,11 +1284,7 @@ Accepts the usual C<-title>, C<-subtitle>, and C<-text> like C<blank_frame>.
 =cut
 
 sub addTextFramePage {
-    my $self = shift;
-
-    # We have to make a copy of our args in order for them to get
-    # "saved" in this coderef:
-    my $args = {@_};
+    my ($self, $args) = (shift, {@_});
     DEBUG "addTextFramePage args are ", Dumper($args);
     return $self->addPage( sub { $self->_text_frame($args) } );
 }
@@ -1327,9 +1318,11 @@ sub _text_frame {
         -scrollbars  => "osoe",
         -wrap        => "word",
     )->pack(qw/-expand 1 -fill both -padx 10 -pady 10/);
+
     DEBUG_FRAME && $t->configure( -background => 'green' );
     $t->insert( '0.0', $$text );
     $t->configure( -state => "disabled" );
+
     return $frame;
 }
 
@@ -1407,15 +1400,18 @@ sub _NextButtonEventCycle {
 	# XXX DEBUG "Page $self->{_current_page_idx} -preNextButtonAction";
     if ( _dispatch( $self->cget( -preNextButtonAction ) ) ) {
         DEBUG "preNextButtonAction says we should not go ahead";
+		return;
     }
 
     if ( $self->_on_last_page ) {
         DEBUG "On the last page";
         if ( _dispatch( $self->cget( -preFinishButtonAction ) ) ) {
             DEBUG "preFinishButtonAction says we should not go ahead";
+            return;
         }
         elsif ( _dispatch( $self->cget( -finishButtonAction ) ) ) {
             DEBUG "finishButtonAction says we should not go ahead";
+        	return;
         }
         else {
         	$self->{really_quit}++;
@@ -1433,7 +1429,8 @@ sub _NextButtonEventCycle {
 
     DEBUG "Before _dispatch postNextButtonAction";
     if ( _dispatch( $self->cget( -postNextButtonAction ) ) ) {
-        DEBUG "postNextButtonAction says we should not go ahead"
+        DEBUG "postNextButtonAction says we should not go ahead";
+        return;
     }
 
     DEBUG "all done, NBEC counter is now $self->{_inside_nextButtonEventCycle_}";
@@ -1453,6 +1450,7 @@ sub _BackButtonEventCycle {
     $self->_page_backward;
     $self->_render_current_page;
     if ( _dispatch( $self->cget( -postBackButtonAction ) ) ) { return; }
+	return;
 }
 
 sub _HelpButtonEventCycle {
@@ -1471,24 +1469,22 @@ sub _CancelButtonEventCycle {
 
 sub _CloseWindowEventCycle {
     my $self = shift;
-    my $hGUI = shift;
+    my $gui  = shift;
     TRACE "Enter _CloseWindowEventCycle... really=[$self->{really_quit}]";
 
-    if ( !$self->{really_quit} ) {
+    if ( not $self->{really_quit} ) {
         DEBUG "Really?";
         if ( $self->Callback( -preCloseWindowAction => $self->{-preCloseWindowAction} ) ) {
             DEBUG "preCloseWindowAction says we should not go ahead";
             return;
         }
     }
-    if ( Tk::Exists($hGUI) ) {
-        DEBUG "hGUI=$hGUI= withdraw";
-        $hGUI->withdraw;
+    if ( Tk::Exists($gui) ) {
+        DEBUG "gui=$gui= withdraw";
+        $gui->withdraw;
     }
 
-    if ( $self->{Configure}{-kill_parent_on_destroy}
-        && Tk::Exists( $self->parent ) )
-    {
+    if ( $self->{Configure}{-kill_parent_on_destroy} and Tk::Exists( $self->parent ) ) {
         DEBUG "Kill parent " . $self->parent . " " . $self->{Configure}{ -parent };
         # This should kill us, too:
         $self->parent->destroy;
@@ -1506,6 +1502,7 @@ sub _CloseWindowEventCycle {
     return undef;
 }
 
+
 =head2 Show
 
 	$wizard->Show();
@@ -1519,6 +1516,7 @@ sub Show {
 	TRACE "Enter Show";
     my $self = shift;
     return if $self->{_showing};
+
     if ( $self->_last_page < 2 ) {
 		my $lp = $self->_last_page + 1;
         warnings::warnif(
@@ -1526,8 +1524,10 @@ sub Show {
     	    . $lp . ' page' . ($lp==1? '' : 's').'!'
 		)
     }
+
     $self->{_current_page_idx} = 0;
     $self->_initial_layout;
+
     $self->resizable( 0, 0 )
       unless $self->{Configure}{-resizable}
          and $self->{Configure}{-resizable} =~ /^(1|yes|true)$/i;
@@ -1595,8 +1595,7 @@ See also the L</addPage> entry.
 
 sub currentPage {
     my $self = shift;
-
-    # Throughout this module, _current_page_idx is zero-based.  But we
+    # Throughout this module, the internal _current_page_idx is zero-based.  But we
     # "publish" it as one-based:
     return $self->{_current_page_idx} + 1;
 }
@@ -1616,7 +1615,7 @@ rules are not (yet) enforced.
 sub setPageSkip {
     my $self = shift;
 	# The user's argument is 1-based, but our internal data structures
-	# are zero-based, ergo minus 1:
+	# are zero-based, thus subract 1:
     foreach my $i (@_) {
         $self->{page_skip}{ $i - 1 } = 1;
     }
@@ -1634,7 +1633,7 @@ All integer arguments are taken to be page numbers
 sub setPageUnskip {
     my $self = shift;
 	# The user's argument is 1-based, but our internal data structures
-	# are zero-based, ergo minus 1:
+	# are zero-based, thus subtract 1:
     foreach my $i (@_) {
         $self->{page_skip}{ $i - 1 } = 0;
     }
@@ -1678,6 +1677,7 @@ sub _page_forward {
     my $self = shift;
     $self->{_current_page_idx} = $self->_next_page_number;
 }
+
 
 =head2 back_page_number
 
@@ -1745,6 +1745,7 @@ sub prompt {
         -buttons        => [ $LABELS{CANCEL}, $LABELS{OK} ],
         -default_button => $LABELS{OK},
     );
+
     if ( $args->{-text} ) {
         $w = $d->add(
             "Label",
@@ -1756,6 +1757,7 @@ sub prompt {
             -anchor     => 'w',
         )->pack();
     }
+
     $w = $d->add(
         "Entry",
         -font         => $self->{defaultFont},
@@ -1765,6 +1767,7 @@ sub prompt {
         -justify      => 'left',
         -textvariable => \$input,
     )->pack(qw( -padx 2 -pady 2 -expand 1 ));
+
     $d->Show;
     return $input ? $input : undef;
 }
@@ -2029,7 +2032,9 @@ Please see the file F<CHANGES.txt> included with the distribution.
 =head1 AUTHOR
 
 Lee Goddard (lgoddard@cpan.org) based on work Daniel T Hable.
-Thanks to co-maintainer Martin Thurn (mthurn@cpan.org) for support and patches.
+
+Thanks to co-maintainer Martin Thurn (mthurn@cpan.org) for support,
+patches, and estensions, whilst I'm elsewhere.
 
 =head1 KEYWORDS
 
@@ -2037,7 +2042,7 @@ Wizard; set-up; setup; installer; uninstaller; install; uninstall; Tk; GUI.
 
 =head1 COPYRIGHT
 
-Initial beta Copyright (c) Daniel T Hable, 2/2002.
+Initial alpha Copyright (c) Daniel T Hable, 2/2002.
 
 Re-write and extension Copyright (C) Lee Goddard, 11/2002 - 01/2008 ff.
 

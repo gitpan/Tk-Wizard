@@ -19,7 +19,7 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     } else {
 		$mwTest->destroy if Tk::Exists($mwTest);
-		eval { require LWP::UserAgent };
+		eval { use LWP::UserAgent };
 		if ($@){
 			plan skip_all => "LWP Requird";
 		} else {
@@ -31,7 +31,7 @@ BEGIN {
 				plan skip_all => "LWP cannot get cpan, guess we're not able to get online";
 			} else {
 				plan tests => 21;
-				pass('can get cpan');
+				pass('can get cpan with LWP-UserAgent');
 				use_ok('WizTestSettings');
 				use_ok("Tk::Wizard");
 				use_ok("Tk::Wizard::Installer" => 2.034);

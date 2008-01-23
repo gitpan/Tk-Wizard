@@ -44,8 +44,8 @@ t/166_single.t
 t/170_TopLevel.t
 t/177_dirselect.t
 t/199_prepost.t
-t/040_pod.t
-t/041_pod-coverage.t
+t/020_pod.t
+t/021_pod-coverage.t
 t/WizTestSettings.pm
 t/dos.txt
 t/unix.txt

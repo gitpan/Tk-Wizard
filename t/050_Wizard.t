@@ -7,6 +7,7 @@ use Test::More;
 use Tk;
 use lib qw(../lib . t/);
 
+
 BEGIN {
     my $mwTest;
     eval { $mwTest = Tk::MainWindow->new };
@@ -14,7 +15,7 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     }
     else {
-        plan tests => 10;
+        plan tests => 7;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
 	use_ok('Tk::Wizard' => ':old');
@@ -23,6 +24,12 @@ BEGIN {
 }
 
 $ENV{TEST_INTERACTIVE} = 0;
+
+# t/050_Wizard.............XStoSubCmd: Not a Tk Window
+#  Tk::die_with_trace at /mnt/i386/usr/local/src/CPAN/build/Tk-Wizard-2.134-1roshM/blib/lib/Tk/Wizard.pm line 890
+#  Tk::Wizard::_render_current_page at /mnt/i386/usr/local/src/CPAN/build/Tk-Wizard-2.134-1roshM/blib/lib/Tk/Wizard.pm line 1542
+#  Tk::Wizard::Show at t/050_Wizard.t line 42
+my $fail;
 
 foreach my $style ( qw(top 95)) {
 
@@ -39,14 +46,14 @@ foreach my $style ( qw(top 95)) {
 		-wait => $ENV{TEST_INTERACTIVE} ? -1 : 1,
 	);
 
-    $wizard->Show;
+    eval { $wizard->Show };
 
-    pass('before MainLoop');
-    MainLoop;
-    pass('after MainLoop');
+    if ($@){
+		fail "Failed to show";
+		$fail = 1;
+	} else {
+		MainLoop;
+		pass 'after MainLoop';
+	}
 }
 
-pass('after foreach loop');
-
-
-__END__

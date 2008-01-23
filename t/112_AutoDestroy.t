@@ -36,6 +36,14 @@ ZERO: {
     isa_ok( $wizard, "Tk::Wizard" );
     is( 1, $wizard->addSplashPage( -wait => $WAIT ), 'One page' );
 
+	# FAIL Tk-Wizard-2.133 amd64-freebsd 6.2-prerelease
+	# t/112_AutoDestroy........# Looks like you planned 28 tests but only ran 4.
+	# Looks like your test died just after 4.
+	# dubious
+	# 	Test returned status 255 (wstat 65280, 0xff00)
+	# DIED. FAILED tests 5-28
+	# 	Failed 24/28 tests, 14.29% okay
+
     if ($cap){
 		$capture = IO::Capture::Stderr::Extended->new;
 		$capture->start;

@@ -51,15 +51,20 @@ BEGIN {
     if ( $Win32::VERSION lt 0.2 ) {
         eval 'use Win32::OLE';    # autouse is still not very good?
         die "Could not load Win32::OLE: $@" if $@;
-    }    # if
-    use Win32;
-    use Win32::TieRegistry( Delimiter => "/", ArrayValues => 0 );
+    }
+    eval {
+    	use Win32;
+    	use Win32::TieRegistry( Delimiter => "/", ArrayValues => 0 );
+	};
+	die $@ if $@;
 }
+
 
 =head1 DESCRIPTION
 
-All the methods and means of L<Tk::Wizard|Tk::Wizard> and
-L<Tk::Wizard::Installer|Tk::Wizard::Installer>, plus the below, which
+As a sub-class of L<Tk::Wizard|Tk::Wizard> and
+L<Tk::Wizard::Installer|Tk::Wizard::Installer>, this module offers
+all of those methods and means, plus the below, which
 are thought to be specific to the Microsoft Windows platform.
 
 If you are looking for a freeware software installer that is not
@@ -374,8 +379,9 @@ check the checkbox below.";
     my $sDirParent = $self->{startmenu_dir_common};
     if ( $args->{-user} eq 'current' ) {
         $sDirParent = $self->{startmenu_dir_current};
-    }    # if
-         # This is the default answer, if the user just clicks "Next":
+    }
+
+    # This is the default answer, if the user just clicks "Next":
     $$variable = "$sDirParent\\$group";
 
     # Recursively read the Start Menu folder, building up a list of
@@ -435,14 +441,15 @@ check the checkbox below.";
         $t =~ s!\A\\!!;
         if ( !$hlist->info( "exists", $t ) ) {
 
-            # print STDERR " DDD trying to add i=$i= t=$t= to hlist...\n";
+            DEBUG "trying to add i=$i= t=$t= to hlist...\n";
             $hlist->add(
                  $t,
                 -text => $t,
                 -data => $i,
             );
         }
-    }    # foreach
+    }
+
     $self->{_hlist_active_} = 0;
     $self->_toggle_hlist( $hlist, $variable, $group );
     if ( !$args->{-disable_nochoice} ) {
@@ -455,11 +462,13 @@ check the checkbox below.";
             -anchor => 'w',
             -padx   => 10,
             -pady   => 5,
-          );    # Checkbutton
+          );
         DEBUG_FRAME && $b->configure( -background => 'red' );
-    }    # if
+    }
+
     return $frame;
-}    # _page_start_menu
+}
+
 
 sub _toggle_hlist {
     my $self = shift;
@@ -473,24 +482,26 @@ sub _toggle_hlist {
     # Optional arg3 = the group string being added onto the path:
     my $group = shift;
     $self->{_hlist_active_} = !$self->{_hlist_active_};
+
     my $w = $hlist->Subwidget('scrolled');
     if ( !$self->{_hlist_active_} ) {
         $$rs = '';
-
         # Deactivate the entire HList.  HList does not support the
         # -state configuration option, therefore we use the bindtags
         # "hack":
         $self->{_hlist_bindtags_} = $w->bindtags;
         $w->bindtags( ['Freeze'] );
     }
+
     else {
         $$rs = $hlist->info('anchor');
         $$rs .= "\\" . $group if $group;
         if ( $self->{_hlist_bindtags_} ) {
             $w->bindtags( $self->{_hlist_bindtags_} );
-        }    # if
-    }    # else
+        }
+    }
 }    # toggle_hlist
+
 
 =head1 CALLBACKS
 
@@ -569,10 +580,13 @@ On success, returns the C<-save_path>; on failure, C<undef>.
 sub callback_create_shortcut {
     my ( $self, $args ) = ( shift, {@_} );
     croak "-target is required (you gave " . ( join ", ", keys %$args ) . ")"
-      unless defined $args->{-target};
+      unless defined $args->{-target} and $args->{-target} ne '';
+
     croak "-save_path is required  (you gave " . ( join ", ", keys %$args ) . ")"
-      unless defined $args->{-save_path};
+      unless defined $args->{-save_path} and $args->{-save_path} ne '';
+
     $args->{-arguments}   = '' unless exists $args->{-arguments};
+    $args->{-workingdir}  = '' unless exists $args->{-workingdir};
     $args->{-description} = '' unless exists $args->{-description};
     $args->{-show}        = '' unless exists $args->{-show};
     $args->{-hotkey}      = '' unless exists $args->{-hotkey};
@@ -584,30 +598,48 @@ sub callback_create_shortcut {
         and exists $args->{-save_path} )
     {
         my ( $base, $file ) = $args->{-save_path} =~ /(.*?)([^\/\\]+)$/;
-        $base .= "\\" . $self->{-program_groups};
+
+        # Historical error on $self->{-program_groups}
+        $base .= "\\" . ($self->{-program_groups} || $self->{-program_groups});
+
         mkpath $base if !-e $base;
         $args->{-save_path} = $base . "\\" . $file;
         $args->{-save_path} =~ s/[\\\/]+/\\/g;
     }
+
     if (    $args->{-target} =~ /^(ht|f)tp:\/\//
         and $args->{-save_path} !~ /\.uri$/i )
     {
         croak "Internet shortcuts require a .uri ending!";
     }
+
     if (    $args->{-target} !~ /^(ht|f)tp:\/\//
         and $args->{-save_path} =~ /\.uri$/i )
     {
         croak "Only internet shortcuts require a .uri ending!";
     }
-    my $s = new Win32::Shortcut;
+
+    my $s = Win32::Shortcut->new;
     $s->Set(
-        $args->{-target}, $args->{-arguments}, $args->{-workingdir}, $args->{-description},
-        $args->{-show},   $args->{-hotkey},    $args->{-iconpath},   $args->{-iconindex},
+        $args->{-target},
+        $args->{-arguments},
+        $args->{-workingdir},
+        $args->{-description},
+        $args->{-show},
+        $args->{-hotkey},
+        $args->{-iconpath},
+        $args->{-iconindex},
     );
-    my $r = $s->Save( $args->{-save_path} ) ? $args->{-save_path} : undef;
+    my $r = $s->Save(
+		$args->{-save_path}
+	) ?
+		$args->{-save_path} : undef;
+
     $s->Close;
+
     return $r;
-}    # callback_create_shortcut
+}
+
 
 =head2 callback_create_shortcuts
 

@@ -2,11 +2,10 @@ use strict;
 use warnings;
 
 use Test::More;
-use lib "./lib";
-use ExtUtils::testlib;
 
 BEGIN {
-	plan skip_all => 'bored trying to work this out!';
+	plan skip_all => 'bored trying to work this out with only win32 as test platform';
+	use Cwd; chdir ".." if getcwd() =~ '\Wt';	# For dev
 }
 
 
