@@ -21,13 +21,13 @@ BEGIN {
 		$mwTest->destroy if Tk::Exists($mwTest);
 		eval { use LWP::UserAgent };
 		if ($@){
-			plan skip_all => "LWP Requird";
+			plan skip_all => "LWP not found";
 		} else {
 			my $ua = LWP::UserAgent->new;
 			$ua->timeout(10);
 			$ua->env_proxy;
 			my $response = $ua->get('http://search.cpan.org/');
-			if (not $response or  $response->is_error ) {
+			if (not $response or $response->is_error ) {
 				plan skip_all => "LWP cannot get cpan, guess we're not able to get online";
 			} else {
 				plan tests => 21;
@@ -47,6 +47,7 @@ my $get_files = {
     'http://www.cpan.org/' => "$test_dir/cpan_index.html",
 };
 
+# This sometimes fails - why?
 my $wizard = Tk::Wizard::Installer->new( -title => "Installer Test", );
 
 isa_ok( $wizard, 'Tk::Wizard::Installer' );

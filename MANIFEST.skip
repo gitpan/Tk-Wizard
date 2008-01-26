@@ -1,3 +1,6 @@
+.tar$
+.tar.gz$
+.zip$
 report.pl
 \.tar\.gz$
 \.tdy$
