@@ -1,0 +1,11 @@
+RELEASE PROCEDURE
+
+* Update release version in Makefile.PL
+
+* Update $VERSION in t/WizTestSettings.pm 
+  to reflect the latest Wizard version
+
+* Update CHANGES log
+
+* Run make test - this will check MANIFEST too
+

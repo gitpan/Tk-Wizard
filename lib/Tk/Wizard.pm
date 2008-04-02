@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.078 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.079 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -82,6 +82,8 @@ my @PAGE_EVENT_LIST = qw(
 	-preBackButtonAction
 	-postBackButtonAction
 );
+
+my $REFRESH_MS = 1000; # Refresh the wizard every REFRESH_MS milliseconds
 
 =head1 SYNOPSIS
 
@@ -187,12 +189,14 @@ A L<Tk::Frame|Tk::Frame> holding the tagText and tagLine.
 
 =item imagePane
 
-Either the image on the first and last pages. Also: for C<95> C<style> wizards: the same;
-for C<style> C<top> (default) Wizards, the box at the top of the wizard. What a terrible sentence.
+On all pages of a C<95>-style Wizard,
+and for the first and last pages of the default c<top>-style Wizard,
+this is a large pane on the left, that holds an image.
+For the other pages of a C<top>-style Wizard, this refers to the image box at the top of the wizard.
 
 =item wizardFrame
 
-The frame that holds the content frame.
+The frame that holds the content frame, the current Wizard page.
 
 =back
 
@@ -252,9 +256,9 @@ is made to maintain or restore any initial current working directory.
 
 =item *
 
-Base64-encoded images to pass in the C<-data> field of the
+A reference to a Base64-encoded image to pass in the C<-data> field of the
 L<Tk::Photo|Tk::Photo> object.  This is the default form, and a couple
-of unused images are supplied: see L<Tk::Wizard::Image>.
+of extra, unused images are supplied: see L<Tk::Wizard::Image>.
 
 =back
 
@@ -319,10 +323,6 @@ Specify the height of the CONTENT AREA of the Wizard, for all pages.
 The default height (if you do not give any -height argument) is 3/4 the default width.
 You can override for a particular page by supplying a -height argument to the add*Page() method.
 
-=item -image_dir
-
-Deprecated. Supply C<-imagepath> and/or C<-topimagepath>.
-
 =item -kill_self_after_finish
 
 The default for the Wizard is to withdraw itself after the "finish"
@@ -335,6 +335,12 @@ the Wizard will instead be destroyed after the "finish" button is clicked.
 =back
 
 Please see also L</ACTION EVENT HANDLERS>.
+
+=head2 WIZARD REFRESH RATE
+
+C<$Tk::Wizard::REFRESH_MS> is the number of milliseconds
+after which an C<update> will be called to redraw the Wizard.
+Current value is one second.
 
 =head1 METHODS
 
@@ -349,23 +355,38 @@ All the above examples are currently equivalent. However,
 as of version 3.00, later in 2008, the first two will no
 longer act as the last two -- that is, they will no longer
 import the methods now located in the C<Choices> and
-C<FileSystem> modules (L<Tk::Wizard::Choices>, L<Tk::Wizard::FileSystem>).
+C<FileSystem> modules (L<Tk::Wizard::Choices>, L<Tk::Wizard::FileSystem>):
+you will have to do that yourself, as in the final example,
+or manuall:
+
+	use Tk::Wizard;
+	use Tk::Wizard::Tasks;
 
 =cut
 
 sub import {
 	my $inv = shift;
+	# The default `use module ()` messes up the logic below; fix with:
+	shift if scalar(@_) and not defined $_[0];
+
 	DEBUG "Enter import for ".$inv;
-	DEBUG "# Import list: ",join",",@_;
+	if (scalar @_){
+		DEBUG "Import list : ", join(",",@_);
+	} else {
+		DEBUG "No import list";
+	}
 
 	# Maintian backwards compatabilty while $VERSION < 3
-	if (not @_ or $_[0] eq ':old'){
+	if (not scalar(@_) or $_[0] eq ':old'){
 
 		require Tk::Wizard::Choices;
 		Tk::Wizard::Choices->import if Tk::Wizard::Choices->can('import');
 
 		require Tk::Wizard::FileSystem;
 		Tk::Wizard::FileSystem->import if Tk::Wizard::FileSystem->can('import');
+
+		require Tk::Wizard::Tasks;
+		Tk::Wizard::Tasks->import if Tk::Wizard::Tasks->can('import');
 	}
 
 	elsif (scalar @_ == 1){
@@ -375,13 +396,13 @@ sub import {
 	}
 
 	elsif ($_[0] eq ':use'){
-		shift;
+		shift; # drop :use - everything else is a sub-module sub-name
 		my $use = shift;
 		foreach my $m (ref $use? @$use : $use){
 			my $n = 'Tk::Wizard::'.$m.'.pm';
 			my $o = $n;
 			$n =~ s/::/\//g;
-			require Tk::Wizard::Choices;
+			# require Tk::Wizard::Choices;
 			require $n;
 			$o->import;
 		}
@@ -389,6 +410,7 @@ sub import {
 
 	return @_;
 }
+
 
 =head2 new
 
@@ -399,20 +421,19 @@ or all of the standard widget options or widget-specific options
 
 # The method is overridden to allow us to supply a MainWindow if one
 # is not supplied by the caller.  Not supplying one suits me, but Mr.
-# Rothenberg requires one.
+# Rothenberg requires one, and he was probably right.
 
 sub new {
     TRACE "Enter new with ", (@_ || 'nothing');
     my $inv = ref( $_[0] ) ? ref( $_[0] ) : $_[0];
-    shift;    # Ignore invocant
+    shift;    					# Ignore invocant
 
     my @args = @_;
 
     unless (
-        ( scalar(@_) % 2 )    # Not a simple list
-        && ref $args[0]       # Already got a MainWindow
-      )
-    {
+        ( scalar(@_) % 2 )		# Not a simple list
+        and ref $args[0]		# Already got a MainWindow
+    ) {
         # Get a main window:
         unshift @args, Tk::MainWindow->new;
         push @args, "-parent" => $args[0];
@@ -527,6 +548,7 @@ sub Populate {
         -postHelpButtonAction  => [ 'CALLBACK', undef, undef, sub { 1 } ],
         -preFinishButtonAction => [ 'CALLBACK', undef, undef, sub { 1 } ],
         -finishButtonAction    => [ 'CALLBACK', undef, undef, sub { $self->withdraw; 1 } ],
+
         -kill_parent_on_destroy => [ 'PASSIVE',  undef,       undef,      0 ],
         -kill_self_after_finish => [ 'PASSIVE',  undef,       undef,      0 ],
         -debug                  => [ 'PASSIVE',  undef,       undef,      0 ],
@@ -543,11 +565,9 @@ sub Populate {
     if ( exists $args->{-imagepath} and not -e $args->{-imagepath} ) {
         Carp::confess "Can't find file at -imagepath: " . $args->{-imagepath};
     }
-
     if ( exists $args->{-topimagepath} and not -e $args->{-topimagepath} ) {
         Carp::confess "Can't find file at -topimagepath: " . $args->{-topimagepath};
     }
-
     $self->{-imagepath}            = $args->{-imagepath};
     $self->{-topimagepath}         = $args->{-topimagepath};
 
@@ -566,8 +586,7 @@ sub Populate {
     $self->{_current_page_idx}		= 0;
 
     # $self->overrideredirect(1); # Removes borders and controls
-  CREATE_BUTTON_PANEL:
-    {
+	CREATE_BUTTON_PANEL: {
         my $buttonPanel = $self->Frame( -background => $self->{background}, )->pack(qw/ -side bottom -fill x/);
         DEBUG_FRAME && $buttonPanel->configure( -background => 'yellow' );
 
@@ -578,10 +597,9 @@ sub Populate {
         )->pack( -side => "right", -expand => 0 );
         DEBUG_FRAME && $f->configure( -background => 'red' );
         $self->Advertise( buttonPanel => $buttonPanel );
-    }    # end of CREATE_BUTTON_PANEL block
+    }
 
-  CREATE_TAGLINE:
-    {
+	CREATE_TAGLINE: {
         my $tagbox = $self->Frame(
             -height     => 12,
             -background => $self->{background},
@@ -607,7 +625,7 @@ sub Populate {
         $self->Advertise( tagLine => $self->{tagline} );
         $self->Advertise( tagBox  => $tagbox );
         $self->Advertise( tagText => $self->{tagtext} );
-    }    # end of CREATE_TAGLINE block
+    }
 
 	# Desktops for dir select: thanks to Slaven Rezic who also suggested SHGetSpecialFolderLocation for Win32. l8r
 	# There is a good module for this now
@@ -687,6 +705,7 @@ sub _font_size {
     return 12;    # Linux etc.
 }
 
+
 =head2 background
 
 Get/set the background color for the body of the Wizard.
@@ -723,6 +742,7 @@ sub _initial_layout {
     if ( $self->_showing_side_banner ) {
         my $im = $self->cget( -imagepath );
         if ( not ref $im ) {
+			warn $im;
             $self->Photo( "sidebanner", -file => $im );
         }
         else {
@@ -884,6 +904,13 @@ sub _render_current_page {
 
     $self->{wizardFrame} = $frame->pack(%frame_pack);
     $self->{wizardFrame}->update;
+
+    # Update the wizard every 1000 seconds
+    $self->{_refresh_event_id} = $self->{wizardFrame}->repeat(
+		$REFRESH_MS,
+		sub { $self->{wizardFrame}->update }
+	) if not $self->{_refresh_event_id};
+
     $self->Advertise( wizardFrame => $self->{wizardFrame} );
 
     # $self->_resize_window;
@@ -891,6 +918,17 @@ sub _render_current_page {
     TRACE "Leave _render_current_page $self->{_current_page_idx}";
 }
 
+=head2 update
+
+Redraws the Wizard.
+
+=cut
+
+sub update {
+	my $self = shift;
+	$self->{wizardFrame}->update if $self->{wizardFrame};
+	return 1;
+}
 
 sub _resize_window {
     my $self = shift;
@@ -1470,7 +1508,7 @@ sub _CancelButtonEventCycle {
 sub _CloseWindowEventCycle {
     my $self = shift;
     my $gui  = shift;
-    TRACE "Enter _CloseWindowEventCycle... really=[$self->{really_quit}]";
+    TRACE "Enter _CloseWindowEventCycle... really=[", ($self->{really_quit} || 'undef'), "]";
 
     if ( not $self->{really_quit} ) {
         DEBUG "Really?";
@@ -1541,6 +1579,7 @@ sub Show {
     $self->configure( -background => $self->cget("-background") );
     $self->_render_current_page;
     $self->{_showing} = 1;
+
     TRACE "Leave Show";
     return 1;
 }

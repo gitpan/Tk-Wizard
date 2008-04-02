@@ -1,10 +1,4 @@
 Changes
-t/extra.txt
-MANIFEST.skip
-META.yml
-Makefile.PL
-README
-TODO
 examples/application.pl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
@@ -15,13 +9,22 @@ inc/Module/Install/Metadata.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/Tk/Wizard.pm
-lib/Tk/Wizard/Image.pm
 lib/Tk/Wizard/Choices.pm
 lib/Tk/Wizard/FileSystem.pm
+lib/Tk/Wizard/Image.pm
 lib/Tk/Wizard/Installer.pm
 lib/Tk/Wizard/Installer/Win32.pm
+lib/Tk/Wizard/Tasks.pm
+Makefile.PL
+MANIFEST			This list of files
+MANIFEST.skip
+META.yml
 perl_licence_blab.txt
+README
+RELEASE_PROCEDURE
 t/001_MANIFEST.t
+t/020_pod.t
+t/021_pod-coverage.t
 t/040_Import.t
 t/040_Import_default.t
 t/042_Import_none.t
@@ -44,9 +47,9 @@ t/166_single.t
 t/170_TopLevel.t
 t/177_dirselect.t
 t/199_prepost.t
-t/020_pod.t
-t/021_pod-coverage.t
-t/WizTestSettings.pm
+t/200_tasklist.t
 t/dos.txt
+t/extra.txt
 t/unix.txt
-MANIFEST			This list of files
+t/WizTestSettings.pm
+TODO

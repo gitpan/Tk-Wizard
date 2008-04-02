@@ -1,3 +1,11 @@
+2007-04-03 Lee 2.137
+
+	* Played with redraw repeat event in response to ticket 34610
+	* Moved task list from FileSystem to Tasts
+	* Removed warnings from &import when use Tk::Wizard ()
+	* Added Wizard::update 
+	* Added $REFRESH_MS
+	
 2008-01-26 Lee 2.136
 
 	* Test-script updates in response to cpan testers

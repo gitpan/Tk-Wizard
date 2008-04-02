@@ -18,8 +18,8 @@ BEGIN {
         plan tests => 7;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
-	use_ok('Tk::Wizard' => ':old');
-    is($Tk::Wizard::VERSION, 2.078, 'pm version') or BAIL_OUT "Is this a fake-log4perl error?";
+	use_ok('Tk::Wizard' => '2.079 ');
+    is($Tk::Wizard::VERSION, 2.079, 'pm version') or BAIL_OUT "Is this a fake-log4perl error?";
     use_ok('WizTestSettings');
 }
 
