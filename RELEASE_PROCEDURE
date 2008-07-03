@@ -1,5 +1,7 @@
 RELEASE PROCEDURE
 
+* Update $VERSION in modified modules and/or files
+
 * Update release version in Makefile.PL
 
 * Update $VERSION in t/WizTestSettings.pm 
@@ -8,4 +10,4 @@ RELEASE PROCEDURE
 * Update CHANGES log
 
 * Run make test - this will check MANIFEST too
-
+  Some of the tests require specific versions of Wizard.

@@ -18,8 +18,8 @@ BEGIN {
         plan tests => 7;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
-	use_ok('Tk::Wizard' => '2.079 ');
-    is($Tk::Wizard::VERSION, 2.079, 'pm version') or BAIL_OUT "Is this a fake-log4perl error?";
+	use_ok('Tk::Wizard' => '2.080');
+    is($Tk::Wizard::VERSION, "2.080", 'pm version') or BAIL_OUT "Is this a fake-log4perl error?";
     use_ok('WizTestSettings');
 }
 
@@ -34,9 +34,7 @@ my $fail;
 foreach my $style ( qw(top 95)) {
 
     my $wizard = Tk::Wizard->new(
-        -background => 'blue',
         -style      => $style,
-        -debug		=> 1,
     );
 
     isa_ok( $wizard, "Tk::Wizard" );

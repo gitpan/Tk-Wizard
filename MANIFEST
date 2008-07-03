@@ -48,8 +48,11 @@ t/170_TopLevel.t
 t/177_dirselect.t
 t/199_prepost.t
 t/200_tasklist.t
+t/210_images.t
+t/300_next.t
 t/dos.txt
 t/extra.txt
 t/unix.txt
 t/WizTestSettings.pm
+t/chick.jpg
 TODO

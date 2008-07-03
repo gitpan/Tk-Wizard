@@ -5,7 +5,7 @@ use inc::Module::Install;
 #
 
 name('Tk-Wizard');
-version("2.137");
+version("2.138_01");
 abstract('GUI for step-by-step interactive logical process');
 author('cpan-at-lgoddard-dot-net');
 license('perl');
@@ -21,14 +21,13 @@ build_requires("FileHandle");
 requires("IO::Handle");
 
 recommends('IO::Capture::Stderr::Extended');
-recommends 'Log::Log4perl' => '1.12';
 
+# There are features "missing" in earlier versions
+recommends 'Log::Log4perl' => '1.12';
 
 # This is used by Tk::Wizard::Installer::addDownloadPage:
 recommends('LWP::UserAgent');
 build_requires('LWP::UserAgent');
-
-# This is used by Tk::Wizard::Installer::addDownloadPage:
 recommends('HTTP::Request');
 requires("Scalar::Util");
 
@@ -53,8 +52,7 @@ if ( $^O =~ m/(MSWin32)/i ) {
         eval '$_ = $Win32::VERSION;';
         if ( !$@ && ( $_ < 0.2 ) ) {
             requires('Win32::OLE');
-            warn
-"Win32.pm version is $_ (less than 0.2), therefore we will use Win32::OLE.  (This requires Windows Scripting Host which is present on Win98 and higher.)\n";
+            warn "Win32.pm version is $_ (less than 0.2), therefore we will use Win32::OLE.  (This requires Windows Scripting Host which is present on Win98 and higher.)\n";
         }
         else {
             warn "Using Win32 for special folders...\n";
@@ -62,10 +60,9 @@ if ( $^O =~ m/(MSWin32)/i ) {
         }
     }
     else {
-        die
-"You are on a Windows platform without the core Win32 module. You can still use this module, but will experience errors if you try to create shortcuts to the Windows special folders.";
+        die "You are on a Windows platform without the core Win32 module. You can still use this module, but will experience errors if you try to create shortcuts to the Windows special folders.";
     }
-}    # if MSWin32
+}
 
 WriteAll;
 

@@ -1,3 +1,7 @@
+2007-04-03 Lee 2.138
+
+	* Updated Wizard::_NextButtonEventCycle
+	
 2007-04-03 Lee 2.137
 
 	* Played with redraw repeat event in response to ticket 34610

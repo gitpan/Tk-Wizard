@@ -5,15 +5,13 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.079 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.080 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
 Tk::Wizard - GUI for step-by-step interactive logical process
 
 =cut
-
-use constant DEBUG_FRAME => 0;
 
 use Carp;
 use Config;
@@ -27,6 +25,10 @@ use Tk::Font;
 use Tk::MainWindow;
 use Tk::ROText;
 use Tk::Wizard::Image;
+use Tk::JPEG;
+use Tk::PNG;
+
+use constant DEBUG_FRAME => 0;
 
 use vars qw( @EXPORT @ISA %LABELS );
 
@@ -121,7 +123,7 @@ can move/copy/rename them without harm once you have installed the module.
 
 =head1 CHANGES
 
-Please see the documentation for the new C<import> method: L<import|import>.
+Please see the file F<CHANGES.txt> included with the distribution for change history.
 
 =head1 DEPENDENCIES
 
@@ -157,7 +159,7 @@ hot on advertising widgets.
 
 =head1 ADVERTISED SUB-WIDGETS
 
-  $wizard->Subwidget('buttonPanel');
+  my $subwidget = $wizard->Subwidget('buttonPanel');
 
 =over 4
 
@@ -588,15 +590,15 @@ sub Populate {
     # $self->overrideredirect(1); # Removes borders and controls
 	CREATE_BUTTON_PANEL: {
         my $buttonPanel = $self->Frame( -background => $self->{background}, )->pack(qw/ -side bottom -fill x/);
-        DEBUG_FRAME && $buttonPanel->configure( -background => 'yellow' );
+        $buttonPanel->configure( -background => 'yellow' ) if DEBUG_FRAME;
 
         # right margin:
         my $f = $buttonPanel->Frame(
             -width      => 5,
             -background => $self->{background},
         )->pack( -side => "right", -expand => 0 );
-        DEBUG_FRAME && $f->configure( -background => 'red' );
-        $self->Advertise( buttonPanel => $buttonPanel );
+        $f->configure( -background => 'red' ) if DEBUG_FRAME;
+		$self->Advertise( buttonPanel => $buttonPanel );
     }
 
 	CREATE_TAGLINE: {
@@ -604,7 +606,7 @@ sub Populate {
             -height     => 12,
             -background => $self->{background},
         )->pack(qw/-side bottom -fill x/);
-        DEBUG_FRAME && $tagbox->configure( -background => 'magenta' );
+        $tagbox->configure( -background => 'magenta' ) if DEBUG_FRAME;
 
         # This is a new, simpler, accurate-width Label way of doing it:
         $self->{tagtext} = $tagbox->Label(
@@ -612,7 +614,7 @@ sub Populate {
             -foreground => 'gray50',
             -background => $self->{background},
         );
-        DEBUG_FRAME && $self->{tagtext}->configure( -background => 'red' );
+        $self->{tagtext}->configure( -background => 'red' ) if DEBUG_FRAME;
         $self->_maybe_pack_tag_text;
 
         # This is the line that extends to the right from the tag text:
@@ -621,7 +623,7 @@ sub Populate {
             -bd     => 1,
             -height => 2,
         )->pack(qw( -side right -fill x -expand 1 ));
-        DEBUG_FRAME && $self->{tagline}->configure( -background => 'yellow' );
+        $self->{tagline}->configure( -background => 'yellow' ) if DEBUG_FRAME;
         $self->Advertise( tagLine => $self->{tagline} );
         $self->Advertise( tagBox  => $tagbox );
         $self->Advertise( tagText => $self->{tagtext} );
@@ -742,25 +744,25 @@ sub _initial_layout {
     if ( $self->_showing_side_banner ) {
         my $im = $self->cget( -imagepath );
         if ( not ref $im ) {
-			warn $im;
+			DEBUG "Load photo from file $im";
             $self->Photo( "sidebanner", -file => $im );
         }
         else {
             $self->Photo( "sidebanner", -data => $$im );
         }
-        my $sBG =
+        my $bg =
             $self->_on_first_page ? 'white'
           : $self->_on_last_page  ? 'white'
           :                         $self->{background};
         $self->{left_object} = $self->Label(
             -image      => "sidebanner",
             -anchor     => "n",
-            -background => $sBG,
+            -background => $bg,
           )->pack(
             -anchor => "n",
             -fill   => 'y',
           );
-        DEBUG_FRAME && $self->{left_object}->configure( -background => 'blue' );
+        $self->{left_object}->configure( -background => 'blue' ) if DEBUG_FRAME;
     }    # end if 95 or first page
 
 	# Wizard 2k style - builds the left side of the wizard
@@ -848,7 +850,7 @@ sub _render_current_page {
             -background => $panel->cget( "-background" ),
         )->pack( -side => "right" );
 
-        DEBUG_FRAME && $f1->configure( -background => 'black' );
+        $f1->configure( -background => 'black' ) if DEBUG_FRAME;
         push @{ $self->{_button_spacers} }, $f1;
         $self->Advertise( cancelButton => $self->{cancelButton} );
     }
@@ -1039,7 +1041,7 @@ sub blank_frame {
         -height     => $args->{-height},
         -background => $self->{background},
     );
-    DEBUG_FRAME && $frame->configure( -background => 'green' );
+    $frame->configure( -background => 'green' ) if DEBUG_FRAME;
 
     # Do not let the content (body) frame auto-resize when we pack its
     # contents:
@@ -1086,7 +1088,7 @@ sub blank_frame {
             -fill   => 'x',
         );
         my $f = $title_frame->Frame(qw/-background white -width 10 -height 30/)->pack(qw/-fill x -anchor n -side left/);
-        DEBUG_FRAME && $f->configure( -background => 'yellow' );
+        $f->configure( -background => 'yellow' ) if DEBUG_FRAME;
 
         # The title frame content proper:
         $lTitle = $title_frame->Label(
@@ -1122,8 +1124,8 @@ sub blank_frame {
                 -bd     => 1,
                 -height => 2,
             )->pack(qw/-side top -fill x/);
-            DEBUG_FRAME && $f->configure( -background => 'red' );
-        }
+            $f->configure( -background => 'red' ) if DEBUG_FRAME;
+		}
 
         if ( $args->{-text} ) {
             $lText = $frame->Label(
@@ -1357,8 +1359,8 @@ sub _text_frame {
         -wrap        => "word",
     )->pack(qw/-expand 1 -fill both -padx 10 -pady 10/);
 
-    DEBUG_FRAME && $t->configure( -background => 'green' );
-    $t->insert( '0.0', $$text );
+    $t->configure( -background => 'green' ) if DEBUG_FRAME;
+	$t->insert( '0.0', $$text );
     $t->configure( -state => "disabled" );
 
     return $frame;
@@ -1430,14 +1432,16 @@ sub _NextButtonEventCycle {
 
     # If there is more than one pending invocation, we will reinvoke
     # ourself when we're done:
-    if ( 1 < $self->{_inside_nextButtonEventCycle_} ) {
+    if ( $self->{_inside_nextButtonEventCycle_} > 1) {
+#	    $self->{_inside_nextButtonEventCycle_}--;
         DEBUG "Called recursively, bail out";
         return;
     }
 
 	# XXX DEBUG "Page $self->{_current_page_idx} -preNextButtonAction";
     if ( _dispatch( $self->cget( -preNextButtonAction ) ) ) {
-        DEBUG "preNextButtonAction says we should not go ahead";
+        INFO "preNextButtonAction says we should not go ahead";
+	    $self->{_inside_nextButtonEventCycle_}--;
 		return;
     }
 
@@ -1445,10 +1449,12 @@ sub _NextButtonEventCycle {
         DEBUG "On the last page";
         if ( _dispatch( $self->cget( -preFinishButtonAction ) ) ) {
             DEBUG "preFinishButtonAction says we should not go ahead";
+		    $self->{_inside_nextButtonEventCycle_}--;
             return;
         }
         elsif ( _dispatch( $self->cget( -finishButtonAction ) ) ) {
             DEBUG "finishButtonAction says we should not go ahead";
+		    $self->{_inside_nextButtonEventCycle_}--;
         	return;
         }
         else {
@@ -1460,14 +1466,15 @@ sub _NextButtonEventCycle {
 	# Advance the wizard page pointer and then adjust the navigation buttons.
 	# Redraw the frame when finished to get changes to take effect.
 	else {
-		DEBUG "advance to next page";
+		TRACE "OK - advance to next page";
 		$self->_page_forward;
 		$self->_render_current_page;
 	}
 
     DEBUG "Before _dispatch postNextButtonAction";
     if ( _dispatch( $self->cget( -postNextButtonAction ) ) ) {
-        DEBUG "postNextButtonAction says we should not go ahead";
+        INFO "postNextButtonAction says we should not go ahead";
+	    $self->{_inside_nextButtonEventCycle_}--;
         return;
     }
 
@@ -2064,16 +2071,12 @@ the client to make frames C<Scrolled>).
 Please use RT (https://rt.cpan.org/Ticket/Create.html?Queue=Tk-Wizard)
 to submit a bug report.
 
-=head1 CHANGES
-
-Please see the file F<CHANGES.txt> included with the distribution.
-
 =head1 AUTHOR
 
 Lee Goddard (lgoddard@cpan.org) based on work Daniel T Hable.
 
 Thanks to co-maintainer Martin Thurn (mthurn@cpan.org) for support,
-patches, and estensions, whilst I'm elsewhere.
+patches, and extensions, whilst I'm elsewhere.
 
 =head1 KEYWORDS
 
