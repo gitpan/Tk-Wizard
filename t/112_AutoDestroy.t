@@ -51,7 +51,7 @@ ZERO: {
 	    $capture->stop;
 	} else {
 		no warnings "Tk::Wizard";
-	    $wizard->Show;
+	    eval { $wizard->Show };
 	}
 
     SKIP: {

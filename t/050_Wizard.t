@@ -29,7 +29,6 @@ $ENV{TEST_INTERACTIVE} = 0;
 #  Tk::die_with_trace at /mnt/i386/usr/local/src/CPAN/build/Tk-Wizard-2.134-1roshM/blib/lib/Tk/Wizard.pm line 890
 #  Tk::Wizard::_render_current_page at /mnt/i386/usr/local/src/CPAN/build/Tk-Wizard-2.134-1roshM/blib/lib/Tk/Wizard.pm line 1542
 #  Tk::Wizard::Show at t/050_Wizard.t line 42
-my $fail;
 
 foreach my $style ( qw(top 95)) {
 
@@ -48,7 +47,7 @@ foreach my $style ( qw(top 95)) {
 
     if ($@){
 		fail "Failed to show";
-		$fail = 1;
+		warn $@;
 	} else {
 		MainLoop;
 		pass 'after MainLoop';
