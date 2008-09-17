@@ -42,7 +42,7 @@ $wizard->addTextFramePage(
 $wizard->addTextFramePage(
     -wait      => $ENV{TEST_INTERACTIVE} ? 0 : 1,
     -subtitle  => "2: Text from filename",
-    -boxedtext => 'perl_licence_blab.txt',
+    -boxedtext => 't/perl_licence_blab.txt',
 );
 
 $wizard->Show;

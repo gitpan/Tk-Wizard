@@ -30,44 +30,48 @@ BEGIN {
     use_ok('WizTestSettings');
 }
 
+
+
 my $WAIT   = $ENV{TEST_INTERACTIVE} ? 0 : 111;
-my @asFrom = qw( 1 2 );
-my @asDest = qw( 3 4 );
+my @form = qw( 1 2 );
+my @dest = qw( 3 4 );
 
 our $TEMP_DIR = 't/tmp';
 mkdir( $TEMP_DIR, 0777 );
 if ( !-d $TEMP_DIR ) {
     mkdir $TEMP_DIR or bail_out($!);
-}    # if
+}
+
 my $testdir = "$TEMP_DIR/__perltk_wizard";
 if ( !-d $testdir ) {
     mkdir $testdir or bail_out($!);
-}    # if
-for (@asFrom) {
-    my $sFrom = "$testdir/$_";
+}
+
+for (@form) {
+    my $form = "$testdir/$_";
     local *OUT;
-    ok( open( OUT, '>', $sFrom ), qq'opened $sFrom for write' ) or bail_out($!);
+    ok( open( OUT, '>', $form ), qq'opened $form for write' ) or bail_out($!);
     ok(
         print( OUT "Tk::Wizard::Installer Test. Please ignore or delete.\n\nThis is file $_\n\n"
               . scalar(localtime) . "\n\n"
         ),
-        qq'wrote contents to $sFrom'
+        qq'wrote contents to $form'
     );
-    ok( close OUT, qq'closed $sFrom' );
-}    # for 1,2
-for (@asDest) {
+    ok( close OUT, qq'closed $form' );
+}
+
+for (@dest) {
     my $sDest = "$testdir/$_";
     unlink $sDest;
-
     # Make sure destination files to NOT exist:
     ok( !-e $sDest, qq'destination file $sDest does not exist before test' );
-}    # for 3,4
-if ( $ENV{TEST_INTERACTIVE} ) {
+}
 
+if ( $ENV{TEST_INTERACTIVE} ) {
     # Add some stuff that will fail, so we can see what exactly happens:
-    unshift @asFrom, 'no_such_file';
-    unshift @asDest, 'no_such_dir';
-}    # if
+    unshift @form, 'no_such_file';
+    unshift @dest, 'no_such_dir';
+}
 
 my $iPageCount = 0;
 my $wizard = Tk::Wizard::Installer->new( -title => "Installer Test", );
@@ -86,7 +90,9 @@ my $SPLASH = $wizard->addSplashPage(
     -text     => "Test Installer's addFileListPage feature for RT #19300."
 );
 is( $SPLASH, 1, 'Splash page is first' );
+
 $iPageCount++;
+
 ok(
     $wizard->addLicencePage(
         -wait     => $WAIT,
@@ -94,7 +100,9 @@ ok(
     ),
     'added DOS license page'
 );
+
 $iPageCount++;
+
 ok(
     $wizard->addLicencePage(
         -wait     => $WAIT,
@@ -102,7 +110,9 @@ ok(
     ),
     'added UNIX license page'
 );
+
 $iPageCount++;
+
 ok(
     $wizard->addLicencePage(
         -wait     => $WAIT,
@@ -110,18 +120,22 @@ ok(
     ),
     'added "extra" license page'
 );
+
 $iPageCount++;
+
 ok(
     $wizard->addFileListPage(
         -slowdown => $ENV{TEST_INTERACTIVE} ? 2000 : 0,
         -wait     => $WAIT,
         -copy     => 1,
-        -from => [ map { "$testdir/$_" } @asFrom ],
-        -to   => [ map { "$testdir/$_" } @asDest ],
+        -from => [ map { "$testdir/$_" } @form ],
+        -to   => [ map { "$testdir/$_" } @dest ],
     ),
     'added File List page'
 );
+
 $iPageCount++;
+
 ok(
     $wizard->addSplashPage(
         -wait     => $WAIT,
@@ -131,13 +145,15 @@ ok(
     ),
     'Added finish page'
 );
+
 $iPageCount++;
 
 isa_ok( $wizard->{_pages}, 'ARRAY', 'Page list array' );
 is( scalar( @{ $wizard->{_pages} } ), $iPageCount, 'Number of pages' );
+
 foreach my $iPage ( 1 .. $iPageCount ) {
     isa_ok( $wizard->{_pages}->[ $iPage - 1 ], 'CODE', qq'Page $iPage in list' );
-}    # foreach
+}
 
 ok( $wizard->Show, "Show" );
 MainLoop();
@@ -148,6 +164,6 @@ rmtree $TEMP_DIR;
 sub bail_out {
     diag @_;
     exit;
-}    # bail_out
+}
 
 __END__

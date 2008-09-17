@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.080 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.081 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -1848,7 +1848,7 @@ sub DIALOGUE_really_quit {
             '-icon'  => 'question',
             -type    => 'yesno',
             -default => 'no',
-            -title   => 'Quit Wizard??',
+            -title   => 'Quit Wizard?',
             -message => "The Wizard has not finished running.\n\n"
             	. "If you quit now, the job will not be complete.\n\nDo you really wish to quit?"
         );
@@ -2023,17 +2023,6 @@ This may change, please bear with me.
 
 =head1 CAVEATS
 
-In earlier versions of this still-alpha software, if you did not call
-the C<Wizard>'s C<destroy> method, you would receive errors. This may
-or may not still be an issue for you. If it is, you can "simply"
-provide a callback to C<-finishButtonAction>:
-
-  $wizard->configure(
-    -finishButtonAction  => sub { $wizard->destroy; 1; },
-  );
-
-Please let me know if you need to do this.
-
 =over 4
 
 =item *
@@ -2057,12 +2046,8 @@ This seems to be a Tk feature.
 
 =item *
 
-Still not much of a Tk widget inheritance - any pointers welcome.
-
-=item *
-
 Nothing is currently done to ensure text fits into the window - it is currently up to
-the client to make frames C<Scrolled>).
+the client to make frames C<Scrolled>) as required.
 
 =back
 
@@ -2073,7 +2058,7 @@ to submit a bug report.
 
 =head1 AUTHOR
 
-Lee Goddard (lgoddard@cpan.org) based on work Daniel T Hable.
+Lee Goddard (lgoddard@cpan.org) based on work by Daniel T Hable.
 
 Thanks to co-maintainer Martin Thurn (mthurn@cpan.org) for support,
 patches, and extensions, whilst I'm elsewhere.
@@ -2084,35 +2069,13 @@ Wizard; set-up; setup; installer; uninstaller; install; uninstall; Tk; GUI.
 
 =head1 COPYRIGHT
 
-Initial alpha Copyright (c) Daniel T Hable, 2/2002.
+Copyright (C) Lee Goddard, 11/2002 - 09/2008 ff.
 
-Re-write and extension Copyright (C) Lee Goddard, 11/2002 - 01/2008 ff.
+This software is made available under the same terms as Perl itself.
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+This software is not endorsed by the microsoft corp
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-THIS SOFTWARE AND THE AUTHORS OF THIS SOFTWARE ARE IN NO WAY CONNECTED
-TO THE MICROSOFT CORP.
-
-THIS SOFTWARE IS NOT ENDORSED BY THE MICROSOFT CORP
-
-MICROSOFT IS A REGISTERED TRADEMARK OF MICROSOFT CORP.
+Microsoft is, obvisouly, a registered trademark of Microsoft corp.
 
 =cut
 

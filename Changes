@@ -1,25 +1,32 @@
-2007-04-03 Lee 2.138
+2008-09-16 Lee 2.139
+
+	* Added uninstaller routines to ::Installer (2.35), and test.
+	  Still to sort out why uninstaller db files are not unlinkable.
+	* Fixed some tests
+	* Fixed couple of typos in Wizard
+
+2008-04-03 Lee 2.138
 
 	* Updated Wizard::_NextButtonEventCycle
-	
-2007-04-03 Lee 2.137
+
+2008-04-03 Lee 2.137
 
 	* Played with redraw repeat event in response to ticket 34610
 	* Moved task list from FileSystem to Tasts
 	* Removed warnings from &import when use Tk::Wizard ()
-	* Added Wizard::update 
+	* Added Wizard::update
 	* Added $REFRESH_MS
-	
+
 2008-01-26 Lee 2.136
 
 	* Test-script updates in response to cpan testers
-	
+
 2008-01-23 Lee 2.135
 
 	* RT#32513 typo in Win32.pm (and some warnings)
 	* RT#32517 typos missing returns in refactoring
 
-2008-01-22 Lee 2.134 
+2008-01-22 Lee 2.134
 
 	* Tests
 
@@ -29,18 +36,18 @@
 	* Typo call to File::Spec in Installer.pm
 	* RT#32490 "next_page_number is off by one"
 	* Renamed hiiSkip to page_skip -- the former seemd to mean nothing
-	
+
 2008-01-14 Lee
 
-	* Backwards-compat Log4perl config 
+	* Backwards-compat Log4perl config
 	* Test 65 freebsd "Tk_FreeColor called with bogus color" so skip for now
-	
+
 2008-01-13 Lee
 
 	* As a means of supply event-handling arguments at the time of page creation:
-	  added @PAGE_EVENT_LIST, $self->{_pages_e} (list of page events), 
+	  added @PAGE_EVENT_LIST, $self->{_pages_e} (list of page events),
 	  and updated &addPage to call &_addPage_with_args if args are received other
-	  than code refs - this changes old behaviour, which was to die under these 
+	  than code refs - this changes old behaviour, which was to die under these
 	  circumstances. See t/007_e.t
 	* Replaced TEST_INTERACTIVE in WizTestSettings.pm
 	* Updated WizTestSettings.pm for dynamic version
@@ -56,7 +63,7 @@
 	* Test descriptors in 022_skip.t
 	* Removed lots of ugly formatting
 	* Updated pod coverage test 110 to ignore L4p stubs
-	
+
 2007-12-22 Lee
 
 	* Lots more style "correction"
@@ -64,17 +71,17 @@
 	* Forgot to test without L4p
 
 2007-12-21 Lee
-	
+
     * Log::Log4perl - please!
     * Warnings
 	* Continued reformatting.
-	* Removed Perl tidy since I've just heard bad news about its impact elsewhere: 
+	* Removed Perl tidy since I've just heard bad news about its impact elsewhere:
 	  when investigated, may reinstate?
 	* Removed files from distro that I have no permission to modify
 	* Remvoed dependencies on files I have no permission to modify
 	* Removed Tk::Wizard::Tester from install location, into test location
-	
-	
+
+
 2007-12-20 Lee
 
 	* Do not treat Cygwin as Win32:
@@ -85,14 +92,14 @@
 		* Makefile.PL: removed Cygwin as Win32
 		* lib\Tk\Wizard.pm(449): removed Cygwin as Win32
 		* lib\Tk\Wizard\Installer\Win32.pm(159): removed Cygwin as Win32
-	
+
 2007-12-19	Lee
 
 	* Tweaks for clarity in preperation for use at GSK
 	* t/77_dirselect.t: removed warnings
-	* t/*: Various used the non-prerequisite IO::Capture::Stderr::Extended 
+	* t/*: Various used the non-prerequisite IO::Capture::Stderr::Extended
 	* */*: Perl tidy. Polite Dictat: Please maintain perldoc perlstyle; please avoid Hungarian notation.
-	
+
 2007-11-16    <Daddy@C-3PO>
 
 	* lib/Tk/Wizard/Installer.pm (pre_install_files_quit): now user can get error details

@@ -3,11 +3,8 @@ use warnings;
 
 use Test::More;
 
-BEGIN {
-	plan skip_all => 'bored trying to work this out with only win32 as test platform';
-	use Cwd; chdir ".." if getcwd() =~ '\Wt';	# For dev
-}
-
+use Cwd;
+chdir "./lib" if getcwd() !~ '\Wlib';	# For dev
 
 eval "use Test::Pod::Coverage 1.00";
 
@@ -16,12 +13,9 @@ if ( $@ ){
 }
 
 else {
-	TODO: {
-		local $TODO = "Must read the pod coverage API";
-		all_pod_coverage_ok(
-			also_private => [ qr/^[A-Z_]+$/ ], # all-caps Log4Perl/l4p-stubs functions as privates
-		);
-	}
+	all_pod_coverage_ok(
+		also_private => [ qr/^[A-Z_]+$/ ], # all-caps Log4Perl/l4p-stubs functions as privates
+	);
 }
 
 

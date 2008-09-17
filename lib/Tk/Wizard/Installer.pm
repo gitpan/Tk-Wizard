@@ -3,7 +3,7 @@ package Tk::Wizard::Installer;
 use strict;
 use warnings;
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.34 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.35 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -57,15 +57,19 @@ use lib '../../'; # dev
 use Carp;
 use Cwd;
 use Data::Dumper;
+use FileHandle;
 use File::Path;
 use File::Copy;
-use FileHandle;
 use File::Spec;
 use Tk;
 use Tk::ErrorDialog;
 use Tk::LabFrame;
 use Tk::ProgressBar;
 use Tk::Wizard ':use' => 'FileSystem';
+
+# For uninstaller
+use Fcntl;   # For O_RDWR, O_CREAT, etc.
+use SDBM_File;
 
 use Exporter;
 use vars qw/ @EXPORT /;
@@ -90,10 +94,8 @@ my %LABELS = (
     LICENCE_ALERT_TITLE => "Licence Condition",
     LICENCE_OPTION_NO   => "I do not accept the terms of the licence agreement",
     LICENCE_OPTION_YES  => "I accept the terms of the licence agreement",
-    LICENCE_IGNORED =>
-"You must read and agree to the licence before you can use this software.\n\nIf you do not agree to the terms of the licence, you must remove the software from your machine.",
-    LICENCE_DISAGREED =>
-"You must read and agree to the licence before you can use this software.\n\nAs you indicated that you do not agree to the terms of the licence, please remove the software from your machine.\n\nSetup will now exit.",
+    LICENCE_IGNORED => "You must read and agree to the licence before you can use this software.\n\nIf you do not agree to the terms of the licence, you must remove the software from your machine.",
+    LICENCE_DISAGREED => "You must read and agree to the licence before you can use this software.\n\nAs you indicated that you do not agree to the terms of the licence, please remove the software from your machine.\n\nSetup will now exit.",
 
     # FileList
     # - supplied as args: see POD for those sections
@@ -230,7 +232,7 @@ sub _page_licence_agreement {
 
   $wizard->addFileListPage ( name1=>value1 ... nameN=>valueN )
 
-Adds a page (a L<Tk::Frame|Tk::Frame>) that a contains a progress bar
+Adds a page (a L<Tk::Frame|Tk::Frame>) that contains a progress bar
 (L<Tk::ProgressBar|Tk::ProgressBar>) which is updated as a supplied
 list of files is copied or moved from one location to another.
 
@@ -325,6 +327,19 @@ A code reference to handle errors, which are detailed in the anonymous hash C<-f
 where names are filenames and values are the error messages.
 If not supplied, calls L</pre_install_files_quit>.
 
+=item -uninstall_db
+
+Path at which to store an uninstall database file for use with
+L<addUninstallPage|addUninstallPage>. This path will be used
+to create two files, one with a C<dir> extension and one
+with a C<pag> extension.
+
+=item -uninstall_db_mask
+
+If you supply C<-uninstall_db> to create an uninstaller,
+you may use this argument to provide a file permissions
+for the db files; otherwise, the default is C<0755>.
+
 =back
 
 =cut
@@ -348,6 +363,17 @@ sub addFileListPage {
     $self->addPage( sub { $self->_page_filelist($args) } );
 }
 
+=head2 addFileCopyPage
+
+Alias for L<addFileListPage|addFileListPage>.
+
+=cut
+
+sub addFileCopyPage {
+	my $self = shift;
+	$self->addFileListPage(@_);
+}
+
 sub _page_filelist {
     my ( $self, $args ) = ( shift, shift );
     Carp::croak "Arguments should be supplied as a hash ref"
@@ -358,6 +384,19 @@ sub _page_filelist {
       if $#{ $args->{-from} } != $#{ $args->{-to} };
     Carp::croak "Nothing to do! -from and -to empty"
       if $#{ $args->{-from} } == -1 or $#{ $args->{-to} } == -1;
+
+	# Uninstaller
+	if (exists $args->{-uninstall_db}){
+		$self->{_uninstall_db_path} = $args->{-uninstall_db};
+		$self->{_uninstall_db} = {};
+		tie(
+			%{$self->{_uninstall_db}},
+			'SDBM_File',
+			$self->{_uninstall_db_path},
+			O_WRONLY | O_CREAT,
+			$args->{-uninstall_db_mask} || 0755,
+		) or die "Could not create uninstaller db file - failed to tie `SDBM file '$self->{_uninstall_db_path}': $!; aborting";
+	}
 
     my $frame = $self->blank_frame(
         -title    => $args->{-title}    || "Copying Files",
@@ -495,7 +534,8 @@ sub _pre_install_files {
     @{ $args->{-from} } = @asFrom;
     @{ $args->{-to} }   = @asTo;
     return $total;    # why was it total+1?
-}    # _pre_install_files
+}
+
 
 # See page_filelist
 sub _install_files {
@@ -557,13 +597,27 @@ sub _install_files {
 
             # Do the move/copy
             if ( $args->{-move} ) {
-                if ( not move( @{ $args->{-from} }[$i], @{ $args->{-to} }[$i] ) ) {
+                if ( move( @{ $args->{-from} }[$i], @{ $args->{-to} }[$i] ) ) {
+					if (exists $self->{_uninstall_db} ){
+						$self->{_uninstall_db}->{
+							Cwd::abs_path( @{ $args->{-to} }[$i] )
+						} ++
+					}
+				}
+				else {
                     $self->{-failed}->{ @{ $args->{-to} }[$i] } = "Could not write file";
                     @{ $args->{-from} }[$i] = undef;
                 }
             }
             else {
-                if ( not copy( @{ $args->{-from} }[$i], @{ $args->{-to} }[$i] ) ) {
+                if ( copy( @{ $args->{-from} }[$i], @{ $args->{-to} }[$i] ) ) {
+					if (exists $self->{_uninstall_db} ){
+						$self->{_uninstall_db}->{
+							Cwd::abs_path( @{ $args->{-to} }[$i] )
+						} ++
+					}
+				}
+				else {
                     $self->{-failed}->{ @{ $args->{-to} }[$i] } = "Could not write file";
                     @{ $args->{-from} }[$i] = undef;
                 }
@@ -573,13 +627,14 @@ sub _install_files {
         else {
             $self->{-failed}->{ @{ $args->{-from} }[$i] } = "Could not read file";
             @{ $args->{-from} }[$i] = undef;
-        }    # else file not readable
-		 DEBUG "slowdown is =$args->{-slowdown}=\n";
-		sleep( $args->{-slowdown} / 1000 );
-    }    # foreach
+        }
+
+		DEBUG "slowdown is =$args->{-slowdown}=\n";
+		sleep( $args->{-slowdown} / 1000 ) if exists $args->{-slowdown};
+    }
 
     if ( scalar keys %{ $self->{-failed} } > 0 ) {
-        WARN "Failed " . ( scalar keys %{ $self->{-failed} } );
+        ERROR "Failed " . ( scalar keys %{ $self->{-failed} } );
         if ( ref $args->{-on_error} eq 'CODE' ) {
             TRACE "# Calling -on_error handler.";
             &{ $args->{-on_error} };
@@ -589,17 +644,19 @@ sub _install_files {
             $self->pre_install_files_quit( scalar keys %{ $self->{-failed} } );
         }
     }
+
     else {
-        $args->{-labelFrom}->configure( -text => 'All done.' );
-        $args->{-labelTo}->configure( -text   => '' );
+        $args->{-labelFrom}->configure(	-text => 'Completed.' );
+        $args->{-labelTo}->configure(	-text => '' );
     }
 
     return $total;
 }
 
+
 =head2 addDownloadPage
 
-  $wizard->addDownloadPage ( name1=>value1 ... nameN=>valueN )
+	$wizard->addDownloadPage( name1 => value1 ... nameN => valueN )
 
 Adds a page that will attempt to download specified
 files to specified locations, updating two progress bars in the
@@ -1045,6 +1102,137 @@ sub pre_install_files_quit {
     # the same problem:
     $self->{-failed} = undef;
 }
+
+
+
+=head2 addUninstallPage
+
+Basically the same as L<addFileListPage|addFileListPage>,
+but rather than taking arguments to indicate from and to where
+files are to be moved or copied, takes the argument
+C<-uninstall_db>, which should be the same value as supplied to
+L<addFileListPage|addFileListPage>.
+
+=cut
+
+
+sub addUninstallPage {
+    my ( $self, $args ) = ( shift, {@_} );
+    $self->addPage( sub { $self->_page_uninstall($args) } );
+}
+
+sub _page_uninstall {
+    my ( $self, $args ) = ( shift, shift );
+
+    my $frame = $self->blank_frame(
+        -title    => $args->{-title}    || "Uninstalling Files",
+        -subtitle => $args->{-subtitle} || "Please wait whilst files are uninstalled.",
+        -text     => $args->{-text}     || "\n"
+    );
+
+    my %bar;    # progress bar args
+    if ( $args->{-bar} ) {
+        %bar = @{ $args->{-bar} };
+        # insert error checking here...
+    }
+    $bar{-gap}    		= 0 unless defined $bar{-gap};
+    $bar{-blocks} 		= 0 unless defined $bar{-blocks};
+    $bar{-colors}      	= [ 0 => 'blue' ] unless $bar{-colors};
+    $bar{-borderwidth} 	= 2               unless $bar{-borderwidth};
+    $bar{-relief}      	= 'sunken'        unless $bar{-relief};
+    $bar{-from}        	= 0               unless $bar{-from};
+    $bar{-to}          	= 100             unless $bar{-to};
+
+    my $f = $frame->LabFrame(
+        -label 		=> $args->{-label_frame_title} || "Uninstalling files",
+        -labelside	=> "acrosstop"
+    );
+    $args->{-labelFrom} = $f->Label(qw//)->pack(qw/-padx 16 -side top -anchor w/);
+    $args->{-labelTo}   = $f->Label(qw//)->pack(qw/-padx 16 -side top -anchor w/);
+    $self->{-bar}       = $f->ProgressBar(%bar)->pack(qw/ -padx 20 -pady 10 -side top -anchor w -fill both -expand 1 /);
+    $f->pack(qw/-fill x -padx 30/);
+
+    $self->{nextButton}->configure( -state => "disable" );
+    $self->{backButton}->configure( -state => "disable" );
+
+	# Get the db file ready
+	$self->{_uninstall_db_path} = $args->{-uninstall_db};
+	$self->{_uninstall_db} = {};
+	tie(
+		%{$self->{_uninstall_db}},
+		'SDBM_File',
+		$self->{_uninstall_db_path},
+		O_RDWR,
+		$args->{-uninstall_db_mask} || 0755,
+	) or die "Could not create uninstaller db file - failed to tie `SDBM file '$self->{_uninstall_db_path}': $!; aborting";
+
+    $self->{-bar}->after(
+        $args->{-delay} || 1000,
+        sub {
+            my $todo = scalar keys %{$self->{_uninstall_db}};
+            INFO "Configure bar to $todo\n" if $self->{-debug};
+            $self->{-bar}->configure( -to => $todo );
+
+            # $self->_install_files($args);
+
+			my $i = 0;
+			foreach my $file (keys %{$self->{_uninstall_db}}){
+				if (-e $file){
+					if (unlink $file){
+						# No report of removed files
+						delete $self->{_uninstall_db}->{$file};
+					}
+					else {
+						# Report info
+						$self->{_uninstall_db}->{$file} = 'could not remove file - '.$@;
+					}
+				}
+				else {
+					# Report info
+					$self->{_uninstall_db}->{$file} = 'does not exist';
+				}
+				$self->{-bar}->value( $self->{-bar}->value + 1 );
+				DEBUG "Updating bar to " . $self->{-bar}->value;
+				$self->{-bar}->update;
+				$i ++;
+			}
+
+            $self->{nextButton}->configure( -state => "normal" );
+            $self->{backButton}->configure( -state => "normal" );
+
+			if (scalar keys %{ $self->{_uninstall_db} }){
+				# report
+				my $button = $self->messageBox(
+					'-icon'  => 'warning',
+					-type    => 'ok',
+					-title   => 'Some files could not be removed',
+					-message => join"\n",
+						"Some files could not be removed:\n",
+						keys %{ $self->{_uninstall_db} }
+				);
+			}
+
+			untie %{ $self->{_uninstall_db} };
+			foreach my $i (qw( dir pag )){
+				unlink $self->{_uninstall_db_path}.'.'.$i
+					or ERROR "Could not remove ".$self->{_uninstall_db_path}.'.'.$i;
+			}
+
+            if ($args->{-wait}) {
+                Tk::Wizard::_fix_wait( \$args->{ -wait } );
+                $frame->after(
+                    $args->{ -wait },
+                    sub {
+                        $self->{nextButton}->configure( -state => 'normal' );
+                        $self->{nextButton}->invoke;
+                      }
+                );
+            }
+          }
+    );
+    return $frame;
+}
+
 
 1;
 
