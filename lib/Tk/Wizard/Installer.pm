@@ -2,8 +2,10 @@ package Tk::Wizard::Installer;
 
 use strict;
 use warnings;
+
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.35 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.36 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
 
 =head1 NAME
 
@@ -31,28 +33,6 @@ Tk::Wizard::Installer - Building-blocks for a software install wizard
 
 =cut
 
-# use Log4perl if we have it, otherwise stub:
-# See Log::Log4perl::FAQ
-BEGIN {
-	eval { require Log::Log4perl; };
-	if($@) {
-		no strict qw"refs";
-		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
-	} else {
-		no warnings;
-		no strict qw"refs";
-		require Log::Log4perl::Level;
-		Log::Log4perl::Level->import(__PACKAGE__);
-		Log::Log4perl->import(":easy");
-		# It took four CPAN uploads and tests to workout why
-		# one user was getting syntax errors for TRACE: must
-		# be the Mithrasmas spirit (hic):
-		if ($Log::Log4perl::VERSION < 1.11){
-			*{__PACKAGE__."::TRACE"} = *DEBUG;
-		}
-	}
-}
-
 use lib '../../'; # dev
 use Carp;
 use Cwd;
@@ -69,7 +49,35 @@ use Tk::Wizard ':use' => 'FileSystem';
 
 # For uninstaller
 use Fcntl;   # For O_RDWR, O_CREAT, etc.
+#  use Fcntl ':flock';
 use SDBM_File;
+
+# use Log4perl if we have it, otherwise stub:
+# See Log::Log4perl::FAQ
+BEGIN {
+	eval { require Log::Log4perl; };
+
+	# No Log4perl so bluff: see Log4perl FAQ
+	if($@) {
+		no strict qw"refs";
+		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+	}
+
+	# Setup log4perl
+	else {
+		no warnings;
+		no strict qw"refs";
+		require Log::Log4perl::Level;
+		Log::Log4perl::Level->import(__PACKAGE__);
+		Log::Log4perl->import(":easy");
+		# It took four CPAN uploads and tests to workout why
+		# one user was getting syntax errors for TRACE: must
+		# be the Mithrasmas spirit (hic):
+		if ($Log::Log4perl::VERSION < 1.11){
+			*{__PACKAGE__."::TRACE"} = *DEBUG;
+		}
+	}
+}
 
 use Exporter;
 use vars qw/ @EXPORT /;
@@ -100,6 +108,7 @@ my %LABELS = (
     # FileList
     # - supplied as args: see POD for those sections
 );
+
 
 =head1 DESCRIPTION
 
@@ -136,6 +145,7 @@ sub addLicencePage {
     Carp::croak "No -filepath argument present" if not $args->{-filepath};
     $self->addPage( sub { $self->_page_licence_agreement($args) } );
 }
+
 
 # PRIVATE METHOD _page_licence_agreement
 #
@@ -213,12 +223,12 @@ sub _page_licence_agreement {
     $self->bind( '<Alt-n>' => sub { ${ $self->{licence_agree} } = 0 } );
     $frame->Radiobutton(%opts2)->pack( -padx => $padx, -anchor => 'w', );
 
-    if ( $args->{ -wait } ) {
-        Tk::Wizard::_fix_wait( \$args->{ -wait } );
+    if ( $args->{-wait} ) {
+        Tk::Wizard::_fix_wait( \$args->{-wait} );
 
         # $frame->after($args->{-wait},sub{$self->forward});
         $frame->after(
-            $args->{ -wait },
+            $args->{-wait},
             sub {
                 $self->{nextButton}->configure( -state => 'normal' );
                 $self->{nextButton}->invoke;
@@ -227,6 +237,7 @@ sub _page_licence_agreement {
     }
     return $frame;
 }
+
 
 =head2 addFileListPage
 
@@ -334,11 +345,13 @@ L<addUninstallPage|addUninstallPage>. This path will be used
 to create two files, one with a C<dir> extension and one
 with a C<pag> extension.
 
-=item -uninstall_db_mask
+=item -uninstall_db_perms
 
 If you supply C<-uninstall_db> to create an uninstaller,
 you may use this argument to provide a file permissions
-for the db files; otherwise, the default is C<0755>.
+for the db files; otherwise, the default is C<0666>.
+Please see the notes in C<SDBM_File> that explain why
+C<0666> is a good choice.
 
 =back
 
@@ -376,17 +389,19 @@ sub addFileCopyPage {
 
 sub _page_filelist {
     my ( $self, $args ) = ( shift, shift );
+
     Carp::croak "Arguments should be supplied as a hash ref"
       if not ref $args or ref $args ne "HASH";
     Carp::croak "-from and -to are required"
       if not $args->{-from} or not $args->{-to};
     Carp::croak "-from and -to are different lengths"
       if $#{ $args->{-from} } != $#{ $args->{-to} };
-    Carp::croak "Nothing to do! -from and -to empty"
+    Carp::croak "Nothing to do! -from and -to are empty"
       if $#{ $args->{-from} } == -1 or $#{ $args->{-to} } == -1;
 
 	# Uninstaller
 	if (exists $args->{-uninstall_db}){
+		DEBUG "Setting-up uninstall SDBM";
 		$self->{_uninstall_db_path} = $args->{-uninstall_db};
 		$self->{_uninstall_db} = {};
 		tie(
@@ -394,7 +409,7 @@ sub _page_filelist {
 			'SDBM_File',
 			$self->{_uninstall_db_path},
 			O_WRONLY | O_CREAT,
-			$args->{-uninstall_db_mask} || 0755,
+			$args->{-uninstall_db_perms} || 0666,
 		) or die "Could not create uninstaller db file - failed to tie `SDBM file '$self->{_uninstall_db_path}': $!; aborting";
 	}
 
@@ -434,17 +449,17 @@ sub _page_filelist {
         $args->{-delay} || 1000,
         sub {
             my $todo = $self->_pre_install_files($args);
-            INFO "Configure bar to $todo\n" if $self->{-debug};
+            # INFO "Configure bar to $todo\n" if $self->{-debug};
             $self->{-bar}->configure( -to => $todo );
             $self->_install_files($args);
             $self->{nextButton}->configure( -state => "normal" );
             $self->{backButton}->configure( -state => "normal" );
 
-            if ( $args->{ -wait } ) {
-                Tk::Wizard::_fix_wait( \$args->{ -wait } );
+            if ( $args->{-wait} ) {
+                Tk::Wizard::_fix_wait( \$args->{-wait} );
 
                 $frame->after(
-                    $args->{ -wait },
+                    $args->{-wait},
                     sub {
                         $self->{nextButton}->configure( -state => 'normal' );
                         $self->{nextButton}->invoke;
@@ -455,6 +470,7 @@ sub _page_filelist {
     );
     return $frame;
 }
+
 
 # Pre-parse, counting files and expanding directories if necessary
 # Return total number of files to process
@@ -559,13 +575,13 @@ sub _install_files {
         if ( -d @{ $args->{-from} }[$i] ) {
             local *DIR;
             my $orig_dir = cwd;
-            chdir @{ $args->{-from} }[$i] or die "Weird dir error";
-            opendir DIR, "." or warn;
+            chdir @{ $args->{-from} }[$i] or die "'From' dir does not exist - ".@{ $args->{-from} }[$i];
+            opendir DIR, "." or warn $!;
             foreach ( grep { !/^\.\.?$/ } readdir DIR ) {
                 push @{ $args->{-from} }, @{ $args->{-from} }[$i] . "/" . $_;
                 push @{ $args->{-to} },   @{ $args->{-to} }[$i] . "/" . $_;
             }
-            closedir DIR or warn;
+            closedir DIR or warn $!;
             chdir $orig_dir;
             next;
         }
@@ -584,15 +600,16 @@ sub _install_files {
             DEBUG "Updating bar to " . $self->{-bar}->value;
             $self->{-bar}->update;
 
-            # Make the path, if needs be
+            # Make the TO path, if needs be
             my $d = File::Spec->catpath( $tv, $td, '' );
-
-            # $d =~ s/[\\\/]+/\//g;
+            DEBUG "Check dir $d";
             if ( !-d $d ) {
                 eval { File::Path::mkpath($d) };
-                if ($@) {
-                    Carp::croak "Could not make path $d : $!";
-                }
+				Carp::croak "Could not make path $d : $!" if $@;
+                DEBUG "Made $d";
+				if (exists $self->{_uninstall_db} ){
+					$self->{_uninstall_db}->{ Cwd::abs_path( $d ) } ++
+				}
             }
 
             # Do the move/copy
@@ -841,12 +858,12 @@ sub _page_download {
 
             # $self->{backButton}->configure(-state=>"normal");
             $self->{nextButton}->configure( -state => "normal" );
-            if ( $args->{ -wait } ) {
-                Tk::Wizard::_fix_wait( \$args->{ -wait } );
+            if ( $args->{-wait} ) {
+                Tk::Wizard::_fix_wait( \$args->{-wait} );
 
                 # $frame->after($args->{-wait},sub{$self->forward});
                 $frame->after(
-                    $args->{ -wait },
+                    $args->{-wait},
                     sub {
                         $self->{nextButton}->configure( -state => 'normal' );
                         $self->{nextButton}->invoke;
@@ -1019,41 +1036,7 @@ sub confirm_download_quit {
     $self->CloseWindowEventCycle if lc $button eq 'yes';
 }    # confirm_download_quit
 
-=head1 DIALOGUES
 
-=head2 DIALOGUE_really_quit
-
-Called when the user tries to quit.
-As opposed to the base C<Wizard>'s dialogue of the same name,
-this dialogue refers to "the Installer", rather than "the Wizard".
-
-=cut
-
-sub DIALOGUE_really_quit {
-    TRACE "Enter Installer DIALOGUE_really_quit  ...";
-    my $self = shift;
-    return 0 if $self->{nextButton}->cget( -text ) eq $LABELS{FINISH};
-    unless ( $self->{really_quit} ) {
-        my $button = $self->parent->messageBox(
-            -icon    => 'question',
-            -type    => 'yesno',
-            -default => 'no',
-            -title   => 'Quit The Installation?',
-            -message =>
-"The Installer has not finished running.\n\nIf you quit now, the installation will be incomplete.\n\nDo you really wish to quit?"
-        );
-        $self->{really_quit} = lc $button eq 'yes' ? 1 : 0;
-    }
-    if ( $self->{really_quit} ) {
-        warn "# Quitting\n" if $self->{-debug};
-        $self->{cancelButton}->configure( -state => 'normal' );
-        $self->{cancelButton}->invoke;
-    }
-    else {
-        warn "# Ok, continuing\n" if $self->{-debug};
-    }
-    return !$self->{really_quit};
-}
 
 =head2 pre_install_files_quit
 
@@ -1163,20 +1146,24 @@ sub _page_uninstall {
 		'SDBM_File',
 		$self->{_uninstall_db_path},
 		O_RDWR,
-		$args->{-uninstall_db_mask} || 0755,
+		$args->{-uninstall_db_perms} || 0666,
 	) or die "Could not create uninstaller db file - failed to tie `SDBM file '$self->{_uninstall_db_path}': $!; aborting";
 
     $self->{-bar}->after(
         $args->{-delay} || 1000,
         sub {
             my $todo = scalar keys %{$self->{_uninstall_db}};
-            INFO "Configure bar to $todo\n" if $self->{-debug};
+            # INFO "Configure bar to $todo\n" if $self->{-debug};
             $self->{-bar}->configure( -to => $todo );
 
             # $self->_install_files($args);
 
+			# Process files
 			my $i = 0;
 			foreach my $file (keys %{$self->{_uninstall_db}}){
+				# Skip dirs for now - process below
+				next if -d $file;
+				# Process files if they have not been deleted by user
 				if (-e $file){
 					if (unlink $file){
 						# No report of removed files
@@ -1192,7 +1179,39 @@ sub _page_uninstall {
 					$self->{_uninstall_db}->{$file} = 'does not exist';
 				}
 				$self->{-bar}->value( $self->{-bar}->value + 1 );
-				DEBUG "Updating bar to " . $self->{-bar}->value;
+				# DEBUG "Updating bar to " . $self->{-bar}->value;
+				$self->{-bar}->update;
+				$i ++;
+			}
+
+			# Process dirs
+			foreach my $dir (keys %{$self->{_uninstall_db}}){
+				next unless -d $dir;
+
+				INFO "Try to remove $dir";
+
+				my $pwd = getcwd;
+				if (not chdir $dir){
+					ERROR "Could not cd to $dir - $@";
+					ERROR "   -e $dir == ".(-e $dir);
+					next;
+				}
+				chdir $pwd;
+				opendir my $d, $dir or warn $!;
+                my @present = grep { !/^\.+$/ } readdir $d;
+				closedir $d;
+
+				if (@present){
+					$self->{_uninstall_db}->{$dir} = "contains user-created files";
+				}
+				elsif (not rmdir $dir){
+					$self->{_uninstall_db}->{$dir} = $!;
+				}
+				else {
+					delete $self->{_uninstall_db}->{$dir};
+				}
+				$self->{-bar}->value( $self->{-bar}->value + 1 );
+				# DEBUG "Updating bar to " . $self->{-bar}->value;
 				$self->{-bar}->update;
 				$i ++;
 			}
@@ -1206,26 +1225,35 @@ sub _page_uninstall {
 					'-icon'  => 'warning',
 					-type    => 'ok',
 					-title   => 'Some files could not be removed',
-					-message => join"\n",
-						"Some files could not be removed:\n",
-						keys %{ $self->{_uninstall_db} }
+					-message => join( "\n",
+						"Some files could not be removed:\n"
+						. join("\n",
+							map { $_ ." - ". $self->{_uninstall_db}->{$_} }
+								keys %{ $self->{_uninstall_db} }
+						)
+				)
 				);
 			}
 
+			$self->{_uninstall_db} = undef;
 			untie %{ $self->{_uninstall_db} };
 			foreach my $i (qw( dir pag )){
-				unlink $self->{_uninstall_db_path}.'.'.$i
-					or ERROR "Could not remove ".$self->{_uninstall_db_path}.'.'.$i;
+				my $fn = $self->{_uninstall_db_path}.'.'.$i;
+				DEBUG "Try to remove $fn";
+				if (not unlink $fn ){
+					my $perm = (stat $fn)[2]; # umask
+					ERROR "Could not remove ".$fn." - $! (perms without umask = $perm";
+				}
 			}
 
             if ($args->{-wait}) {
-                Tk::Wizard::_fix_wait( \$args->{ -wait } );
+                Tk::Wizard::_fix_wait( \$args->{-wait} );
                 $frame->after(
-                    $args->{ -wait },
+                    $args->{-wait},
                     sub {
                         $self->{nextButton}->configure( -state => 'normal' );
                         $self->{nextButton}->invoke;
-                      }
+					}
                 );
             }
           }
@@ -1233,6 +1261,40 @@ sub _page_uninstall {
     return $frame;
 }
 
+=head1 DIALOGUES
+
+=head2 DIALOGUE_really_quit
+
+Called when the user tries to quit.
+As opposed to the base C<Wizard>'s dialogue of the same name,
+this dialogue refers to "the Installer", rather than "the Wizard".
+
+=cut
+
+sub DIALOGUE_really_quit {
+    TRACE "Enter Installer DIALOGUE_really_quit  ...";
+    my $self = shift;
+    return 0 if $self->{nextButton}->cget( -text ) eq $LABELS{FINISH};
+    unless ( $self->{really_quit} ) {
+        my $button = $self->parent->messageBox(
+            -icon    => 'question',
+            -type    => 'yesno',
+            -default => 'no',
+            -title   => 'Quit The Installation?',
+            -message => "The Installer has not finished running.\n\nIf you quit now, the installation will be incomplete.\n\nDo you really wish to quit?"
+        );
+        $self->{really_quit} = lc $button eq 'yes' ? 1 : 0;
+    }
+    if ( $self->{really_quit} ) {
+        warn "# Quitting\n" if $self->{-debug};
+        $self->{cancelButton}->configure( -state => 'normal' );
+        $self->{cancelButton}->invoke;
+    }
+    else {
+        warn "# Ok, continuing\n" if $self->{-debug};
+    }
+    return !$self->{really_quit};
+}
 
 1;
 

@@ -1,5 +1,9 @@
 Tk::Wizard TODO
 
+* unlink uninstaller.db.* files
+
+* t/210_Images.t - Tk::JPEG errors on non-Vista machines?
+
 * Images broken in 5.8.8 :-(
 
 * Default sizes are now off: see the test suite

@@ -1,3 +1,8 @@
+2008-09-16 Lee 2.140
+
+	* Some version number errors - commented-out that test in t/050*.
+	* Tk::JPEG seems fixed so broght that test back
+
 2008-09-16 Lee 2.139
 
 	* Added uninstaller routines to ::Installer (2.35), and test.

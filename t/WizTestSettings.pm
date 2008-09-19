@@ -49,7 +49,9 @@ BEGIN {
 		if (not Log::Log4perl::initialized()){
 			# my ($fn) = $0 =~ /[^\/]+$/;
 
-			my $log_conf = "log4perl.logger                   	= ERROR, Screen\n";
+			my $log_conf = "log4perl.logger                   		= ERROR, Screen\n";
+			   $log_conf.= "log4perl.logger.Tk.Wizard.Installer		= ALL, Screen
+			   		        log4perl.additivity.Tk.Wizard.Installer	= 0\n";
 
 			if ($Log::Log4Perl::VERSION >= 1.11){
 				$log_conf .= "log4perl.appender.Screen       	= Log::Log4perl::Appender::ScreenColoredLevels\n";

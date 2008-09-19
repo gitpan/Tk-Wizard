@@ -26,8 +26,8 @@ BEGIN {
 		}
 	}
 
-	use Log::Log4perl qw(:easy);
-	Log::Log4perl->easy_init($DEBUG);
+	# use Log::Log4perl qw(:easy);
+	# Log::Log4perl->easy_init($DEBUG);
 }
 
 $ENV{TEST_INTERACTIVE} = 0;
@@ -66,7 +66,7 @@ $wiz->addPage(
 			# ...click the next button after a short time
 			$wiz->Subwidget('nextButton')->after(2000,
 				sub {
-					INFO "X" x 50;
+					# INFO "X" x 50;
 					$wiz->Subwidget('nextButton')->invoke
 				},
 			);

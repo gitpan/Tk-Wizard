@@ -5,7 +5,7 @@ use inc::Module::Install;
 #
 
 name('Tk-Wizard');
-version("2.139");
+version("2.141");
 abstract('GUI for step-by-step interactive logical process');
 author('cpan-at-lgoddard-dot-net');
 license('perl');
@@ -31,6 +31,7 @@ build_requires('LWP::UserAgent');
 recommends('HTTP::Request');
 requires("Scalar::Util");
 
+# build_requires('IO::Capture::Stderr::Extended');
 build_requires("Test::More");
 requires('Tk');
 requires("Tk::After");

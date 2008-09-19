@@ -36,21 +36,21 @@ BEGIN {
         plan skip_all => 'Test irrelevant without a display';
     }
     else {
-		plan skip_all => 'Tk::JPEG errors';
-        #plan tests => 10;
+		# plan skip_all => 'Tk::JPEG errors';
+        plan tests => 11;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
     use_ok('Tk::Wizard' => $VERSION);
     use_ok('WizTestSettings');
 
-   	use Log::Log4perl qw(:easy);
-	Log::Log4perl->easy_init($DEBUG);
+	# use Log::Log4perl qw(:easy);
+	# Log::Log4perl->easy_init($INFO);
 }
+
+our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 1;
 
 autoflush STDOUT 1;
 chdir ".." if getcwd =~ /\Wt$/;
-
-our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 10;
 
 my $wizard = Tk::Wizard->new(
     -title => "Test version $VERSION For Tk::Wizard version $Tk::Wizard::VERSION",

@@ -6,7 +6,6 @@ use warnings;
 
 my $VERSION = do { my @r = ( q$Revision: 1.15 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
-use ExtUtils::testlib;
 use File::Path;
 use Test::More;
 use Tk;
@@ -25,15 +24,16 @@ BEGIN {
     $mwTest->destroy if Tk::Exists($mwTest);
     use_ok("Tk::Wizard::Installer");
     use_ok('WizTestSettings');
-}
 
+}
 
 
 chdir ".." if getcwd =~ /\Wt$/;
 my $WAIT   = $ENV{TEST_INTERACTIVE} ? 0 : 111;
 
-my @form = qw( 1 2 );
-my @dest = qw( 3 4 );
+my @from = qw( 1 2 );
+my $dest_subdir = 'mydir/';
+my @dest = map { $dest_subdir.$_} qw( 3 4 );
 
 my $TEMP_DIR = 't/tmp';
 mkdir( $TEMP_DIR, 0777 );
@@ -45,7 +45,7 @@ my $testdir = "$TEMP_DIR/__perltk_wizard/";
 mkdir $testdir or bail_out($!)
 	if not -d $testdir;
 
-my $uninstall_db = getcwd."/t/uninstall.db";
+my $uninstall_db = getcwd."/".$TEMP_DIR."/uninstall.db";
 
 
 # DBM files of uninstaller may be lying around during dev
@@ -53,15 +53,15 @@ unlink $uninstall_db.'.dir' if -e $uninstall_db.'.dir';
 unlink $uninstall_db.'.pag' if -e $uninstall_db.'.pag';
 
 
-for (@form) {
-    my $form = "$testdir/$_";
+for (@from) {
+    my $from = "$testdir/$_";
     local *OUT;
-    ok( open( OUT, '>', $form ), "opened $form for write" ) or bail_out($!);
+    ok( open( OUT, '>', $from ), "opened $from for write" ) or bail_out($!);
     ok( print OUT "Tk::Wizard::Installer Test. Please ignore or delete.\n\nThis is file $_\n\n"
         . scalar(localtime) . "\n\n"
-        . "wrote contents to $form"
+        . "wrote contents to $from"
     );
-    ok( close OUT, "closed $form");
+    ok( close OUT, "closed $from");
 }
 
 for (@dest) {
@@ -73,9 +73,13 @@ for (@dest) {
 
 if ( $ENV{TEST_INTERACTIVE} ) {
     # Add some stuff that will fail, so we can see what exactly happens:
-    unshift @form, 'no_such_file';
+    unshift @from, 'no_such_file';
     unshift @dest, 'no_such_dir';
 }
+
+#
+# Create INSTALL pages
+#
 
 my $page_count = 0;
 my $wizard = Tk::Wizard::Installer->new( -title => "Installer Test", );
@@ -85,8 +89,6 @@ isa_ok( $wizard->parent, "Tk::MainWindow", "Parent" );
 ok( $wizard->configure( -finishButtonAction => sub { ok( 1, 'Finished' ); 1 }, ), 'Configured' );
 isa_ok( $wizard->cget( -finishButtonAction ), "Tk::Callback" );
 
-# Create pages
-#
 my $SPLASH = $wizard->addSplashPage(
     -wait     => $WAIT,
     -title    => "Installer Test",
@@ -101,7 +103,7 @@ ok(
         -slowdown 	=> $ENV{TEST_INTERACTIVE} ? 2000 : 0,
         -wait     	=> $WAIT,
         -copy     	=> 1,
-        -from 		=> [ map { "$testdir/$_" } @form ],
+        -from 		=> [ map { "$testdir/$_" } @from ],
         -to   		=> [ map { "$testdir/$_" } @dest ],
         -uninstall_db => $uninstall_db,
     ),
@@ -160,6 +162,7 @@ $page_count = 0;
 my $un_wizard = Tk::Wizard::Installer->new( -title => "Installer Test", );
 isa_ok( $un_wizard, 'Tk::Wizard::Installer', 'uninstaller' );
 
+
 # Create pages
 #
 $un_wizard->addSplashPage(
@@ -206,6 +209,18 @@ TODO: {
 	local $TODO = "Not sure why not unlinking - help please";
 	ok( not(-e $uninstall_db.'.dir'), 'removed uninstaller .dir file');
 	ok( not(-e $uninstall_db.'.pag'), 'removed uninstaller .pag file');
+}
+
+{
+	if (-d $testdir.$dest_subdir){
+		opendir my $d,$testdir.$dest_subdir or BAIL_OUT "Could not open $testdir.$dest_subdir - $@";
+		fail('dir exists');
+		is( scalar( grep {!/^\.+$/} readdir $d ), 0, 'no files in test dir');
+		closedir $d;
+	} else {
+		pass 'no dir?';
+		ok( not(-d $testdir.$dest_subdir), 'Removed test dir '.$testdir.$dest_subdir);
+	}
 }
 
 END {
