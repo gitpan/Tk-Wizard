@@ -2,9 +2,10 @@ package Tk::Wizard::Installer;
 
 use strict;
 use warnings;
+use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.36 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.38 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 
 =head1 NAME
@@ -169,7 +170,7 @@ sub _page_licence_agreement {
 	open my $in, $fname or Carp::croak "Could not read licence from $fname: $!";
 	read $in, $text, -s $in;
 	close $in;
-	WARN "Licence file $fname is empty." if not length $text;
+	warn "Licence file $fname is empty!" if not length $text;
 
     # Clean up line endings because Tk::ROText on *NIX displays them:
     $text =~ s![\r\n]+!\n!g;
@@ -449,7 +450,7 @@ sub _page_filelist {
         $args->{-delay} || 1000,
         sub {
             my $todo = $self->_pre_install_files($args);
-            # INFO "Configure bar to $todo\n" if $self->{-debug};
+            DEBUG "Configure bar to $todo";
             $self->{-bar}->configure( -to => $todo );
             $self->_install_files($args);
             $self->{nextButton}->configure( -state => "normal" );
@@ -576,12 +577,12 @@ sub _install_files {
             local *DIR;
             my $orig_dir = cwd;
             chdir @{ $args->{-from} }[$i] or die "'From' dir does not exist - ".@{ $args->{-from} }[$i];
-            opendir DIR, "." or warn $!;
+            opendir DIR, "." or warn 'Could not open directory ',$!;
             foreach ( grep { !/^\.\.?$/ } readdir DIR ) {
                 push @{ $args->{-from} }, @{ $args->{-from} }[$i] . "/" . $_;
                 push @{ $args->{-to} },   @{ $args->{-to} }[$i] . "/" . $_;
             }
-            closedir DIR or warn $!;
+            closedir DIR or warn 'Could not close dir, ',$!;
             chdir $orig_dir;
             next;
         }
@@ -833,7 +834,7 @@ sub _page_download {
             }
 
             if ( scalar keys %{ $self->{-failed} } > 0 and $args->{-on_error} ) {
-                warn "# Failed." if $self->{-debug};
+                DEBUG "Failed to download";
                 if ( ref $args->{-on_error} eq 'CODE' ) {
                     DEBUG "Calling -on_error handler.";
                     &{ $args->{-on_error} };
@@ -1046,7 +1047,7 @@ Asks if the user wishes to continue after file copy errors.
 
 sub pre_install_files_quit {
     my ( $self, $failed ) = ( shift, shift );
-    TRACE "Enter pre_install_files_quit ...\n" if $self->{-debug};
+    TRACE "Enter pre_install_files_quit ...";
 
 	SHOW:
     my $d = $self->Dialog(
@@ -1073,12 +1074,12 @@ sub pre_install_files_quit {
     }
 
     if ( lc $button eq 'no' ) {
-        warn "Won't continue....\n" if $self->{-debug};
+        DEBUG "Won't continue....";
         $self->{cancelButton}->configure( -state => 'normal' );
         $self->{cancelButton}->invoke;
     }
     else {
-        warn "Will continue.\n" if $self->{-debug};
+        DEBUG "Will continue.";
     }
 
     # Clear out the error list so we don't inform the user twice about
@@ -1153,7 +1154,7 @@ sub _page_uninstall {
         $args->{-delay} || 1000,
         sub {
             my $todo = scalar keys %{$self->{_uninstall_db}};
-            # INFO "Configure bar to $todo\n" if $self->{-debug};
+            TRACE "Configure bar to $todo\n";
             $self->{-bar}->configure( -to => $todo );
 
             # $self->_install_files($args);
@@ -1197,9 +1198,13 @@ sub _page_uninstall {
 					next;
 				}
 				chdir $pwd;
-				opendir my $d, $dir or warn $!;
-                my @present = grep { !/^\.+$/ } readdir $d;
-				closedir $d;
+				my @present;
+				if (opendir my $d, $dir){
+                	@present = grep { !/^\.+$/ } readdir $d;
+					closedir $d;
+				} else {
+					 warn $pwd," - ",$!;
+				 }
 
 				if (@present){
 					$self->{_uninstall_db}->{$dir} = "contains user-created files";
@@ -1211,7 +1216,7 @@ sub _page_uninstall {
 					delete $self->{_uninstall_db}->{$dir};
 				}
 				$self->{-bar}->value( $self->{-bar}->value + 1 );
-				# DEBUG "Updating bar to " . $self->{-bar}->value;
+				DEBUG "Updating bar to " . $self->{-bar}->value;
 				$self->{-bar}->update;
 				$i ++;
 			}
@@ -1286,12 +1291,12 @@ sub DIALOGUE_really_quit {
         $self->{really_quit} = lc $button eq 'yes' ? 1 : 0;
     }
     if ( $self->{really_quit} ) {
-        warn "# Quitting\n" if $self->{-debug};
+        DEBUG "Quitting\n";
         $self->{cancelButton}->configure( -state => 'normal' );
         $self->{cancelButton}->invoke;
     }
     else {
-        warn "# Ok, continuing\n" if $self->{-debug};
+        DEBUG "Ok, continuing\n";
     }
     return !$self->{really_quit};
 }

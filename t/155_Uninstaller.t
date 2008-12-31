@@ -147,7 +147,7 @@ ok( exists ($wizard->{_uninstall_db_path}),
 	"Created value for _uninstall_db_path"
 );
 
-diag "_uninstall_db_path = $wizard->{_uninstall_db_path}" if exists $wizard->{_uninstall_db_path};
+diag "TEST: _uninstall_db_path = $wizard->{_uninstall_db_path}" if exists $wizard->{_uninstall_db_path};
 
 ok( (-e $wizard->{_uninstall_db_path}.'.dir'),
 	"Created .dir file for _uninstall_db_path"
@@ -207,8 +207,8 @@ ok( 1, "Exited MainLoop" );
 
 TODO: {
 	local $TODO = "Not sure why not unlinking - help please";
-	ok( not(-e $uninstall_db.'.dir'), 'removed uninstaller .dir file');
-	ok( not(-e $uninstall_db.'.pag'), 'removed uninstaller .pag file');
+	ok( not(-e $uninstall_db.'.dir'), 'Module removed uninstaller .dir file');
+	ok( not(-e $uninstall_db.'.pag'), 'Module removed uninstaller .pag file');
 }
 
 {
@@ -224,6 +224,8 @@ TODO: {
 }
 
 END {
+	undef $un_wizard;
+	diag "Test will probably fail to clean up: is something holding on to the files?";
 	rmtree $TEMP_DIR;
 	unlink $uninstall_db.'.dir';
 	unlink $uninstall_db.'.pag';

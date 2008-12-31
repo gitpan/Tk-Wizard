@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.78 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.79 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use Carp ();
 use Tk::LabFrame;

@@ -106,6 +106,7 @@ is(
     'bye is 3'
 );
 
+pass('Pre Show');
 $wizard->Show;
 pass('after Show');
 MainLoop();

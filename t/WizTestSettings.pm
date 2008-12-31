@@ -22,8 +22,8 @@ use Carp;
 our $VERSION; # see POD
 
 BEGIN {
-	# Set our version to be the TK::Wizard version to use
-	$VERSION = do { my @r = ( q$Revision: 2.080 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+	# Set our version to be the relevant $TK::Wizard::VERSION
+	$VERSION = do { my @r = ( q$Revision: 2.082 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 	# Require the correct version
 	use lib "../lib";
@@ -50,8 +50,8 @@ BEGIN {
 			# my ($fn) = $0 =~ /[^\/]+$/;
 
 			my $log_conf = "log4perl.logger                   		= ERROR, Screen\n";
-			   $log_conf.= "log4perl.logger.Tk.Wizard.Installer		= ALL, Screen
-			   		        log4perl.additivity.Tk.Wizard.Installer	= 0\n";
+			#  $log_conf.= "log4perl.logger.Tk.Wizard.Installer		= ALL, Screen
+			#  		        log4perl.additivity.Tk.Wizard.Installer	= 0\n";
 
 			if ($Log::Log4Perl::VERSION >= 1.11){
 				$log_conf .= "log4perl.appender.Screen       	= Log::Log4perl::Appender::ScreenColoredLevels\n";

@@ -3,7 +3,7 @@ Tk::Wizard - Wizard GUI Framework
 
 IMPORTANT CHANGE(S) FROM PREVOUS VERSION(S)
 
-* Version 2.131 has moved some methods to new modules to keep
+* Version 2.131 moved some methods to new modules to keep
   in line with the original ethos as outlined in the POD.
   This should have no practical effect until verseion 3.00 but
   pleaes read the documentation for the "import" method for
@@ -15,7 +15,7 @@ IMPORTANT CHANGE(S) FROM PREVOUS VERSION(S)
 
   Look-up the Martin Thurn's Tk::Wizard::Sizer module (included with this distro)
   to semi-automatically recalculate what you should pass in the
-  -width and -height arguments. 
+  -width and -height arguments.
 
 INSTALLATION
 

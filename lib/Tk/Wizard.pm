@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.081 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.082 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -456,7 +456,7 @@ sub new {
     $self->fontCreate(
         'FIXED',
         -family => 'Courier',
-        -size   => $iFontSize,
+        -size   => $iFontSize + 1,
     );
 
     # Font used in multiple choices for radio title
@@ -1354,7 +1354,7 @@ sub _text_frame {
         -background => ( $args->{ -background } || 'white' ),
         -relief => "sunken",
         -borderwidth => "1",
-        -font        => "SMALL_FONT",
+        -font        => $self->{defaultFont},
         -scrollbars  => "osoe",
         -wrap        => "word",
     )->pack(qw/-expand 1 -fill both -padx 10 -pady 10/);
