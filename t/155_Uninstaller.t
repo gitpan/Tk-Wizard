@@ -1,4 +1,3 @@
-
 # $Id: 52_Installer.t,v 1.15 2007/11/16 21:36:00 martinthurn Exp $
 
 use strict;

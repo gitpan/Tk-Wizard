@@ -3,7 +3,11 @@ Tk::Wizard - Wizard GUI Framework
 
 IMPORTANT CHANGE(S) FROM PREVOUS VERSION(S)
 
-* Version 2.131 moved some methods to new modules to keep
+* Tk::Wizard Version 2.084, distribution 2.143,
+  allows Wizard::addPage to accept same args as Wizard::blank_frame:
+  see t/055_Pages.t
+
+* Tk::Wizard Version 2.131 moved some methods to new modules to keep
   in line with the original ethos as outlined in the POD.
   This should have no practical effect until verseion 3.00 but
   pleaes read the documentation for the "import" method for
@@ -29,7 +33,10 @@ or, unpack the archive and in the new folder execute the following:
    make all test
    make install
 
-If you are on Windows you might have to use nmake instead of make.
+If you are on Windows you might have to use nmake instead of make -
+or you could try:
+
+	ppm install Tk::Wizard
 
 If you set environment variable TEST_INTERACTIVE to any non-zero
 value, most of the tests will pause and you will have to click the
@@ -37,7 +44,7 @@ value, most of the tests will pause and you will have to click the
 
 DESCRIPTION
 
-In the context of this namespace, a Wizard is defined as a graphical
+In the context of this Perl namespace, a Wizard is defined as a graphical
 user interface (GUI) that presents information, and possibly performs
 tasks, step-by-step via a series of different pages.  Pages (or
 'screens', or 'Wizard frames') may be chosen logically depending upon
@@ -55,7 +62,8 @@ look-and-feel is highly encouraged: please see "NOTES ON SUB-CLASSING
 Tk::Wizard".
 
 AUTHOR
-        Lee Goddard (lgoddard@cpan.org) based on work Daniel T Hable.
+        Lee Goddard (lgoddard@cpan.org)
 
-CO-MAINTAINER
+THANKS TO
+        Daniel T Hable
         Martin Thurn (mthurn@cpan.org)

@@ -57,3 +57,4 @@ t/dos.txt
 t/extra.txt
 t/perl_licence_blab.txt
 t/unix.txt
+t/055_Pages.t

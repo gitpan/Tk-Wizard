@@ -1,3 +1,7 @@
+2008-12-31 Lee 2.143
+
+	* Allow Wizard::addPage to accept same args as Wizard::blank_frame
+
 2008-12-31 Lee 2.142
 
 	* Font sizes for RT reports

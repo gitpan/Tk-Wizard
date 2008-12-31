@@ -1,6 +1,5 @@
-#! perl -w
-
-# $Id: 77_dirselect.t,v 1.7 2007/08/18 00:44:16 martinthurn Exp $
+use strict;
+use warnings;
 
 =head1 NAME
 
@@ -15,21 +14,24 @@ the user's error script, when it uses C<slee>.
 
 =cut
 
-use strict;
+
+use Test::More skip_all => 'Tk image handling broken in my current dev version of Perl Tk';
+my $VERSION = do { my @r = ( q$Revision: 2.079 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use FileHandle;
 use Cwd;
-use Test::More;
 use Tk;
 use lib qw(../lib . t/);
 
-use Tk::PNG;
-use Tk::JPEG;
+use_ok("Tk::PNG");
+use_ok("Tk::JPEG");
 
-my $VERSION = do { my @r = ( q$Revision: 2.079 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
+__END__
 
 BEGIN {
+	use Test::More;
     my $mwTest;
     eval { $mwTest = Tk::MainWindow->new };
     if ($@) {

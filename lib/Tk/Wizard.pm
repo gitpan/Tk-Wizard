@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.082 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.084 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -1209,8 +1209,8 @@ sub blank_frame {
 
     if ( $args->{ -wait } > 0 ) {
         _fix_wait( \$args->{ -wait } );
-        DEBUG  "in blank_frame(), fixed  -wait is $args->{-wait}";
-        DEBUG  "installing 'after', self is $self";
+        DEBUG  "In blank_frame(), fixed  -wait is $args->{-wait}";
+        DEBUG  "Installing 'after', self is $self";
         $self->after(
             $args->{ -wait },
             sub {
@@ -1228,6 +1228,8 @@ sub blank_frame {
 =head2 addPage
 
   $wizard->addPage ($page_code_ref1 ... $page_code_refN)
+  $wizard->addPage (@args)
+  $wizard->addPage ($page_code_ref, -preNextButtonAction => $x, -postNextButtonAction => $y)
 
 Adds a page to the wizard. The parameters must be references to code that
 evaluate to L<Tk::Frame|Tk::Frame> objects, such as those returned by the methods
@@ -1239,12 +1241,12 @@ Returns the index of the page added, which is useful as a page UID when
 performing checks as the I<Next> button is pressed (see file F<test.pl>
 supplied with the distribution).
 
-As of version 2.76, you may supply arguments: C<-preNextButtonAction>,
+As of version 2.084, you can just supply the args to L<blank_frame|blank_frame>.
+
+As of version 2.076, you may supply arguments: C<-preNextButtonAction>,
 C<-postNextButtonAction>, C<-preBackButtonAction>, C<-postBackButtonAction>:
 see L<ACTION EVENT HANDLERS> for further information. More handlers, and
 more documentation, may be added.
-
-See also L</blank_frame>.
 
 =cut
 
@@ -1254,23 +1256,41 @@ sub addPage {
 
 	# Bit faster if, as of old, all args are code refs (ie no events):
 	if ( scalar(grep { ref $_ eq 'CODE' } @args) == scalar(@args)) {
+	   DEBUG "Add args to make ".scalar @{ $self->{_pages} };
 	   push @{ $self->{_pages} }, @args;
     }
 
 	# Add pages with arguments:
     else {
-		my ($code, @sub_args);
+		my ($code, @sub_args, $found);
 		while (@args){
 			if (ref $args[0] eq 'CODE'){
-				$self->_addPage_with_args($code, @sub_args) if defined $code;
+				$found = 1;
+				if (defined $code){
+					DEBUG "Call _addPage_with_args...";
+					$self->_addPage_with_args($code, @sub_args);
+				} else {
+					DEBUG "No code yet...";
+				}
 				@sub_args = ();
 				$code = shift @args;
 			} else {
-				push @sub_args, shift @args, shift @args;
+				DEBUG "Add to sub_args...";
+				push @sub_args, shift(@args), shift(@args);
 			}
 		}
 
-		$self->_addPage_with_args($code, @sub_args) if defined $code;
+		if (defined $code){
+			$found = 1;
+			DEBUG "Call _addPage_with_args (finally)";
+			$self->_addPage_with_args($code, @sub_args);
+		}
+
+		if (not $found){
+			DEBUG "No code ref found: blank frame from args: ", join", ",@sub_args;
+			push @{ $self->{_pages} }, sub { $self->blank_frame(@sub_args) };
+		}
+
 	}
 
 	TRACE "Leave addpage";
@@ -1279,12 +1299,12 @@ sub addPage {
 
 
 sub _addPage_with_args {
+    TRACE "Enter _addPage_with_args";
     my ($self, $code) = (shift, shift);
 	my $args = scalar(@_)? {@_} : {};
 
-	TRACE "Adding code ".Dumper $code;
-
 	# Add the page
+	DEBUG "Adding code ".Dumper $code;
     push @{ $self->{_pages} }, $code;
 
 	# Add the arguments
@@ -1293,6 +1313,7 @@ sub _addPage_with_args {
 		DEBUG "Add $e for $#{$self->{_pages}}" if defined $args->{$e};
 		$self->{_pages_e}->{$e}->[ $#{$self->{_pages}} ] = $args->{$e} || undef;
 	}
+	TRACE "Leave _addPage_with_args";
 }
 
 
