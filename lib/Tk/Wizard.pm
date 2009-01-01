@@ -745,6 +745,8 @@ sub _initial_layout {
         my $im = $self->cget( -imagepath );
         if ( not ref $im ) {
 			DEBUG "Load photo from file $im";
+			FATAL "No such file as $im" unless -e $im;
+			DEBUG $self;
             $self->Photo( "sidebanner", -file => $im );
         }
         else {

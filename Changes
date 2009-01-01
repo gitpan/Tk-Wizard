@@ -1,3 +1,9 @@
+2008-01-01 Lee 2.144
+
+	* Rebuilt tardist with Perl 5.8.9 after errors with 5.10 build
+	  - probably won't fix, but worth a try. Public release in the
+	  hope of public test reports
+
 2008-12-31 Lee 2.143
 
 	* Allow Wizard::addPage to accept same args as Wizard::blank_frame
@@ -113,91 +119,91 @@
 	* t/*: Various used the non-prerequisite IO::Capture::Stderr::Extended
 	* */*: Perl tidy. Polite Dictat: Please maintain perldoc perlstyle; please avoid Hungarian notation.
 
-2007-11-16    <Daddy@C-3PO>
+2007-11-16    Martin Thurn
 
 	* lib/Tk/Wizard/Installer.pm (pre_install_files_quit): now user can get error details
 
-2007-11-07    <Daddy@C-3PO>
+2007-11-07    Martin Thurn
 
 	* lib/Tk/Wizard.pm (initial_layout): fixed position & bg of side image
 
-2007-10-21    <Daddy@C-3PO>
+2007-10-21    Martin Thurn
 
 	* lib/Tk/Wizard.pm (addSingleChoicePage): new method
 
-2007-10-20    <Daddy@C-3PO>
+2007-10-20    Martin Thurn
 
 	* lib/Tk/Wizard/Installer.pm (_install_files): fixed undef warning
 
-2007-10-19    <Daddy@C-3PO>
+2007-10-19    Martin Thurn
 
 	* lib/Tk/Wizard.pm (back_page_number): new method
 	(next_page_number): new method
 	(_page_fileSelect): don't send non-existent -initialdir to getOpenFile
 
-2007-10-17    <Daddy@C-3PO>
+2007-10-17    Martin Thurn
 
 	* lib/Tk/Wizard.pm (new): new option -fontfamily
 
-2007-10-16    <Daddy@C-3PO>
+2007-10-16    Martin Thurn
 
 	* lib/Tk/Wizard.pm (new): new option -basefontsize
 
-2007-10-11    <Daddy@C-3PO>
+2007-10-11    Martin Thurn
 
 	* MANIFEST: finally added lib/Tk/Wizard/Installer/Win32/Sizer.pm
 
-2007-10-08    <Daddy@C-3PO>
+2007-10-08    Martin Thurn
 
 	* lib/Tk/Wizard.pm (_page_fileSelect): 'readonly' --> 'disabled'
 
-2007-10-01    <Daddy@C-3PO>
+2007-10-01    Martin Thurn
 
 	* lib/Tk/Wizard/Installer.pm (addFileListPage): corrected the pod
 	* lib/Tk/Wizard/Installer/Sizer.pm: use inheritance for sizer methods
 	* lib/Tk/Wizard/Installer/Win32/Sizer.pm: use inheritance
 
-2007-09-30    <Daddy@C-3PO>
+2007-09-30    Martin Thurn
 
 	* lib/Tk/Wizard/Installer/Win32/Sizer.pm: new module
 
-2007-09-29    <Daddy@C-3PO>
+2007-09-29    Martin Thurn
 
 	* lib/Tk/Wizard/Installer/Win32.pm (_page_start_menu): FIXED this method
 
-2007-09-26    <Daddy@C-3PO>
+2007-09-26    Martin Thurn
 
 	* lib/Tk/Wizard.pm (addSplashPage): new method
 
-2007-09-19    <Daddy@C-3PO>
+2007-09-19    Martin Thurn
 
 	* lib/Tk/Wizard.pm (_page_dirSelect): added workaround for the broken Tk::DirTree
 
-2007-09-13    <Daddy@C-3PO>
+2007-09-13    Martin Thurn
 
 	* lib/Tk/Wizard.pm (Populate): new Wizard options -width and -height
 
-2007-09-10    <Daddy@C-3PO>
+2007-09-10    Martin Thurn
 
 	* lib/Tk/Wizard/Installer.pm (_install_files): FIX wrong invocation of mkpath
 
 	* lib/Tk/Wizard.pm (Populate): do not set default background to undef!
 
-2007-09-09    <Daddy@C-3PO>
+2007-09-09    Martin Thurn
 
 	* lib/Tk/Wizard.pm: behavior of -background arguments are more sensible
 
 	* lib/Tk/Wizard/Tester.pm (new): now takes all Tk::Wizard::new arguments
 
-2007-09-07    <Daddy@C-3PO>
+2007-09-07    Martin Thurn
 
 	* lib/Tk/Wizard.pm (Tk::Error): new function to clean up runtime error handling
 
-2007-09-03    <Daddy@C-3PO>
+2007-09-03    Martin Thurn
 
 	* lib/Tk/Wizard.pm (callback_dirSelect): fix for wrong mkpath invocation
 
-2007-09-02    <Daddy@C-3PO>
+2007-09-02    Martin Thurn
 
 	* lib/Tk/Wizard.pm (blank_frame): fix pod for -width -height
 	(_NextButtonEventCycle): prevent concurrent invokation
@@ -205,11 +211,11 @@
 
 	* lib/Tk/Wizard/Sizer.pm: new module
 
-2007-08-19    <Daddy@C-3PO>
+2007-08-19    Martin Thurn
 
 	* lib/Tk/Wizard.pm (addDirSelectPage): sort folders case-insensitively on Windows
 
-2007-08-17    <Daddy@C-3PO>
+2007-08-17    Martin Thurn
 
 	* lib/Tk/Wizard/Tester.pm (new): fixed args to addDirSelectPage()
 	* lib/Tk/Wizard/Installer.pm (_page_licence_agreement): added keyboard shortcuts for the Accept/Decline radio buttons
@@ -219,28 +225,28 @@
 	* lib/Tk/Wizard/Tester.pm (new): reordered a couple pages; added the style name to the text of every page
 	* lib/Tk/Wizard.pm: lots of cosmetic fixes
 
-2007-08-07    <Daddy@C-3PO>
+2007-08-07    Martin Thurn
 
 	* lib/Tk/Wizard/Tester.pm: new module, for testing
 	* lib/Tk/Wizard.pm: cosmetic fixes and navigation improvements
 
-2007-08-06    <Daddy@C-3PO>
+2007-08-06    Martin Thurn
 
 	* lib/Tk/Wizard.pm (_on_last_page): new private method
 	(_on_first_page): new private method
 
-2007-07-17    <Daddy@C-3PO>
+2007-07-17    Martin Thurn
 
 	* lib/Tk/Wizard.pm (Populate): pretty up the tag text line
 	* lib/Tk/Wizard/Installer.pm (addFileListPage): make sure all functions have pod
 
-2007-07-04    <Daddy@C-3PO>
+2007-07-04    Martin Thurn
 
 	* examples/application.pl: do not need finishButtonAction because:
 	* lib/Tk/Wizard.pm (Populate): default finishButtonAction now does withdraw rather than destroy
 	(_CloseWindowEventCycle): new option -kill_self_after_finish
 
-2007-06-07    <Daddy@C-3PO>
+2007-06-07    Martin Thurn
 
 	* t/25_TaskList.t: new test for "N/A" status icon
 	* lib/Tk/Wizard/Image.pm: new "N/A" status icon
@@ -257,30 +263,30 @@
 
 	* Spelling in POD
 
-2007-05-05    <Daddy@C-3PO>
+2007-05-05    Martin Thurn
 
 	* lib/Tk/Wizard.pm (Populate): withdraw after SUPER::Populate to eliminate "flicker" and ghost windows
 
-2007-05-01    <Daddy@C-3PO>
+2007-05-01    Martin Thurn
 
 	* lib/Tk/Wizard.pm (setPageSkip): new method
 	(setPageUnskip): new method
 
-2007-04-28    <Daddy@C-3PO>
+2007-04-28    Martin Thurn
 
 	* lib/Tk/Wizard/Installer.pm (page_licence_agreement): fix line endings on license text
 	(addLicencePage): pass all arguments to page creation function
 
-2007-04-21    <Daddy@C-3PO>
+2007-04-21    Martin Thurn
 
 	* lib/Tk/Wizard.pm: fix pod syntax errors
 	* lib/Tk/Wizard/Installer.pm: fix pod syntax errors
 
-2007-04-18    <Daddy@C-3PO>
+2007-04-18    Martin Thurn
 
 	* Wizard.pm (addTextFrame): fix args grabbing and passing (thanks Peter Weber!)
 
-2007-03-12    <Daddy@C-3PO>
+2007-03-12    Martin Thurn
 
 	* multiple-files: cleaned up for new CVS repository
 	* Wizard.pm (currentPage): bug fix for off-by-one

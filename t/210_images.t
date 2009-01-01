@@ -3,20 +3,17 @@ use warnings;
 
 =head1 NAME
 
-200_tasklist.t - test a tasklist
+210_images.t - images
 
 =head1 DESCRIPTION
 
-User story: http://rt.cpan.org/Ticket/Display.html?id=34610
-
-Strangely, after the &update fix, I only see the error in
-the user's error script, when it uses C<slee>.
+Adding a JPEG seems to kill Tk.
 
 =cut
 
 
-use Test::More skip_all => 'Tk image handling broken in my current dev version of Perl Tk';
-my $VERSION = do { my @r = ( q$Revision: 2.079 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+# use Test::More skip_all => 'Tk image handling broken in my current dev version of Perl Tk';
+my $VERSION = do { my @r = ( q$Revision: 2.100 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use ExtUtils::testlib;
 use FileHandle;
@@ -24,14 +21,9 @@ use Cwd;
 use Tk;
 use lib qw(../lib . t/);
 
-use_ok("Tk::PNG");
-use_ok("Tk::JPEG");
-
-
-__END__
+use Test::More;
 
 BEGIN {
-	use Test::More;
     my $mwTest;
     eval { $mwTest = Tk::MainWindow->new };
     if ($@) {
@@ -39,15 +31,20 @@ BEGIN {
     }
     else {
 		# plan skip_all => 'Tk::JPEG errors';
-        plan tests => 11;
+        plan tests => 12;
     }
     $mwTest->destroy if Tk::Exists($mwTest);
     use_ok('Tk::Wizard' => $VERSION);
     use_ok('WizTestSettings');
 
-	# use Log::Log4perl qw(:easy);
-	# Log::Log4perl->easy_init($INFO);
+	# XXX
+	# use Log::Log4perl ':easy';
+	# Log::Log4perl->easy_init($TRACE);
+	# $ENV{TEST_INTERACTIVE} = 1;
 }
+
+use_ok("Tk::PNG");
+use_ok("Tk::JPEG");
 
 our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 1;
 
@@ -56,18 +53,14 @@ chdir ".." if getcwd =~ /\Wt$/;
 
 my $wizard = Tk::Wizard->new(
     -title => "Test version $VERSION For Tk::Wizard version $Tk::Wizard::VERSION",
-    -debug => 88,
 );
 
 isa_ok( $wizard, "Tk::Wizard" );
 my $fn = getcwd . "/t/chick.jpg";
-ok(-e( $fn ), "pic") or BAIL_OUT;
+ok(-e( $fn ), "pic path ".$fn) or BAIL_OUT ;
 
-$wizard->configure(
-    -finishButtonAction  => sub { pass('user clicked finish'); 1; },
-	-imagepath    		 => $fn,
-);
-isa_ok( $wizard->cget( -finishButtonAction ),  "Tk::Callback" );
+# THIS IS IS KAPUT TK INTERNAL ERROR
+# $wizard->configure( -imagepath => $fn, );
 
 #
 # Create pages
