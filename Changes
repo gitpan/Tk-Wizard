@@ -1,3 +1,8 @@
+2008-01-01 Lee 2.144_win32_gzip1_3_11
+
+	* Try to build with earlier GNU Win32 gzip: if this fails
+	  will build with earlier GNU Win32 tar, too.
+
 2008-01-01 Lee 2.144
 
 	* Rebuilt tardist with Perl 5.8.9 after errors with 5.10 build
