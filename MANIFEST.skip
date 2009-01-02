@@ -1,3 +1,4 @@
+temp.pl
 .tar$
 .tar.gz$
 .zip$
@@ -11,3 +12,5 @@ Makefile.old
 dump$
 \.pag$
 \.dir$
+tmp$
+tmp/$

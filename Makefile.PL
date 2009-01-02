@@ -6,7 +6,7 @@ use inc::Module::Install;
 #
 
 name('Tk-Wizard');
-version("2.144_bsdtar");
+version("2.145");
 abstract('GUI for step-by-step interactive logical process');
 author('cpan-at-lgoddard-dot-net');
 license('perl');
@@ -62,7 +62,7 @@ if ( $^O =~ m/(MSWin32)/i ) {
         }
     }
     else {
-        die "You are on a Windows platform without the core Win32 module. You can still use this module, but will experience errors if you try to create shortcuts to the Windows special folders.";
+        warn "You are on a Windows platform without the core Win32 module. You can still use this module, but will experience errors if you try to create shortcuts to the Windows special folders.";
     }
 }
 

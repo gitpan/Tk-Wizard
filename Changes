@@ -1,7 +1,7 @@
-2008-01-02 Lee 2.144_bsdtar
+2008-01-02 Lee 2.145
 
-	* Try to build with bsdtar as advised on
-	  http://sourceforge.net/forum/message.php?msg_id=4028811
+	* Bah. Using code suggested by PAUSE to "fix" the
+	  "broken" tar ball.
 
 2008-01-02 Lee 2.144_win32_gzip1_3_11
 
