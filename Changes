@@ -1,3 +1,8 @@
+2008-01-02 Lee 2.149
+
+	* Applied MTHURN's patch to Installer::Win32 to remove warnings/typo
+	  (on faith).
+
 2008-01-02 Lee 2.146
 
 	* Add a 'fix' target for the 'fix' script recommended by the Pause.

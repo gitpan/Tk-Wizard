@@ -10,9 +10,8 @@ use strict;
 use warnings;
 
 use lib "../../../"; # dev
-use Carp;
+use Carp ();
 use Cwd;
-use Data::Dumper;    # for debugging only
 use File::Path;
 use Exporter;
 use Tk::Wizard ':use' => 'FileSystem';
@@ -21,7 +20,7 @@ use base 'Tk::Wizard::Installer';
 use vars '@EXPORT';
 @EXPORT = ("MainLoop");
 
-our $VERSION = do { my @r = ( q$Revision: 2.18 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.19 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use constant DEBUG_FRAME => 0;
 
@@ -38,9 +37,6 @@ BEGIN {
 		require Log::Log4perl::Level;
 		Log::Log4perl::Level->import(__PACKAGE__);
 		Log::Log4perl->import(":easy");
-		# It took four CPAN uploads and tests to workout why
-		# one user was getting syntax errors for TRACE: must
-		# be the Mithrasmas spirit (hic):
 		if ($Log::Log4perl::VERSION < 1.11){
 			*{__PACKAGE__."::TRACE"} = *DEBUG;
 		}
@@ -185,10 +181,10 @@ registry tree in the current location: YMMV.
 sub register_with_windows {
     my ( $self, $args ) = ( shift, {@_} );
     return 1 if $^O !~ /mswin32/i;
+
     unless ($args->{DisplayName}
         and $args->{UninstallString}
-        and ( $args->{uninstall_key_name} or $args->{app_path} ) )
-    {
+        and ( $args->{uninstall_key_name} or $args->{app_path} ) ){
         die __PACKAGE__
           . "::register_with_windows requires an argument of name/value pairs which must include the keys 'UninstallString', 'uninstall_key_name' and 'DisplayName'";
     }
@@ -196,17 +192,19 @@ sub register_with_windows {
     if ( not $args->{UninstallString} and not $args->{app_path} ) {
         die __PACKAGE__ . "::register_with_windows requires either argument 'app_path' or 'UninstallString' be set.";
     }
+
     if ( $args->{app_path} ) {
         $args->{app_path} = "perl -e '$args->{app_path} -u'";
     }
     my $uninst_key_ref =
-      $Registry->{'LMachine/SOFTWARE/Microsoft/Windows/CurrentVersion/Uninstall/'}
-      ->CreateKey( $args->{uninstall_key_name} );
-    die "Perl Win32::TieRegistry error" if !$uninst_key_ref;
+      $Registry->{'LMachine/SOFTWARE/Microsoft/Windows/CurrentVersion/Uninstall/'}->CreateKey(
+		  $args->{uninstall_key_name}
+	);
+    Carp::confess "Perl Win32::TieRegistry error" if !$uninst_key_ref;
 
-    foreach ( keys %$args ) {
-        next if $_ =~ /^(app_path|uninstall_key_name)$/g;
-        $uninst_key_ref->{"/$_"} = $args->{$_};
+    foreach my $i ( keys %$args ) {
+        next if $i =~ /^(app_path|uninstall_key_name)$/g;
+        $uninst_key_ref->{"/$i"} = $args->{$i};
     }
 
     return 1;
@@ -303,6 +301,7 @@ sub addStartMenuPage {
 }
 
 sub _page_start_menu {
+    local *DIR;
     my ($self) = (shift);
     my $args;
     if ( ref $_[0] eq 'HASH' ) {
@@ -311,40 +310,58 @@ sub _page_start_menu {
     else {
         $args = {@_};
     }
-    local *DIR;
     my $cwd    = cwd;
     my $do_set = 1;
-    croak "You must set -variable parameter"
-      unless exists $args->{-variable};
+
+    Carp::croak "You must set -variable parameter"
+		if not exists $args->{-variable};
+
     $args->{-user} ||= 'common';
+
     $args->{-background} = 'white'  unless exists $args->{-background};
+
     $args->{-relief}     = 'sunken' unless exists $args->{-relief};
+
     $args->{-border}     = 1        unless exists $args->{-border};
+
     $args->{-listHeight} = 10       unless exists $args->{-listHeight};
+
     $args->{-title}    ||= "Create Shortcuts";
+
     $args->{-subtitle} ||= "Please select where to place an icon on the start menu";
+
     $args->{-text}     ||= "
 If you want the new Program Group to be installed within an existing
 folder in your Start Menu, select that folder below.
 If you do not want to install the new Program in your Start Folder,
 check the checkbox below.";
+
     $args->{-label_nochoice} ||= "Do not create a shortcut on the Start Menu";
+
     $self->{-program_group} = $args->{-program_group};
 
-    my $common_args;    # formatting
-    $common_args->{-background} = $args->{-background}
+    my $common_formatting = {};
+
+    $common_formatting->{-background} = $args->{-background}
       if exists $args->{-background};
-    $common_args->{-relief} = $args->{-relief} if exists $args->{-relief};
-    $common_args->{-highlightthickness} = $args->{-highlightthickness}
+
+    $common_formatting->{-relief} = $args->{-relief} if exists $args->{-relief};
+
+    $common_formatting->{-highlightthickness} = $args->{-highlightthickness}
       if exists $args->{-highlightthickness};
-    $common_args->{-borderwidth} = $args->{-borderwidth}
+
+    $common_formatting->{-borderwidth} = $args->{-borderwidth}
       if exists $args->{-borderwidth};
-    $common_args->{-cursor} = $args->{-cursor} if exists $args->{-cursor};
-    $common_args->{-highlightcolor} = $args->{-highlightcolor}
+
+    $common_formatting->{-cursor} = $args->{-cursor} if exists $args->{-cursor};
+
+    $common_formatting->{-highlightcolor} = $args->{-highlightcolor}
       if exists $args->{-highlightcolor};
-    $common_args->{-foreground} = $args->{-foreground}
+
+    $common_formatting->{-foreground} = $args->{-foreground}
       if exists $args->{-foreground};
-    $common_args->{-font} = $args->{-font} if exists $args->{-font};
+
+    $common_formatting->{-font} = $args->{-font} if exists $args->{-font};
 
     # Don't pass these to other modules
     my $variable = $args->{-variable};
@@ -362,8 +379,7 @@ check the checkbox below.";
 
     # The above may not work if non-standard/non-English setup, so:
     if (   not $self->{startmenu_dir_current}
-        or not $self->{startmenu_dir_common} )
-    {
+        or not $self->{startmenu_dir_common} ) {
         my $WshShell = eval 'Win32::OLE->CreateObject("WScript.Shell")';
         if ( ref $WshShell eq 'Win32::OLE' ) {
             $self->{startmenu_dir_current} = $WshShell->SpecialFolders(17);
@@ -376,68 +392,73 @@ check the checkbox below.";
     }
 
     # The default is to install for all users:
-    my $sDirParent = $self->{startmenu_dir_common};
+    my $dir_parent = $self->{startmenu_dir_common};
     if ( $args->{-user} eq 'current' ) {
-        $sDirParent = $self->{startmenu_dir_current};
+        $dir_parent = $self->{startmenu_dir_current};
     }
 
     # This is the default answer, if the user just clicks "Next":
-    $$variable = "$sDirParent\\$group";
+    $$variable = "$dir_parent\\$group";
 
     # Recursively read the Start Menu folder, building up a list of
     # all folders in there:
-    my @asTry = ($sDirParent);
+    my @asTry = ($dir_parent);
     my @asDir;
-  TRY_DIR:
+
+  	TRY_DIR:
     while (@asTry) {
+		local $" = ',';
 
         # $sTry is the FULL path of this folder:
         my $sTry = shift @asTry;
         next TRY_DIR if !-d $sTry;
         push @asDir, $sTry;
         opendir DIR, $sTry
-          or croak " EEE can not open the start menu ($sTry): $!";
+          or Carp::croak "Can not open the start menu ($sTry): $!";
         my @asTryChildren = sort readdir DIR;
-        local $" = ',';
 
         # print STDERR " DDD asTryChildren = (@asTryChildren)\n";
         push @asTry, grep { !m/^\.\.?$/ && s/^(.*)$/$sTry\\$1/ && -d } @asTryChildren;
-        closedir DIR or warn;
-    }    # while TRY_DIR
+        closedir DIR or warn $!;
+    }
+
     my $text = $frame->Label(
         -justify      => 'left',
         -textvariable => $variable,
         -anchor       => 'w',
-        %$common_args,
+        %$common_formatting,
       )->pack(
         -side   => 'top',
         -anchor => 'w',
         -fill   => 'x',
         -padx   => 10,
       );
-    DEBUG_FRAME && $text->configure( -background => 'magenta' );
+
+    $text->configure( -background => 'magenta' ) if DEBUG_FRAME;
+
     my $hlist = $frame->Scrolled(
-        'HList',
-        -scrollbars => "osoe",
-        -selectmode => 'single',
-        -height     => $args->{-listHeight},
-        -itemtype   => 'text',
-        -separator  => '\\',
-        -browsecmd  => sub {
-            $$variable = shift;
-            $$variable .= "\\" . $group if $group;
+		'HList',
+		-scrollbars => "osoe",
+		-selectmode => 'single',
+		-height     => $args->{-listHeight},
+		-itemtype   => 'text',
+		-separator  => '\\',
+		-browsecmd  => sub {
+			$$variable = shift;
+			$$variable .= "\\" . $group if $group;
         },
-        %$common_args,
-      )->pack(
+        %$common_formatting,
+	)->pack(
         -expand => 1,
         -fill   => 'both',
         -padx   => 10,
         -pady   => 5,
-      );    # HList
-    DEBUG_FRAME && $hlist->configure( -background => 'yellow' );
+	);
+    $hlist->configure( -background => 'yellow' ) if DEBUG_FRAME;
+
     foreach my $i (@asDir) {
         my $t = $i;
-        $t =~ s!\Q$sDirParent!!;
+        $t =~ s!\Q$dir_parent!!;
         $t =~ s!\A\\!!;
         if ( !$hlist->info( "exists", $t ) ) {
 
@@ -463,7 +484,7 @@ check the checkbox below.";
             -padx   => 10,
             -pady   => 5,
           );
-        DEBUG_FRAME && $b->configure( -background => 'red' );
+        $b->configure( -background => 'red' ) if DEBUG_FRAME;
     }
 
     return $frame;
@@ -500,7 +521,7 @@ sub _toggle_hlist {
             $w->bindtags( $self->{_hlist_bindtags_} );
         }
     }
-}    # toggle_hlist
+}
 
 
 =head1 CALLBACKS
@@ -579,28 +600,27 @@ On success, returns the C<-save_path>; on failure, C<undef>.
 
 sub callback_create_shortcut {
     my ( $self, $args ) = ( shift, {@_} );
-    croak "-target is required (you gave " . ( join ", ", keys %$args ) . ")"
+    Carp::croak "-target is required (you gave " . ( join ", ", keys %$args ) . ")"
       unless defined $args->{-target} and $args->{-target} ne '';
 
-    croak "-save_path is required  (you gave " . ( join ", ", keys %$args ) . ")"
+    Carp::croak "-save_path is required  (you gave " . ( join ", ", keys %$args ) . ")"
       unless defined $args->{-save_path} and $args->{-save_path} ne '';
 
     $args->{-arguments}   = '' unless exists $args->{-arguments};
     $args->{-workingdir}  = '' unless exists $args->{-workingdir};
     $args->{-description} = '' unless exists $args->{-description};
-    $args->{-show}        = '' unless exists $args->{-show};
+    $args->{-show}        = 0  unless exists $args->{-show};
     $args->{-hotkey}      = '' unless exists $args->{-hotkey};
-    $args->{-iconpath}    = '' unless exists $args->{-iconpath};
-    $args->{-iconindex}   = '' unless exists $args->{-iconindex};
-    undef $self->{-program_group} if exists $args->{-no_program_group};
+    $args->{-iconpath}    = 0  unless exists $args->{-iconpath};
+    $args->{-iconindex}   = 0  unless exists $args->{-iconindex};
+    delete $self->{-program_group} if exists $args->{-no_program_group};
 
     if (    exists $self->{-program_group}
-        and exists $args->{-save_path} )
-    {
+        and exists $args->{-save_path} ) {
         my ( $base, $file ) = $args->{-save_path} =~ /(.*?)([^\/\\]+)$/;
 
         # Historical error on $self->{-program_groups}
-        $base .= "\\" . ($self->{-program_groups} || $self->{-program_groups});
+        $base .= "\\" . ($self->{-program_groups} || $self->{-program_group});
 
         mkpath $base if !-e $base;
         $args->{-save_path} = $base . "\\" . $file;
@@ -608,15 +628,13 @@ sub callback_create_shortcut {
     }
 
     if (    $args->{-target} =~ /^(ht|f)tp:\/\//
-        and $args->{-save_path} !~ /\.uri$/i )
-    {
-        croak "Internet shortcuts require a .uri ending!";
+        and $args->{-save_path} !~ /\.uri$/i ) {
+        Carp::croak "Internet shortcuts require a .uri ending!";
     }
 
     if (    $args->{-target} !~ /^(ht|f)tp:\/\//
-        and $args->{-save_path} =~ /\.uri$/i )
-    {
-        croak "Only internet shortcuts require a .uri ending!";
+        and $args->{-save_path} =~ /\.uri$/i ) {
+        Carp::croak "Only internet shortcuts require a .uri ending!";
     }
 
     my $s = Win32::Shortcut->new;
@@ -658,11 +676,12 @@ sub callback_create_shortcuts {
     my $self = shift;
     my @paths;
     foreach (@_) {
-        confess "Not a hash reference" unless ref $_ eq 'HASH';
+        Carp::confess "Not a hash reference" unless ref $_ eq 'HASH';
         $self->callback_create_shortcut(%$_);
     }
     return wantarray ? @paths : \@paths;
-}    # callback_create_shortcuts
+}
+
 
 sub Tk::Error::RedefineIfNeeded {
     local $\ = "\n";
