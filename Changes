@@ -1,3 +1,7 @@
+2008-01-02 Lee 2.146
+
+	* Add a 'fix' target for the 'fix' script recommended by the Pause.
+
 2008-01-02 Lee 2.145
 
 	* Bah. Using code suggested by PAUSE to "fix" the

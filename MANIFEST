@@ -15,6 +15,7 @@ inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
+inc/fix.pl
 lib/Tk/Wizard.pm
 lib/Tk/Wizard/Choices.pm
 lib/Tk/Wizard/FileSystem.pm
@@ -32,6 +33,7 @@ t/044_Import_one.t
 t/045_Import_one_list.t
 t/045_Import_one_ref.t
 t/050_Wizard.t
+t/055_Pages.t
 t/060_e.t
 t/110_warnings.t
 t/112_AutoDestroy.t
@@ -57,4 +59,3 @@ t/dos.txt
 t/extra.txt
 t/perl_licence_blab.txt
 t/unix.txt
-t/055_Pages.t

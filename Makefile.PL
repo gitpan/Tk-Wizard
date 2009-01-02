@@ -70,6 +70,9 @@ WriteAll;
 
 sub MY::postamble {
     return <<'PART0';
+fix:
+	$(PERLRUN) inc/fix.pl $(DISTVNAME).tar.gz
+
 coverage :
 	- cover -delete
 	$(MAKE) HARNESS_PERL_SWITCHES=-MDevel::Cover test
