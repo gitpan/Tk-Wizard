@@ -1,4 +1,9 @@
-2008-01-01 Lee 2.144_win32_gzip1_3_11
+2008-01-02 Lee 2.144_bsdtar
+
+	* Try to build with bsdtar as advised on
+	  http://sourceforge.net/forum/message.php?msg_id=4028811
+
+2008-01-02 Lee 2.144_win32_gzip1_3_11
 
 	* Try to build with earlier GNU Win32 gzip: if this fails
 	  will build with earlier GNU Win32 tar, too.
