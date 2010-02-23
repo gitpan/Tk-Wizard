@@ -564,10 +564,14 @@ sub Populate {
         -fontfamily             => [ 'PASSIVE',  undef,       undef,      $self->_font_family ],
     );
 
-    if ( exists $args->{-imagepath} and not -e $args->{-imagepath} ) {
+    if ( exists $args->{-imagepath}
+    	and not ref($args->{-imagepath}) eq 'SCALAR' and not -e $args->{-imagepath}
+    ) {
         Carp::confess "Can't find file at -imagepath: " . $args->{-imagepath};
     }
-    if ( exists $args->{-topimagepath} and not -e $args->{-topimagepath} ) {
+    if ( exists $args->{-topimagepath}
+    	and not ref($args->{-imagepath}) eq 'SCALAR' and not -e $args->{-topimagepath}
+    ) {
         Carp::confess "Can't find file at -topimagepath: " . $args->{-topimagepath};
     }
     $self->{-imagepath}            = $args->{-imagepath};
@@ -1755,8 +1759,23 @@ the Wizard will land on if the Back button is clicked.
 
 =cut
 
+# sub back_page_number {
+#    my $self  = shift;
+#    my $iPage = $self->{_current_page_idx};
+#    do {
+#        $iPage--;
+#    } until ( !$self->{page_skip}{$iPage} || ( $iPage <= 0 ) );
+#    $iPage = 0 if ( $iPage < 0 );
+#    return $iPage;
+# }
+
 sub back_page_number {
-    my $self  = shift;
+	my $self = shift;
+	return $self->_back_page_number + 1;
+}
+
+sub _back_page_number {
+	my $self = shift;
     my $iPage = $self->{_current_page_idx};
     do {
         $iPage--;
@@ -1765,11 +1784,12 @@ sub back_page_number {
     return $iPage;
 }
 
+
 # Decrements the page pointer backward to the previous logical page,
 # honouring the Skip flags:
 sub _page_backward {
     my $self = shift;
-    $self->{_current_page_idx} = $self->back_page_number;
+    $self->{_current_page_idx} = $self->_back_page_number;
 }
 
 =head2 prompt
@@ -2083,7 +2103,7 @@ to submit a bug report.
 
 Lee Goddard (lgoddard@cpan.org) based on work by Daniel T Hable.
 
-Thanks to co-maintainer Martin Thurn (mthurn@cpan.org) for support,
+Thanks to Martin Thurn (mthurn@cpan.org) and Scott R. Keszler for support,
 patches, and extensions, whilst I'm elsewhere.
 
 =head1 KEYWORDS
@@ -2092,13 +2112,13 @@ Wizard; set-up; setup; installer; uninstaller; install; uninstall; Tk; GUI.
 
 =head1 COPYRIGHT
 
-Copyright (C) Lee Goddard, 11/2002 - 09/2008 ff.
+Copyright (C) Lee Goddard, 11/2002 - 02/2010 ff.
 
 This software is made available under the same terms as Perl itself.
 
-This software is not endorsed by the microsoft corp
+This software is not endorsed by, or in any way associated with,  the Microsoft Corp
 
-Microsoft is, obvisouly, a registered trademark of Microsoft corp.
+Microsoft is, obvisouly, a registered trademark of Microsoft Corp.
 
 =cut
 
@@ -2106,7 +2126,7 @@ REDEFINES:
 {
     no warnings 'redefine';
     sub Tk::ErrorOFF {
-        DEBUG " DDD this is Martin's Tk::Error\n";
+        DEBUG "This is Martin's Tk::Error\n";
         my ( $oWidget, $sError, @asLocations ) = @_;
         local $, = "\n";
         print STDERR @asLocations;

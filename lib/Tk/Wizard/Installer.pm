@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.38 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.39 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 
 =head1 NAME
@@ -142,9 +142,13 @@ function or with the Wizard's C<callback_licence_agreement> function.
 
 sub addLicencePage {
     my ( $self, $args ) = ( shift, {@_} );
-    DEBUG_FUNC && print STDERR " FFF addLicencePage\n";
     Carp::croak "No -filepath argument present" if not $args->{-filepath};
-    $self->addPage( sub { $self->_page_licence_agreement($args) } );
+    # $self->addPage( sub { $self->_page_licence_agreement($args) } );
+	my %btn_args =
+		map { my $x = delete $args->{$_}; $_ => $x }
+		grep { /ButtonAction$/ }
+		keys %$args;
+	return $self->addPage( sub { $self->_page_licence_agreement($args) }, %btn_args );
 }
 
 
@@ -159,8 +163,6 @@ sub addLicencePage {
 
 sub _page_licence_agreement {
     my ( $self, $args ) = ( shift, shift );
-
-    DEBUG_FUNC && print STDERR " FFF _page_licence_agreement\n";
 
     my $padx = $self->cget( -style ) eq 'top' ? 30 : 5;
     $self->{licence_agree} = undef;
@@ -374,7 +376,12 @@ C<0666> is a good choice.
 #
 sub addFileListPage {
     my ( $self, $args ) = ( shift, {@_} );
-    $self->addPage( sub { $self->_page_filelist($args) } );
+    # $self->addPage( sub { $self->_page_filelist($args) } );
+	my %btn_args =
+		map { my $x = delete $args->{$_}; $_ => $x }
+		grep { /ButtonAction$/ }
+		keys %$args;
+	return $self->addPage( sub { $self->_page_filelist($args) }, %btn_args );
 }
 
 =head2 addFileCopyPage
@@ -739,13 +746,16 @@ Would it be useful to implement globbing for FTP URIs?
 
 sub addDownloadPage {
     my ( $self, $args ) = ( shift, {@_} );
-    DEBUG_FUNC && print STDERR " FFF addDownloadPage\n";
-    $self->addPage( sub { $self->_page_download($args) } );
-}    # addDownloadPage
+    # $self->addPage( sub { $self->_page_download($args) } );
+	my %btn_args =
+		map { my $x = delete $args->{$_}; $_ => $x }
+		grep { /ButtonAction$/ }
+		keys %$args;
+	return $self->addPage( sub { $self->_page_download($args) }, %btn_args );
+}
 
 sub _page_download {
     my ( $self, $args ) = ( shift, shift );
-    DEBUG_FUNC && print STDERR " FFF _page_download\n";
     Carp::croak "Arguments should be supplied as a hash ref"
       if not ref $args or ref $args ne "HASH";
     Carp::croak "-files is required" if not $args->{-files};
@@ -762,7 +772,6 @@ sub _page_download {
 
     if ( defined $args->{-bar} ) {
         %bar = @{ $args->{-bar} };
-
         # insert error checking here...
     }
     $bar{-gap}    = 0 unless defined $bar{-gap};
@@ -786,9 +795,11 @@ sub _page_download {
     );
     $args->{-file_bar} =
       $args->{file_label}->ProgressBar(%bar)->pack(qw/ -padx 20 -pady 10 -side top -anchor w -fill both -expand 1 /);
+
     $args->{file_label}->pack(qw/-fill x -padx 30/);
     $self->{nextButton}->configure( -state => "disable" );
     $self->{backButton}->configure( -state => "disable" );
+
     $self->{-bar}->after(
         $args->{-delay} || 10,
         sub {
@@ -820,7 +831,8 @@ sub _page_download {
                     $args->{-file_bar}->configure( -to => 0 );
                     $args->{-file_bar}->value(0);
                     $args->{-file_bar}->update;
-                }    # foreach
+                }
+
                 if ( scalar keys %{ $args->{-files} } > 0 ) {
                     DEBUG "Files left: ", ( scalar keys %{ $args->{-files} } );
                     if ( $args->{-no_retry}
@@ -862,24 +874,22 @@ sub _page_download {
             if ( $args->{-wait} ) {
                 Tk::Wizard::_fix_wait( \$args->{-wait} );
 
-                # $frame->after($args->{-wait},sub{$self->forward});
                 $frame->after(
                     $args->{-wait},
                     sub {
                         $self->{nextButton}->configure( -state => 'normal' );
                         $self->{nextButton}->invoke;
-                      }    # sub
-                );         # after
-            }    # if
-          }    # sub
-    );         # after
+                      }
+                );
+            }
+          }
+    );
     return $frame;
-}    # _page_download
+}
 
 # c/o PPM.pm
 sub _read_uri {
     my ( $self, $args ) = ( shift, {@_} );
-    DEBUG_FUNC && print STDERR " FFF _read_uri\n";
     carp "Require uri param"    unless defined $args->{uri};
     carp "Require target param" unless defined $args->{target};
     my ( $proxy_user, $proxy_pass );
@@ -952,7 +962,8 @@ sub _lwp_callback {
     $self->{response} = $res;
     $self->{response}->add_content($data);
     $self->{bytes_transferred} += length $data;
-}    # _lwp_callback
+}
+
 
 =head1 CALLBACKS
 
@@ -988,7 +999,7 @@ sub callback_licence_agreement {
         exit;
     }
     return 1;
-}    # callback_licence_agreement
+}
 
 =head2 confirm_download_again
 
@@ -1011,7 +1022,7 @@ sub confirm_download_again {
           . " were not downloaded.\n\nWould you like to try again?",
     );
     return lc $button eq 'yes' ? 1 : 0;
-}    # confirm_download_again
+}
 
 =head2 confirm_download_quit
 
@@ -1035,7 +1046,7 @@ sub confirm_download_quit {
           . "Should the Installation process be aborted?",
     );
     $self->CloseWindowEventCycle if lc $button eq 'yes';
-}    # confirm_download_quit
+}
 
 
 
@@ -1102,7 +1113,12 @@ L<addFileListPage|addFileListPage>.
 
 sub addUninstallPage {
     my ( $self, $args ) = ( shift, {@_} );
-    $self->addPage( sub { $self->_page_uninstall($args) } );
+    # $self->addPage( sub { $self->_page_uninstall($args) } );
+	my %btn_args =
+		map { my $x = delete $args->{$_}; $_ => $x }
+		grep { /ButtonAction$/ }
+		keys %$args;
+	return $self->addPage( sub { $self->_page_uninstall($args) }, %btn_args );
 }
 
 sub _page_uninstall {
@@ -1345,6 +1361,6 @@ Lee Goddard (lgoddard@cpan.org).
 
 =head1 COPYRIGHT
 
-Copyright (C) Lee Goddard, 11/2002 - 01/2008 ff.
+Copyright (C) Lee Goddard, 11/2002 - 01/s ff.
 
 Made available under the same terms as Perl itself.

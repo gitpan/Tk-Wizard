@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.76 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.77 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use Carp ();
 use Tk::LabFrame;
@@ -65,7 +65,12 @@ Also see L</callback_dirSelect>.
 sub Tk::Wizard::addDirSelectPage {
     my $self = shift;
     my $args = {@_};
-    $self->addPage( sub { $self->_page_dirSelect($args) } );
+    # $self->addPage( sub { $self->_page_dirSelect($args) } );
+	my %btn_args =
+		map { my $x = delete $args->{$_}; $_ => $x }
+		grep { /ButtonAction$/ }
+		keys %$args;
+	return $self->addPage( sub { $self->_page_dirSelect($args) }, %btn_args );
 }
 
 
@@ -82,7 +87,6 @@ sub Tk::Wizard::_page_dirSelect {
     my $self = shift;
     my $args = shift;
 
-    # print STDERR " DDD _page_dirSelect args are ", Dumper($args);
     if ( not $args->{-variable} ) {
         Carp::croak "You must supply a -variable parameter";
     }
@@ -166,12 +170,13 @@ sub Tk::Wizard::_page_dirSelect {
                 $new_name = ${ $args->{-variable} } . "/$new_name";
                 if ( $self->_cb_try_create_dir($new_name) ) {
                     ${ $args->{-variable} } = $new_name;
-                    $dirs->configure( -directory => $new_name );
+                    # Thanks, Martin Thurn
+                    eval { $dirs->add_to_tree($new_name, $new_name) }; #$dirs->configure( -directory => $new_name );
                     $dirs->chdir($new_name);
                 }
-            }    # if new_name
+            }
 
-        },    # end of -command sub
+        },
       )->pack(
         -side   => 'right',
         -anchor => 'w',
@@ -189,8 +194,8 @@ sub Tk::Wizard::_page_dirSelect {
             -command => sub {
                 ${ $args->{-variable} } = $self->{desktop_dir};
 
-                # print STDERR " DDD   5 DirTree->configure(-directory=>$self->{desktop_dir})\n";
-                $dirs->configure( -directory => $self->{desktop_dir} );
+                # $dirs->configure( -directory => $self->{desktop_dir} );
+                eval { $dirs->add_to_tree($self->{desktop_dir}, $self->{desktop_dir}) };
                 $dirs->chdir( $self->{desktop_dir} );
             },
           )->pack(
@@ -206,21 +211,23 @@ sub Tk::Wizard::_page_dirSelect {
         $self->idletasks;
         $self->{wizardFrame}->update;
         $self->update;
-        ($d) =~ /^(\w+:)/;
+        $d = $1 if ($d =~ /^(\w+:)/); # ($d) =~ /^(\w+:)/;
 
         if ( $args->{-nowarnings}
             and (  $args->{-nowarnings} eq "1" or not $WINDOZE )
         ) {
-            $dirs->configure( -directory => $d ) if -d $d;
+            eval { $dirs->add_to_tree($d, $d) } if -d $d; # $dirs->configure( -directory => $d ) if -d $d;
         }
 
         elsif ( $args->{-nowarnings} ) {    # Fixed drives only
-            $dirs->configure( -directory => $d )
+            #$dirs->configure( -directory => $d )
+            eval { $dirs->add_to_tree($d, $d) }
               if ( ( Win32API::File::GetDriveType($d) == 3 ) and -d $d );
         }
 
         else {
-		   $dirs->configure( -directory => $d );
+		   # $dirs->configure( -directory => $d );
+        	eval { $dirs->add_to_tree($d, $d) };
         }
     }
 
@@ -381,7 +388,12 @@ An optional C<-background> argument is used as the background of the Entry widge
 sub Tk::Wizard::addFileSelectPage {
     my $self = shift;
     my $args = {@_};
-    $self->addPage( sub { $self->_page_fileSelect($args) } );
+    # $self->addPage( sub { $self->_page_fileSelect($args) } );
+	my %btn_args =
+		map { my $x = delete $args->{$_}; $_ => $x }
+		grep { /ButtonAction$/ }
+		keys %$args;
+	return $self->addPage( sub { $self->_page_fileSelect($args) }, %btn_args );
 }
 
 #

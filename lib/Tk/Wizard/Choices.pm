@@ -5,7 +5,7 @@ use warnings;
 use warnings::register;
 
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.76 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.77 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use Carp ();
 
@@ -93,7 +93,13 @@ Here is an example of what the -choices parameter should look like:
 sub Tk::Wizard::addMultipleChoicePage {
     my $self = shift;
     my $args = {@_};
-    return $self->addPage( sub { $self->_page_multiple_choice($args) } );
+    # return $self->addPage( sub { $self->_page_multiple_choice($args) } );
+
+	my %btn_args =
+		map { my $x = delete $args->{$_}; $_ => $x }
+		grep { /ButtonAction$/ }
+		keys %$args;
+	return $self->addPage( sub { $self->_page_multiple_choice($args) }, %btn_args );
 }
 
 
@@ -227,8 +233,12 @@ sub Tk::Wizard::addSingleChoicePage {
     # "saved" in this coderef:
     my $args = {@_};
 
-    # print STDERR " DDD addSingleChoicePage args are ", Dumper($args);
-    return $self->addPage( sub { $self->_page_single_choice($args) } );
+    # return $self->addPage( sub { $self->_page_single_choice($args) } );
+	my %btn_args =
+		map { my $x = delete $args->{$_}; $_ => $x }
+		grep { /ButtonAction$/ }
+		keys %$args;
+	return $self->addPage( sub { $self->_page_single_choice($args) }, %btn_args );
 }
 
 sub Tk::Wizard::_page_single_choice {
@@ -255,12 +265,11 @@ sub Tk::Wizard::_page_single_choice {
     );
 
     foreach my $opt ( @{ $args->{-choices} } ) {
-        # if ( reftype($opt) ne 'HASH' ) {
         if ( ref $opt ne 'HASH' ) {
             Carp::croak "Option in -choices array must be a hash";
         }
         $opt->{-title} ||= '';
-        my $sValue = $opt->{-value} || $opt->{-title};
+        my $sValue = defined($opt->{-value}) ? $opt->{-value} : $opt->{-title};
         my $b = $content->Radiobutton(
             -text             => $opt->{-title},
             -justify          => 'left',
@@ -272,7 +281,7 @@ sub Tk::Wizard::_page_single_choice {
             -activebackground => $self->{background},
         )->pack(qw/-side top -anchor w /);
 
-        ${ $args->{-variable} } = $sValue if not $not_first_page++;
+        ${ $args->{-variable} } ||= $sValue if not $not_first_page++;
         ${ $args->{-variable} } = $sValue if $opt->{-selected};
 
         my $s = $opt->{-subtitle} || '';
@@ -287,8 +296,6 @@ sub Tk::Wizard::_page_single_choice {
                 -justify    => 'left',
                 -background => $self->{background},
             )->pack(qw/-side top -anchor w/);
-
-            # DEBUG_FRAME && $l->configure( -background => 'light blue' );
         }
     }
 

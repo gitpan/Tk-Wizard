@@ -32,18 +32,14 @@ BEGIN {
 our $WAIT = $ENV{TEST_INTERACTIVE} ? 0 : 555;
 
 my $oICS   = IO::Capture::Stderr::Extended->new;
-my $wizard = Tk::Wizard->new(
-    -title => "Title Wrap Test",
-
-    # -debug => 88,
-);
+my $wizard = Tk::Wizard->new( -title => $0, );
 isa_ok( $wizard, "Tk::Wizard" ) or BAIL_OUT;
 
 $wizard->configure( -preNextButtonAction => sub { &preNext($wizard) } );
 is(
     $wizard->addSplashPage(
         -wait  => 100,
-        -title => "Welcome to the Wizard",
+        -title => "Page 1",
     ),
     1,
     'splash is 1'
@@ -52,6 +48,7 @@ is(
 my $the_chosen_one;
 is(
     $wizard->addSingleChoicePage(
+        -title	  => 'Page 2',
         -wait     => $WAIT,
         -variable => \$the_chosen_one,
         -choices  => [
@@ -68,6 +65,7 @@ is(
 
 is(
     $wizard->addSingleChoicePage(
+        -title	  => 'Page 3',
         -wait     => $WAIT,
         -variable => \$the_chosen_one,
         -choices  => [
@@ -90,6 +88,7 @@ is(
 
 is(
     $wizard->addSingleChoicePage(
+        -title	  => 'Page 4',
         -wait     => $WAIT,
         -variable => \$the_chosen_one,
         -choices  => [
@@ -115,9 +114,9 @@ is(
 );
 
 $wizard->addSplashPage(
-    -wait  => 100,
-    -title => "Page Bye!",
-    -text  => "Thanks for testing!"
+    -title	=> 'Page 5',
+    -wait  	=> 100,
+    -text  	=> "Thanks for testing!"
 );
 
 $oICS->start;

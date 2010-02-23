@@ -12,5 +12,5 @@ RELEASE PROCEDURE
 * Run make test - this will check MANIFEST too
   Some of the tests require specific versions of Wizard.
 
-* After make tardist, run make fix if building on Win32
+* After make tardist, run `make fix` if building on Win32
   - cf. the GNU Win32 tar permission problem

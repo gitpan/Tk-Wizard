@@ -20,7 +20,7 @@ use base 'Tk::Wizard::Installer';
 use vars '@EXPORT';
 @EXPORT = ("MainLoop");
 
-our $VERSION = do { my @r = ( q$Revision: 2.19 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.20 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use constant DEBUG_FRAME => 0;
 
@@ -297,7 +297,12 @@ suggestions welcomed for a better idea.
 
 sub addStartMenuPage {
     my ( $self, $args ) = ( shift, {@_} );
-    return $self->addPage( sub { $self->_page_start_menu($args) } );
+    # return $self->addPage( sub { $self->_page_start_menu($args) } );
+	my %btn_args =
+		map { my $x = delete $args->{$_}; $_ => $x }
+		grep { /ButtonAction$/ }
+		keys %$args;
+	return $self->addPage( sub { $self->_page_start_menu($args) }, %btn_args );
 }
 
 sub _page_start_menu {
@@ -417,7 +422,6 @@ check the checkbox below.";
           or Carp::croak "Can not open the start menu ($sTry): $!";
         my @asTryChildren = sort readdir DIR;
 
-        # print STDERR " DDD asTryChildren = (@asTryChildren)\n";
         push @asTry, grep { !m/^\.\.?$/ && s/^(.*)$/$sTry\\$1/ && -d } @asTryChildren;
         closedir DIR or warn $!;
     }

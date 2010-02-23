@@ -3,9 +3,36 @@ package Tk::Wizard::Tasks;
 use strict;
 use warnings;
 use warnings::register;
-
+use lib "../../";
 use vars '$VERSION';
-$VERSION = do { my @r = ( q$Revision: 2.79 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.80 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
+
+use vars qw(@ISA @EXPORT);
+BEGIN {
+	eval { require Log::Log4perl; };
+
+	# No Log4perl so bluff: see Log4perl FAQ
+	if($@) {
+		no strict qw"refs";
+		*{__PACKAGE__."::$_"} = sub { } for qw(TRACE DEBUG INFO WARN ERROR FATAL);
+	}
+
+	# Setup log4perl
+	else {
+		no warnings;
+		no strict qw"refs";
+		require Log::Log4perl::Level;
+		Log::Log4perl::Level->import(__PACKAGE__);
+		Log::Log4perl->import(":easy");
+		if ($Log::Log4perl::VERSION < 1.11){
+			*{__PACKAGE__."::TRACE"} = *DEBUG;
+		}
+	}
+
+    require Exporter;    # Exporting Tk's MainLoop so that
+    @ISA    = ( "Exporter", );    # I can just use strict and Tk::Wizard without
+    @EXPORT = ("MainLoop");       # having to use Tk
+}
 
 use Carp ();
 use Tk::LabFrame;
@@ -125,11 +152,26 @@ sub Tk::Wizard::_page_taskList {
         if ( !$args->{$sArg} ) {
             $photos->{$state} = $self->Photo( $state, -data => $Tk::Wizard::Image::TASK_LIST{$state} );
         }
-        elsif (!-r $args->{$sArg}
-            || !$self->Photo( $state, -file => $args->{$sArg} ) )
-        {
-            warn "# Could not read $sArg from " . $args->{$sArg};
-        }
+#        elsif (!-r $args->{$sArg}
+#            || !$self->Photo( $state, -file => $args->{$sArg} ) )
+#        {
+#            warn "# Could not read $sArg from " . $args->{$sArg};
+#        }
+		elsif ( ref($args->{$sArg}) eq 'SCALAR' ) {
+			$photos->{$state} = $self->Photo(
+				$state,
+				-data => ${$args->{$sArg}}
+			) || WARN "Could not read $sArg from referenced data " . ${$args->{$sArg}};
+		}
+		elsif (-r $args->{$sArg}) {
+			$photos->{$state} = $self->Photo(
+				$state,
+				-file => $args->{$sArg}
+			) || WARN "Could not read $sArg from file " . $args->{$sArg};
+		}
+		else {
+			WARN "Could not read $sArg from " . $args->{$sArg};
+		}
     }
 
     $args->{-frame_pack} = [qw/-expand 1 -fill x -padx 30 -pady 10/]
@@ -224,11 +266,12 @@ sub Tk::Wizard::_page_taskList {
 
                 if ( Tk::Exists( $self->{nextButton} ) ) {
                     $self->{nextButton}->configure( -state => "normal" );
-                    # $self->{nextButton}->invoke if $args->{ -continue };
+                    # RT#54904
+                    $self->{nextButton}->invoke if $args->{ -continue };
                 }
-              }, # End of anonymous sub
+              },
 
-        ); # End of $frame->after args
+        );
     }
     return $frame;
 }

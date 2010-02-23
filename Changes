@@ -1,3 +1,13 @@
+2010-02-23 Lee
+
+	* Scott R. Keszler's #54904: addTaskListPage: -*_photo options only work with filenames
+	* Scott R. Keszler's #54576: addSingleChoicePage forgets choice when Back button used
+	* Scott R. Keszler's #54575: back_page_number uses 0-based count
+	* Scott R. Keszler's #54596: imagepath and topimagepath accept only filenames
+	* Scott R. Keszler's #54520: -.*ButtonAction args not passed to add.*Page methods
+	* Martin Thurn's #44856: bugfix and improvement for dirselect
+	* Martin Thurn's #53740: can not use -value=>0 on singleChoicePage
+
 2008-01-02 Lee 2.149
 
 	* Applied MTHURN's patch to Installer::Win32 to remove warnings/typo

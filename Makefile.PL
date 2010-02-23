@@ -6,7 +6,7 @@ use inc::Module::Install;
 #
 
 name('Tk-Wizard');
-version("2.149");
+version("2.150");
 abstract('GUI for step-by-step interactive logical process');
 author('cpan-at-lgoddard-dot-net');
 license('perl');
