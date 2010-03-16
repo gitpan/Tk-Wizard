@@ -1,4 +1,8 @@
+use strict;
+use warnings;
+
 package Tk::Wizard::Installer::Win32;
+our $VERSION = do { my @r = ( q$Revision: 2.21 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 =head1 NAME
 
@@ -6,8 +10,6 @@ Tk::Wizard::Installer::Win32 - Win32-specific routines for Tk::Wizard::Installer
 
 =cut
 
-use strict;
-use warnings;
 
 use lib "../../../"; # dev
 use Carp ();
@@ -19,8 +21,6 @@ use base 'Tk::Wizard::Installer';
 
 use vars '@EXPORT';
 @EXPORT = ("MainLoop");
-
-our $VERSION = do { my @r = ( q$Revision: 2.20 $ =~ /\d+/g ); sprintf "%d." . "%03d" x $#r, @r };
 
 use constant DEBUG_FRAME => 0;
 
@@ -614,7 +614,7 @@ sub callback_create_shortcut {
     $args->{-workingdir}  = '' unless exists $args->{-workingdir};
     $args->{-description} = '' unless exists $args->{-description};
     $args->{-show}        = 0  unless exists $args->{-show};
-    $args->{-hotkey}      = '' unless exists $args->{-hotkey};
+    $args->{-hotkey}      = 0  if not exists $args->{-hotkey} or $args->{-hotkey} eq '';
     $args->{-iconpath}    = 0  unless exists $args->{-iconpath};
     $args->{-iconindex}   = 0  unless exists $args->{-iconindex};
     delete $self->{-program_group} if exists $args->{-no_program_group};

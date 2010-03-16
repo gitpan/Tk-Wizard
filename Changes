@@ -1,3 +1,7 @@
+2010-03-16
+
+	* Update Win32 shortcut hotkey args after M Thurn spotted change in API
+
 2010-02-23 Lee
 
 	* Scott R. Keszler's #54904: addTaskListPage: -*_photo options only work with filenames
